@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Interfaces\Services\BaseServiceInterface;
-use App\Interfaces\Repositories\BaseRepositoryInterface;
+use App\Repositories\BaseRepository;
 
-class BaseService implements BaseServiceInterface
+abstract class BaseService
 {
     protected $repository;
 
-    public function __construct(BaseRepositoryInterface $repository)
+    public function __construct(BaseRepository $repository)
     {
         $this->repository = $repository;
     }
@@ -19,7 +18,7 @@ class BaseService implements BaseServiceInterface
         return $this->repository->all();
     }
 
-    public function find(int $id)
+    public function find($id)
     {
         return $this->repository->find($id);
     }
@@ -29,12 +28,12 @@ class BaseService implements BaseServiceInterface
         return $this->repository->create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update($id, array $data)
     {
         return $this->repository->update($id, $data);
     }
 
-    public function delete(int $id)
+    public function delete($id)
     {
         return $this->repository->delete($id);
     }

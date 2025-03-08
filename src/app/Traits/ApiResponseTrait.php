@@ -4,8 +4,10 @@ namespace App\Traits;
 
 trait ApiResponseTrait
 {
-    protected function successResponse($data = [], string $message = 'Success', int $status = 200)
+    protected function successResponse($data = [], string $messageKey = null, int $status = 200, array $messageParams = [])
     {
+        $message = $messageKey ? __($messageKey, $messageParams) : 'Success';
+        
         return response()->json([
             'status' => 'success',
             'message' => $message,
@@ -13,8 +15,10 @@ trait ApiResponseTrait
         ], $status);
     }
 
-    protected function errorResponse(string $message, int $status = 400, $errors = [])
+    protected function errorResponse(string $messageKey, int $status = 400, $errors = [], array $messageParams = [])
     {
+        $message = __($messageKey, $messageParams);
+        
         return response()->json([
             'status' => 'error',
             'message' => $message,
