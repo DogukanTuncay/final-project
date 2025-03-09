@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Course extends Model
 {
-    use HasImage, HasTranslations;
+    use HasImage, HasTranslations,HasFactory;
 
     /**
      * Çevirilecek alanlar
@@ -99,7 +99,7 @@ class Course extends Model
         
         // Yeni kayıt oluşturulurken slug otomatik oluşturulur
         static::creating(function ($course) {
-            $course->slug = Str::slug($course->name);
+            $course->slug = Str::slug($course->getTranslation('name', 'en'));
         });
     }
 
@@ -119,9 +119,9 @@ class Course extends Model
         return self::DIFFICULTIES[$this->difficulty] ?? $this->difficulty;
     }
 
-    /**
-     * Kullanıcının kurs tamamlama durumunu döndürür
-     */
+    /*
+      Kullanıcının kurs tamamlama durumunu döndürür
+
     public function getCompletionStatusAttribute(): array
     {
         if (!auth()->check()) {
@@ -146,21 +146,21 @@ class Course extends Model
             'completed_lessons' => $completedLessons
         ];
     }
-
-    /**
-     * Kursun dersleri ile ilişkisi
      */
+    /*
+     * Kursun dersleri ile ilişkisi
+
     public function lessons(): HasMany
     {
         return $this->hasMany(Lesson::class)->orderBy('order');
     }
-
+     */
     /**
      * Kursun bölümleri ile ilişkisi
      */
     public function chapters(): HasMany
     {
-        return $this->hasMany(Chapter::class)->orderBy('order');
+        return $this->hasMany(CourseChapter::class)->orderBy('order');
     }
 
     /**

@@ -35,6 +35,9 @@
             "Tests\\": "tests/"
         }
     },
+    "files": [
+        "app/Helpers/LocaleHelper.php"
+    ],
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

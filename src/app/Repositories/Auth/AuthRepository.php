@@ -38,8 +38,8 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
         if (!$token = JWTAuth::attempt($credentials)) {
             return ['error' => 'Email or Password is dismatch'];
         }
-
-        return compact('token');
+        $user = auth()->user();
+        return compact('token', 'user');
     }
 
     public function logout()

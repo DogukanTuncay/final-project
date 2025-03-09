@@ -7,6 +7,9 @@ use App\Http\Resources\Admin\CourseResource;
 use App\Interfaces\Services\Admin\CourseServiceInterface;
 use Illuminate\Http\Request;
 use App\Http\Controllers\BaseController;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Response;
+
 class CourseController extends BaseController
 {
     protected $service;
@@ -27,18 +30,40 @@ class CourseController extends BaseController
     
     public function store(CourseRequest $request)
     {
-        $course = $this->service->create($request->validated());
-        return $this->successResponse(
-            new CourseResource($course),
-            'responses.courses.created',
-            201
-        );
+        try {
+            $course = $this->service->create($request->validated());
+            if(!$course){
+                return $this->errorResponse('responses.courses.not_found', 404);
+            }
+            return $this->successResponse(
+                new CourseResource($course),
+                'responses.courses.created',
+                201
+            );
+        } catch (QueryException $e) {
+            // TODO: Geçici çözüm - Exception Handler çalışmadığı için controller'da yakalıyoruz
+            $message = $e->getMessage();
+            $sqlState = $e->errorInfo[0] ?? null;
+            
+            if ($sqlState === '23505' && strpos($message, 'courses_slug_unique') !== false) {
+                return $this->errorResponse('errors.duplicate_course_slug', Response::HTTP_CONFLICT);
+            }
+            
+            // Genel veritabanı hatası
+            return $this->errorResponse('responses.courses.create_failed', Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Exception $e) {
+            return $this->errorResponse('responses.courses.create_failed', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
     
     public function show($id)
     {
         try {
             $course = $this->service->find($id);
+            if(!$course){
+                return $this->errorResponse('responses.courses.not_found', 404);
+
+            }
             return $this->successResponse(
                 new CourseResource($course),
                 'responses.courses.retrieved'
@@ -51,11 +76,27 @@ class CourseController extends BaseController
     public function update(CourseRequest $request, $id)
     {
         try {
+            $course = $this->service->find($id);
+            if(!$course){
+                return $this->errorResponse('responses.courses.not_found', 404);
+            }
+            
             $course = $this->service->update($id, $request->validated());
             return $this->successResponse(
                 new CourseResource($course),
                 'responses.courses.updated'
             );
+        } catch (QueryException $e) {
+            // TODO: Geçici çözüm - Exception Handler çalışmadığı için controller'da yakalıyoruz
+            $message = $e->getMessage();
+            $sqlState = $e->errorInfo[0] ?? null;
+            
+            if ($sqlState === '23505' && strpos($message, 'courses_slug_unique') !== false) {
+                return $this->errorResponse('errors.duplicate_course_slug', Response::HTTP_CONFLICT);
+            }
+            
+            // Genel veritabanı hatası
+            return $this->errorResponse('responses.courses.update_failed', Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (\Exception $e) {
             return $this->errorResponse('responses.courses.update_error', 400);
         }
@@ -64,6 +105,11 @@ class CourseController extends BaseController
     public function destroy($id)
     {
         try {
+            $course = $this->service->find($id);
+            if(!$course){
+                return $this->errorResponse('responses.courses.not_found', 404);
+
+            }
             $this->service->delete($id);
             return $this->successResponse(
                 [],
@@ -77,6 +123,11 @@ class CourseController extends BaseController
     public function updateOrder(Request $request, $id)
     {
         try {
+            $course = $this->service->find($id);
+            if(!$course){
+                return $this->errorResponse('responses.courses.not_found', 404);
+
+            }
             $validator = \Validator::make($request->all(), [
                 'order' => 'required|integer|min:0'
             ]);
@@ -89,7 +140,11 @@ class CourseController extends BaseController
                 );
             }
     
-            $course = $this->service->updateOrder($id, $request->order);
+            $result = $this->service->updateOrder($id, $request->order);
+            if(!$result){
+                return $this->errorResponse('responses.courses.order_error', 400);
+            }
+            
             return $this->successResponse(
                 new CourseResource($course),
                 'responses.courses.order_updated'
@@ -102,6 +157,11 @@ class CourseController extends BaseController
     public function toggleStatus($id)
     {
         try {
+            $course = $this->service->find($id);
+            if(!$course){
+                return $this->errorResponse('responses.courses.not_found', 404);
+
+            }
             $course = $this->service->toggleStatus($id);
             $messageKey = $course->is_active ? 
                 'responses.courses.status_active' : 
@@ -119,6 +179,11 @@ class CourseController extends BaseController
     public function toggleFeatured($id)
     {
         try {
+            $course = $this->service->find($id);
+            if(!$course){
+                return $this->errorResponse('responses.courses.not_found', 404);
+
+            }
             $course = $this->service->toggleFeatured($id);
             $messageKey = $course->is_featured ? 
                 'responses.courses.featured' : 

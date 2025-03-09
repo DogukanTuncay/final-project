@@ -12,65 +12,265 @@ use Symfony\Component\Mailer\Exception\TransportException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use App\Exceptions\UniqueConstraintException;
 
 class Handler extends ExceptionHandler
 {
     use ApiResponseTrait;
 
-    public function register()
+    /**
+     * A list of the exception types that are not reported.
+     *
+     * @var array<int, class-string<Throwable>>
+     */
+    protected $dontReport = [
+        // 
+    ];
+
+    /**
+     * A list of the inputs that are never flashed to the session on validation exceptions.
+     *
+     * @var array<int, string>
+     */
+    protected $dontFlash = [
+        'current_password',
+        'password',
+        'password_confirmation',
+    ];
+
+    /**
+     * Register the exception handling callbacks for the application.
+     */
+    public function register(): void
     {
-        $this->renderable(function (Throwable $e, $request) {
-            return $this->handleError($e);
+        $this->reportable(function (Throwable $e) {
+            //
+        });
+
+        // Özel UniqueConstraintException işleme
+        $this->renderable(function (UniqueConstraintException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*') || $request->is('admin/*')) {
+                $constraint = $e->getConstraint();
+                
+                if ($e->isCourseChapterSlugViolation()) {
+                    return $this->errorResponse('errors.duplicate_course_chapter_slug', Response::HTTP_CONFLICT);
+                } 
+                
+                if ($e->isCourseSlugViolation()) {
+                    return $this->errorResponse('errors.duplicate_course_slug', Response::HTTP_CONFLICT);
+                }
+                
+                return $this->errorResponse('errors.duplicate_entry', Response::HTTP_CONFLICT);
+            }
+            return null;
+        });
+
+        // UniqueConstraintViolationException için özel handling
+        $this->renderable(function (UniqueConstraintViolationException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*') || $request->is('admin/*')) {
+                $message = $e->getMessage();
+                
+                // Özel constraint mesajları
+                if (strpos($message, 'course_chapters_slug_unique') !== false) {
+                    return $this->errorResponse('errors.duplicate_course_chapter_slug', Response::HTTP_CONFLICT);
+                } 
+                elseif (strpos($message, 'courses_slug_unique') !== false) {
+                    return $this->errorResponse('errors.duplicate_course_slug', Response::HTTP_CONFLICT);
+                }
+                
+                return $this->errorResponse('errors.duplicate_entry', Response::HTTP_CONFLICT);
+            }
+            return null;
+        });
+
+        // QueryException için özel handling - UniqueConstraint veya PostgreSQL hatalarını yakala
+        $this->renderable(function (QueryException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*') || $request->is('admin/*')) {
+                $sqlState = $e->errorInfo[0] ?? null;
+                $message = $e->getMessage();
+                
+                // PostgreSQL unique constraint ihlalleri (23505)
+                if ($sqlState === '23505') {
+                    // Özel constraint mesajları
+                    if (strpos($message, 'course_chapters_slug_unique') !== false) {
+                        return $this->errorResponse('errors.duplicate_course_chapter_slug', Response::HTTP_CONFLICT);
+                    } 
+                    elseif (strpos($message, 'courses_slug_unique') !== false) {
+                        return $this->errorResponse('errors.duplicate_course_slug', Response::HTTP_CONFLICT);
+                    }
+                    
+                    return $this->errorResponse('errors.duplicate_entry', Response::HTTP_CONFLICT);
+                }
+                
+                // MySQL unique constraint violation (1062)
+                $errorCode = $e->errorInfo[1] ?? null;
+                if ($errorCode == 1062) {
+                    return $this->errorResponse('errors.duplicate_entry', Response::HTTP_CONFLICT);
+                }
+                
+                return $this->errorResponse('errors.database_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+            return null;
         });
     }
 
     /**
-     * Hata türüne göre uygun errorResponse döndür.
+     * Render an exception into an HTTP response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $exception
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    protected function handleError(Throwable $e)
+    public function render($request, Throwable $exception)
     {
-        // Doğrulama hatası
-        if ($e instanceof ValidationException) {
-            return $this->errorResponse(json_encode($e->errors()), Response::HTTP_UNPROCESSABLE_ENTITY);
+        // Sadece API istekleri için özel hata yanıtları
+        if ($request->expectsJson() || $request->is('api/*') || $request->is('admin/*')) {
+            
+            // QueryException işleme - PostgreSQL unique constraint ihlalleri
+            if ($exception instanceof QueryException) {
+                $message = $exception->getMessage();
+                $sqlState = $exception->errorInfo[0] ?? null;
+            
+                // Debug amacıyla loglama
+                Log::debug('Database Exception:', [
+                    'message' => $message,
+                    'sql_state' => $sqlState,
+                    'error_code' => $exception->errorInfo[1] ?? null
+                ]);
+                
+                // PostgreSQL unique constraint ihlali (23505)
+                if ($sqlState === '23505') {
+                    // Hangi constraint'in ihlal edildiğini anlama
+                    if (strpos($message, 'course_chapters_slug_unique') !== false) {
+                        return $this->errorResponse('errors.duplicate_course_chapter_slug', Response::HTTP_CONFLICT);
+                    } 
+                    
+                    if (strpos($message, 'courses_slug_unique') !== false) {
+                        return $this->errorResponse('errors.duplicate_course_slug', Response::HTTP_CONFLICT);
+                    }
+                    
+                    // Genel unique constraint ihlali
+                    return $this->errorResponse('errors.duplicate_entry', Response::HTTP_CONFLICT);
+                }
+                
+                // MySQL unique constraint ihlali (1062)
+                $errorCode = $exception->errorInfo[1] ?? null;
+                if ($errorCode == 1062) {
+                    return $this->errorResponse('errors.duplicate_entry', Response::HTTP_CONFLICT);
+                }
+                
+                // Diğer veritabanı hataları
+                return $this->errorResponse(
+                    'errors.database_error', 
+                    Response::HTTP_INTERNAL_SERVER_ERROR
+                );
+            }
+            
+            // UniqueConstraintViolationException - Illuminate'in kendi unique constraint exception'ı
+            if ($exception instanceof UniqueConstraintViolationException) {
+                $message = $exception->getMessage();
+                
+                // Spesifik constraint mesajları
+                if (strpos($message, 'course_chapters_slug_unique') !== false) {
+                    return $this->errorResponse('errors.duplicate_course_chapter_slug', Response::HTTP_CONFLICT);
+                } 
+                
+                if (strpos($message, 'courses_slug_unique') !== false) {
+                    return $this->errorResponse('errors.duplicate_course_slug', Response::HTTP_CONFLICT);
+                }
+                
+                return $this->errorResponse('errors.duplicate_entry', Response::HTTP_CONFLICT);
+            }
+            
+            // Doğrulama hataları
+            if ($exception instanceof ValidationException) {
+                return $this->errorResponse(
+                    'errors.validation_error', 
+                    Response::HTTP_UNPROCESSABLE_ENTITY, 
+                    $exception->errors()
+                );
+            }
+            
+            // Model bulunamadı hataları
+            if ($exception instanceof ModelNotFoundException) {
+                $model = strtolower(class_basename($exception->getModel()));
+                return $this->errorResponse(
+                    'errors.not_found', 
+                    Response::HTTP_NOT_FOUND, 
+                    ['model' => $model]
+                );
+            }
+            
+            // Route bulunamadı hataları
+            if ($exception instanceof NotFoundHttpException) {
+                return $this->errorResponse('errors.route_not_found', Response::HTTP_NOT_FOUND);
+            }
+            
+            // Metod izin verilmedi hataları
+            if ($exception instanceof MethodNotAllowedHttpException) {
+                return $this->errorResponse('errors.method_not_allowed', Response::HTTP_METHOD_NOT_ALLOWED);
+            }
+            
+            // Yetki hataları
+            if ($exception instanceof AuthorizationException) {
+                return $this->errorResponse('errors.forbidden', Response::HTTP_FORBIDDEN);
+            }
+            
+            // Kimlik doğrulama hataları
+            if ($exception instanceof AuthenticationException) {
+                return $this->errorResponse('errors.unauthenticated', Response::HTTP_UNAUTHORIZED);
+            }
+            
+            // HTTP exception sınıfı
+            if ($exception instanceof HttpException) {
+                return $this->errorResponse(
+                    'errors.http_error', 
+                    $exception->getStatusCode()
+                );
+            }
+            
+            // Bilinmeyen diğer hata türleri
+            Log::error('Unhandled Exception:', [
+                'message' => $exception->getMessage(),
+                'exception' => get_class($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine()
+            ]);
+            
+            // Geliştirme ortamında detaylı, üretimde genel hata
+            $errorMessage = app()->environment('production') 
+                ? 'errors.server_error' 
+                : $exception->getMessage();
+                
+            return $this->errorResponse(
+                $errorMessage, 
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
-        // SMTP Hata Yönetimi (Mailer TransportException)
-    if ($e instanceof TransportException) {
-        return $this->errorResponse('E-posta gönderilirken bir hata oluştu. Lütfen SMTP ayarlarınızı kontrol edin.', 500);
+        
+        // Web istekleri için Laravel'in varsayılan davranışını kullan
+        return parent::render($request, $exception);
     }
-        // Model bulunamadı hatası
-        if ($e instanceof ModelNotFoundException) {
-            return $this->errorResponse('Kayıt bulunamadı.', Response::HTTP_NOT_FOUND);
-        }
 
-        // Yetkilendirme hatası
-        if ($e instanceof AuthorizationException) {
-            return $this->errorResponse('Bu işlemi yapmak için yetkiniz yok.', Response::HTTP_FORBIDDEN);
-        }
-
-        // Kimlik doğrulama hatası
-        if ($e instanceof AuthenticationException) {
-            return $this->errorResponse('Giriş yapmanız gerekiyor.', Response::HTTP_UNAUTHORIZED);
-        }
-
-        // Tüm diğer hata türleri
-        return $this->errorResponse(
-            env('APP_DEBUG') ? $e->getMessage() : 'Beklenmedik bir hata oluştu.',
-            Response::HTTP_INTERNAL_SERVER_ERROR
-        );
-    }
-
+    /**
+     * Hataları raporla
+     */
     public function report(Throwable $exception)
-{
-    // Laravel'in kendi hata raporlama sistemini çalıştır
-    parent::report($exception);
+    {
+        // Laravel'in kendi hata raporlama sistemini çalıştır
+        parent::report($exception);
 
-    // Hataları `storage/logs/laravel.log` içine kaydet
-    Log::error($exception->getMessage(), [
-        'exception' => $exception,
-        'file' => $exception->getFile(),
-        'line' => $exception->getLine(),
-    ]);
-}
-
-
+        // Hataları log dosyasına kaydet
+        Log::error($exception->getMessage(), [
+            'exception' => get_class($exception),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+        ]);
+    }
 }

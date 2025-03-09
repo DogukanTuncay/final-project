@@ -5,8 +5,8 @@ namespace App\Http\Requests\Admin;
 use App\Models\Course;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-
-class CourseRequest extends FormRequest
+use App\Http\Requests\BaseRequest;
+class CourseRequest extends BaseRequest
 {
     public function authorize()
     {
@@ -41,16 +41,5 @@ class CourseRequest extends FormRequest
             'category' => ['required', Rule::in(array_keys(Course::CATEGORIES))],
             'difficulty' => ['required', Rule::in(array_keys(Course::DIFFICULTIES))],
         ]);
-    }
-
-    public function messages()
-    {
-        return [
-            'image.required' => 'Kurs görseli gereklidir',
-            'image.image' => 'Dosya bir görsel olmalıdır',
-            'category.required' => 'Kategori seçimi zorunludur',
-            'difficulty.required' => 'Zorluk seviyesi seçimi zorunludur',
-            // ... diğer mesajlar
-        ];
     }
 }

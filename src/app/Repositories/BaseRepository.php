@@ -23,6 +23,12 @@ abstract class BaseRepository
         return $this->model->find($id);
     }
 
+    /**
+     * Yeni bir kayıt oluştur
+     * 
+     * @param array $data
+     * @return Model
+     */
     public function create(array $data)
     {
         return $this->model->create($data);

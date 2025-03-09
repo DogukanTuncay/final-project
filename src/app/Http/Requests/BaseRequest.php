@@ -16,12 +16,7 @@ abstract class BaseRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
-    {
-        return [
-            //
-        ];
-    }
+    
 
     protected function failedValidation(Validator $validator)
     {

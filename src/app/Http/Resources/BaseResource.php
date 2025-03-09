@@ -19,13 +19,11 @@ class BaseResource extends JsonResource
         $userLocale = null;
         $user = JWTAuth::user();
         $userLocale = $user && !empty($user->locale) ? $user->locale : null;
-        
         // Kullanıcı locale'i yoksa uygulama locale'ini kullan
         $locale = $userLocale ?? app()->getLocale();
         $fallbackLocale = config('app.fallback_locale', 'en');
         $translatable = $model->getTranslatableAttributes();
         $translated = [];
-    
         foreach ($translatable as $attribute) {
             $translated[$attribute] = $model->getTranslation($attribute, $locale, false) 
                 ?? $model->getTranslation($attribute, $fallbackLocale, false)

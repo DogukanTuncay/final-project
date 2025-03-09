@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Interfaces\Services\CourseServiceInterface;
-use App\Http\Requests\Api\CourseRequest;
+use App\Http\Controllers\BaseController;
+use App\Interfaces\Services\Api\CourseServiceInterface;
 use App\Http\Resources\Api\CourseResource;
 
-class CourseController extends Controller
+class CourseController extends BaseController
 {
     protected $service;
 
@@ -16,32 +15,56 @@ class CourseController extends Controller
         $this->service = $service;
     }
 
+    /**
+     * Tüm aktif kursları listele
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index()
     {
-        $items = $this->service->all();
-        return CourseResource::collection($items);
+        $courses = $this->service->allActive();
+        return $this->successResponse(CourseResource::collection($courses), 'responses.courses.listed');
     }
 
-    public function store(CourseRequest $request)
+    /**
+     * Belirli bir kursun detayını göster
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show(int $id)
     {
-        $item = $this->service->create($request->validated());
-        return new CourseResource($item);
+        $course = $this->service->findActive($id);
+        return $this->successResponse(new CourseResource($course), 'responses.courses.retrieved');
     }
 
-    public function show($id)
+    /**
+     * Belirli bir kursu slug'a göre göster
+     * @param string $slug
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bySlug(string $slug)
     {
-        $item = $this->service->find($id);
-        return new CourseResource($item);
+        $course = $this->service->findBySlug($slug);
+        return $this->successResponse(new CourseResource($course), 'responses.courses.retrieved');
     }
 
-    public function update(CourseRequest $request, $id)
+    /**
+     * Öne çıkarılan kursları listele
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function featured()
     {
-        $item = $this->service->update($id, $request->validated());
-        return new CourseResource($item);
+        $courses = $this->service->findFeatured();
+        return $this->successResponse(CourseResource::collection($courses), 'responses.courses.listed');
     }
 
-    public function destroy($id)
+    /**
+     * Belirli bir kategorideki kursları listele
+     * @param string $category
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function byCategory(string $category)
     {
-        return $this->service->delete($id);
+        $courses = $this->service->findActiveByCategory($category);
+        return $this->successResponse(CourseResource::collection($courses), 'responses.courses.by_category');
     }
 }
