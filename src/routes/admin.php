@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CourseChapterController;
 use App\Http\Controllers\Admin\CourseChapterLessonController;
+use App\Http\Controllers\Admin\CourseChapterLessonContentController;
 
 
 Route::group(['middleware' => ['JWT'], 'prefix' => 'admin', 'namespace' => 'App\Http\Controllers\Admin'], function () {
@@ -39,6 +40,24 @@ Route::group(['middleware' => ['JWT'], 'prefix' => 'admin', 'namespace' => 'App\
         Route::patch('{id}/status', 'toggleStatus')->name('admin.course-chapter-lessons.toggle-status');
         Route::patch('{id}/order', 'updateOrder')->name('admin.course-chapter-lessons.update-order');
         Route::get('chapter/{chapterId}', 'byChapter')->name('admin.course-chapter-lessons.by-chapter');
+    });
+    
+    // Ders İçerikleri (CourseChapterLessonContent) Route'ları
+    Route::group(['prefix' => 'lesson-contents', 'controller' => CourseChapterLessonContentController::class], function () {
+        Route::get('/', 'index')->name('admin.lesson-contents.index');
+        Route::post('/', 'store')->name('admin.lesson-contents.store');
+        Route::get('{id}', 'show')->name('admin.lesson-contents.show');
+        Route::put('{id}', 'update')->name('admin.lesson-contents.update');
+        Route::delete('{id}', 'destroy')->name('admin.lesson-contents.destroy');
+        Route::patch('{id}/status', 'toggleStatus')->name('admin.lesson-contents.toggle-status');
+        Route::patch('{id}/order', 'updateOrder')->name('admin.lesson-contents.update-order');
+        Route::post('bulk-update-order', 'bulkUpdateOrder')->name('admin.lesson-contents.bulk-update-order');
+        Route::get('lesson/{lessonId}', 'byLesson')->name('admin.lesson-contents.by-lesson');
+        
+        // İçerik türlerine özel route'lar
+        Route::post('text', 'createTextContent')->name('admin.lesson-contents.create-text');
+        Route::post('video', 'createVideoContent')->name('admin.lesson-contents.create-video');
+        Route::post('fill-in-the-blank', 'createFillInTheBlankContent')->name('admin.lesson-contents.create-fill-in-the-blank');
     });
     
 });

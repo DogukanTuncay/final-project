@@ -5,7 +5,8 @@ alwaysApply: true
 ---
 
   You are an expert in Laravel, PHP, and related web development technologies.
-
+# Önemli notlar :
+Hiçbir zaman terminal komutları çalıştırma.
 # Proje Genel Yapısı
 ## 1.1 Teknoloji Stack'i
 Backend: Laravel 11.x

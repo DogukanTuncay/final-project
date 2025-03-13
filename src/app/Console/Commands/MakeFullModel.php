@@ -173,32 +173,56 @@ class MakeFullModel extends Command
 
     private function getRepositoryInterfaceTemplate($name, $type)
     {
-        return "<?php\n\nnamespace App\\Interfaces\\Repositories\\{$type};\n\ninterface {$name}RepositoryInterface\n{\n    public function all();\n    public function find(\$id);\n    public function create(array \$data);\n    public function update(\$id, array \$data);\n    public function delete(\$id);\n}";
+        if ($type === 'Admin') {
+            return "<?php\n\nnamespace App\\Interfaces\\Repositories\\{$type};\n\ninterface {$name}RepositoryInterface\n{\n    public function all();\n    public function find(\$id);\n    public function create(array \$data);\n    public function update(\$id, array \$data);\n    public function delete(\$id);\n}";
+        } else {
+            return "<?php\n\nnamespace App\\Interfaces\\Repositories\\{$type};\n\ninterface {$name}RepositoryInterface\n{\n    public function findById(\$id);\n    public function findBySlug(\$slug);\n    public function getWithPagination(array \$params);\n    // Burada API için gerekli diğer metodları ekleyebilirsiniz\n}";
+        }
     }
 
     private function getServiceInterfaceTemplate($name, $type)
     {
-        return "<?php\n\nnamespace App\\Interfaces\\Services\\{$type};\n\ninterface {$name}ServiceInterface\n{\n    public function all();\n    public function find(\$id);\n    public function create(array \$data);\n    public function update(\$id, array \$data);\n    public function delete(\$id);\n}";
+        if ($type === 'Admin') {
+            return "<?php\n\nnamespace App\\Interfaces\\Services\\{$type};\n\ninterface {$name}ServiceInterface\n{\n    public function all();\n    public function find(\$id);\n    public function create(array \$data);\n    public function update(\$id, array \$data);\n    public function delete(\$id);\n}";
+        } else {
+            return "<?php\n\nnamespace App\\Interfaces\\Services\\{$type};\n\ninterface {$name}ServiceInterface\n{\n    public function findById(\$id);\n    public function findBySlug(\$slug);\n    public function getWithPagination(array \$params);\n    // Burada API için gerekli diğer metodları ekleyebilirsiniz\n}";
+        }
     }
 
     private function getRepositoryTemplate($name, $type)
     {
-        return "<?php\n\nnamespace App\\Repositories\\{$type};\n\nuse App\\Models\\{$name};\nuse App\\Interfaces\\Repositories\\{$type}\\{$name}RepositoryInterface;\nuse App\\Repositories\\BaseRepository;\n\nclass {$name}Repository extends BaseRepository implements {$name}RepositoryInterface\n{\n    public function __construct({$name} \$model)\n    {\n        parent::__construct(\$model);\n    }\n}";
+        if ($type === 'Admin') {
+            return "<?php\n\nnamespace App\\Repositories\\{$type};\n\nuse App\\Models\\{$name};\nuse App\\Interfaces\\Repositories\\{$type}\\{$name}RepositoryInterface;\nuse App\\Repositories\\BaseRepository;\n\nclass {$name}Repository extends BaseRepository implements {$name}RepositoryInterface\n{\n    public function __construct({$name} \$model)\n    {\n        parent::__construct(\$model);\n    }\n}";
+        } else {
+            return "<?php\n\nnamespace App\\Repositories\\{$type};\n\nuse App\\Models\\{$name};\nuse App\\Interfaces\\Repositories\\{$type}\\{$name}RepositoryInterface;\n\nclass {$name}Repository implements {$name}RepositoryInterface\n{\n    protected \$model;\n\n    public function __construct({$name} \$model)\n    {\n        \$this->model = \$model;\n    }\n\n    public function findById(\$id)\n    {\n        return \$this->model->findOrFail(\$id);\n    }\n\n    public function findBySlug(\$slug)\n    {\n        return \$this->model->where('slug', \$slug)->firstOrFail();\n    }\n\n    public function getWithPagination(array \$params)\n    {\n        \$query = \$this->model->query();\n\n        // İsteğe bağlı filtreleme işlemleri burada yapılabilir\n        if (isset(\$params['is_active'])) {\n            \$query->where('is_active', \$params['is_active']);\n        }\n\n        // Sıralama işlemleri\n        \$orderBy = \$params['order_by'] ?? 'id';\n        \$orderDirection = \$params['order_direction'] ?? 'desc';\n        \$query->orderBy(\$orderBy, \$orderDirection);\n\n        // Sayfalama\n        \$perPage = \$params['per_page'] ?? 15;\n        return \$query->paginate(\$perPage);\n    }\n\n    // Burada API için gerekli diğer metodları ekleyebilirsiniz\n}";
+        }
     }
 
     private function getServiceTemplate($name, $type)
     {
-        return "<?php\n\nnamespace App\\Services\\{$type};\n\nuse App\\Interfaces\\Services\\{$type}\\{$name}ServiceInterface;\nuse App\\Interfaces\\Repositories\\{$type}\\{$name}RepositoryInterface;\nuse App\\Services\\BaseService;\n\nclass {$name}Service extends BaseService implements {$name}ServiceInterface\n{\n    public function __construct({$name}RepositoryInterface \$repository)\n    {\n        parent::__construct(\$repository);\n    }\n}";
+        if ($type === 'Admin') {
+            return "<?php\n\nnamespace App\\Services\\{$type};\n\nuse App\\Interfaces\\Services\\{$type}\\{$name}ServiceInterface;\nuse App\\Interfaces\\Repositories\\{$type}\\{$name}RepositoryInterface;\nuse App\\Services\\BaseService;\n\nclass {$name}Service extends BaseService implements {$name}ServiceInterface\n{\n    public function __construct({$name}RepositoryInterface \$repository)\n    {\n        parent::__construct(\$repository);\n    }\n}";
+        } else {
+            return "<?php\n\nnamespace App\\Services\\{$type};\n\nuse App\\Interfaces\\Services\\{$type}\\{$name}ServiceInterface;\nuse App\\Interfaces\\Repositories\\{$type}\\{$name}RepositoryInterface;\n\nclass {$name}Service implements {$name}ServiceInterface\n{\n    protected \$repository;\n\n    public function __construct({$name}RepositoryInterface \$repository)\n    {\n        \$this->repository = \$repository;\n    }\n\n    public function findById(\$id)\n    {\n        return \$this->repository->findById(\$id);\n    }\n\n    public function findBySlug(\$slug)\n    {\n        return \$this->repository->findBySlug(\$slug);\n    }\n\n    public function getWithPagination(array \$params)\n    {\n        return \$this->repository->getWithPagination(\$params);\n    }\n\n    // Burada API için gerekli diğer metodları ekleyebilirsiniz\n}";
+        }
     }
 
     private function getControllerTemplate($name, $type)
     {
-        return "<?php\n\nnamespace App\\Http\\Controllers\\{$type};\n\nuse App\\Http\\Controllers\\Controller;\nuse App\\Interfaces\\Services\\{$name}ServiceInterface;\nuse App\\Http\\Requests\\{$type}\\{$name}Request;\nuse App\\Http\\Resources\\{$type}\\{$name}Resource;\n\nclass {$name}Controller extends Controller\n{\n    protected \$service;\n\n    public function __construct({$name}ServiceInterface \$service)\n    {\n        \$this->service = \$service;\n    }\n\n    public function index()\n    {\n        \$items = \$this->service->all();\n        return {$name}Resource::collection(\$items);\n    }\n\n    public function store({$name}Request \$request)\n    {\n        \$item = \$this->service->create(\$request->validated());\n        return new {$name}Resource(\$item);\n    }\n\n    public function show(\$id)\n    {\n        \$item = \$this->service->find(\$id);\n        return new {$name}Resource(\$item);\n    }\n\n    public function update({$name}Request \$request, \$id)\n    {\n        \$item = \$this->service->update(\$id, \$request->validated());\n        return new {$name}Resource(\$item);\n    }\n\n    public function destroy(\$id)\n    {\n        return \$this->service->delete(\$id);\n    }\n}";
+        if ($type === 'Admin') {
+            return "<?php\n\nnamespace App\\Http\\Controllers\\{$type};\n\nuse App\\Http\\Controllers\\Controller;\nuse App\\Interfaces\\Services\\{$type}\\{$name}ServiceInterface;\nuse App\\Http\\Requests\\{$type}\\{$name}Request;\nuse App\\Http\\Resources\\{$type}\\{$name}Resource;\nuse App\\Traits\\ApiResponseTrait;\n\nclass {$name}Controller extends Controller\n{\n    use ApiResponseTrait;\n    \n    protected \$service;\n\n    public function __construct({$name}ServiceInterface \$service)\n    {\n        \$this->service = \$service;\n    }\n\n    public function index()\n    {\n        \$items = \$this->service->all();\n        return \$this->successResponse({$name}Resource::collection(\$items), 'admin.{$name}.list.success');\n    }\n\n    public function store({$name}Request \$request)\n    {\n        \$item = \$this->service->create(\$request->validated());\n        return \$this->successResponse(new {$name}Resource(\$item), 'admin.{$name}.create.success');\n    }\n\n    public function show(\$id)\n    {\n        \$item = \$this->service->find(\$id);\n        return \$this->successResponse(new {$name}Resource(\$item), 'admin.{$name}.show.success');\n    }\n\n    public function update({$name}Request \$request, \$id)\n    {\n        \$item = \$this->service->update(\$id, \$request->validated());\n        return \$this->successResponse(new {$name}Resource(\$item), 'admin.{$name}.update.success');\n    }\n\n    public function destroy(\$id)\n    {\n        \$this->service->delete(\$id);\n        return \$this->successResponse(null, 'admin.{$name}.delete.success');\n    }\n}";
+        } else {
+            return "<?php\n\nnamespace App\\Http\\Controllers\\{$type};\n\nuse App\\Http\\Controllers\\Controller;\nuse App\\Interfaces\\Services\\{$type}\\{$name}ServiceInterface;\nuse App\\Http\\Resources\\{$type}\\{$name}Resource;\nuse Illuminate\\Http\\Request;\nuse App\\Traits\\ApiResponseTrait;\n\nclass {$name}Controller extends Controller\n{\n    use ApiResponseTrait;\n    \n    protected \$service;\n\n    public function __construct({$name}ServiceInterface \$service)\n    {\n        \$this->service = \$service;\n    }\n\n    public function index(Request \$request)\n    {\n        \$items = \$this->service->getWithPagination(\$request->all());\n        return \$this->successResponse({$name}Resource::collection(\$items), 'api.{$name}.list.success');\n    }\n\n    public function show(\$id)\n    {\n        \$item = \$this->service->findById(\$id);\n        return \$this->successResponse(new {$name}Resource(\$item), 'api.{$name}.show.success');\n    }\n\n    public function showBySlug(\$slug)\n    {\n        \$item = \$this->service->findBySlug(\$slug);\n        return \$this->successResponse(new {$name}Resource(\$item), 'api.{$name}.show.success');\n    }\n}";
+        }
     }
 
     private function getRequestTemplate($name, $type)
     {
-        return "<?php\n\nnamespace App\\Http\\Requests\\{$type};\n\nuse App\\Http\\Requests\\BaseRequest;\n\nclass {$name}Request extends BaseRequest\n{\n    public function rules()\n    {\n        return [\n            //\n        ];\n    }\n}";
+        if ($type === 'Admin') {
+            return "<?php\n\nnamespace App\\Http\\Requests\\{$type};\n\nuse App\\Http\\Requests\\BaseRequest;\n\nclass {$name}Request extends BaseRequest\n{\n    public function rules()\n    {\n        return [\n            //\n        ];\n    }\n}";
+        } else {
+            return "<?php\n\nnamespace App\\Http\\Requests\\{$type};\n\nuse App\\Http\\Requests\\BaseRequest;\n\nclass {$name}Request extends BaseRequest\n{\n    public function rules()\n    {\n        return [\n            // API tarafında farklı doğrulama kuralları olabilir\n        ];\n    }\n}";
+        }
     }
 
     private function getResourceTemplate($name, $type)

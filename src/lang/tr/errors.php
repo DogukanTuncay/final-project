@@ -34,4 +34,18 @@ return [
     // Yetkilendirme hataları
     'token_invalid' => 'Kimlik doğrulama jetonu geçersiz.',
     'token_expired' => 'Kimlik doğrulama jetonunun süresi doldu.',
+    
+    // Ders içeriği hataları
+    'lesson_content' => [
+        'not_found' => 'Ders içeriği bulunamadı.',
+        'lesson_not_found' => 'İçeriğin ekleneceği ders bulunamadı.',
+        'create_failed' => 'Ders içeriği oluşturulamadı.',
+        'update_failed' => 'Ders içeriği güncellenemedi.',
+        'delete_failed' => 'Ders içeriği silinemedi.',
+        'order_update_failed' => 'Ders içeriği sıralaması güncellenemedi.',
+        'content_type_invalid' => 'Geçersiz içerik türü.',
+        'content_data_missing' => 'İçerik verileri eksik veya geçersiz.',
+        'duplicate_content' => 'Bu içerik zaten eklenmiş.',
+        'invalid_lesson_id' => 'Geçersiz ders ID\'si.'
+    ]
 ]; 

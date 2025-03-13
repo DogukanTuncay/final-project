@@ -119,6 +119,65 @@ return [
         'not_authorized' => 'You must be logged in to mark this lesson as completed.',
         'lesson_not_found' => 'The lesson to be marked was not found.',
         'progress_updated' => 'Lesson progress has been updated.',
+    ],
+    
+    // Lesson content translations
+    'admin' => [
+        'lesson-contents' => [
+            // Admin Success Messages
+            'list' => [
+                'success' => 'Lesson contents listed successfully.'
+            ],
+            'show' => [
+                'success' => 'Lesson content displayed successfully.'
+            ],
+            'create' => [
+                'success' => 'Lesson content created successfully.'
+            ],
+            'update' => [
+                'success' => 'Lesson content updated successfully.'
+            ],
+            'delete' => [
+                'success' => 'Lesson content deleted successfully.'
+            ],
+            'status' => [
+                'success' => 'Lesson content status updated successfully.'
+            ],
+            'order' => [
+                'success' => 'Lesson content order updated successfully.'
+            ],
+            'bulk-order' => [
+                'success' => 'Lesson contents order updated successfully.'
+            ],
+            'by-lesson' => [
+                'success' => 'Lesson contents for the specified lesson listed successfully.'
+            ],
+            'create-text' => [
+                'success' => 'Text content created successfully.'
+            ],
+            'create-video' => [
+                'success' => 'Video content created successfully.'
+            ],
+            'create-fill-in-the-blank' => [
+                'success' => 'Fill in the blank content created successfully.'
+            ]
+        ]
+    ],
+    
+    // API translations
+    'api' => [
+        'lesson-contents' => [
+            'find' => [
+                'success' => 'Lesson content found successfully.'
+            ],
+            'by-lesson' => [
+                'success' => 'Lesson contents for the specified lesson listed successfully.'
+            ],
+            'by-type' => [
+                'success' => 'Lesson contents of the specified type listed successfully.'
+            ],
+            'invalid-type' => 'Invalid content type specified.'
+        ]
     ]
     // Similar messages for other models
 ];

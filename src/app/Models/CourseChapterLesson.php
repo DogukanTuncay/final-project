@@ -136,4 +136,22 @@ class CourseChapterLesson extends Model
     {
         return $this->thumbnail ? Storage::url($this->thumbnail) : null;
     }
+
+    /**
+     * Dersin içerikleri
+     */
+    public function contents(): HasMany
+    {
+        return $this->hasMany(CourseChapterLessonContent::class)->orderBy('order');
+    }
+
+    /**
+     * Dersin aktif içerikleri
+     */
+    public function activeContents(): HasMany
+    {
+        return $this->hasMany(CourseChapterLessonContent::class)
+            ->where('is_active', true)
+            ->orderBy('order');
+    }
 }

@@ -119,6 +119,65 @@ return [
         'not_authorized' => 'Bu dersi tamamlandı olarak işaretlemek için giriş yapmalısınız.',
         'lesson_not_found' => 'İşaretlenmek istenen ders bulunamadı.',
         'progress_updated' => 'Ders ilerleme durumu güncellendi.',
+    ],
+    
+    // Ders içerikleri için çeviriler
+    'admin' => [
+        'lesson-contents' => [
+            // Admin Başarı Mesajları
+            'list' => [
+                'success' => 'Ders içerikleri başarıyla listelendi.'
+            ],
+            'show' => [
+                'success' => 'Ders içeriği başarıyla gösterildi.'
+            ],
+            'create' => [
+                'success' => 'Ders içeriği başarıyla oluşturuldu.'
+            ],
+            'update' => [
+                'success' => 'Ders içeriği başarıyla güncellendi.'
+            ],
+            'delete' => [
+                'success' => 'Ders içeriği başarıyla silindi.'
+            ],
+            'status' => [
+                'success' => 'Ders içeriği durumu başarıyla güncellendi.'
+            ],
+            'order' => [
+                'success' => 'Ders içeriği sırası başarıyla güncellendi.'
+            ],
+            'bulk-order' => [
+                'success' => 'Ders içerikleri sıralaması başarıyla güncellendi.'
+            ],
+            'by-lesson' => [
+                'success' => 'Derse ait içerikler başarıyla listelendi.'
+            ],
+            'create-text' => [
+                'success' => 'Metin içeriği başarıyla oluşturuldu.'
+            ],
+            'create-video' => [
+                'success' => 'Video içeriği başarıyla oluşturuldu.'
+            ],
+            'create-fill-in-the-blank' => [
+                'success' => 'Boşluk doldurma içeriği başarıyla oluşturuldu.'
+            ]
+        ]
+    ],
+    
+    // API tarafı için çeviriler
+    'api' => [
+        'lesson-contents' => [
+            'find' => [
+                'success' => 'Ders içeriği başarıyla bulundu.'
+            ],
+            'by-lesson' => [
+                'success' => 'Derse ait içerikler başarıyla listelendi.'
+            ],
+            'by-type' => [
+                'success' => 'Belirtilen türdeki içerikler başarıyla listelendi.'
+            ],
+            'invalid-type' => 'Geçersiz içerik türü belirtildi.'
+        ]
     ]
     // Diğer modeller için benzer şekilde mesajlar eklenebilir
 ];

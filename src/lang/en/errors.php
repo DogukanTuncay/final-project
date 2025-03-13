@@ -34,4 +34,18 @@ return [
     // Yetkilendirme hataları
     'token_invalid' => 'The authentication token is invalid.',
     'token_expired' => 'The authentication token has expired.',
+    
+    // Lesson content errors
+    'lesson_content' => [
+        'not_found' => 'Lesson content not found.',
+        'lesson_not_found' => 'The lesson to attach content to was not found.',
+        'create_failed' => 'Failed to create lesson content.',
+        'update_failed' => 'Failed to update lesson content.',
+        'delete_failed' => 'Failed to delete lesson content.',
+        'order_update_failed' => 'Failed to update lesson content order.',
+        'content_type_invalid' => 'Invalid content type.',
+        'content_data_missing' => 'Content data is missing or invalid.',
+        'duplicate_content' => 'This content has already been added.',
+        'invalid_lesson_id' => 'Invalid lesson ID.'
+    ]
 ]; 
