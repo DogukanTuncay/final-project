@@ -58,6 +58,6 @@ Route::group(['middleware' => ['JWT'], 'prefix' => 'admin', 'namespace' => 'App\
         Route::post('text', 'createTextContent')->name('admin.lesson-contents.create-text');
         Route::post('video', 'createVideoContent')->name('admin.lesson-contents.create-video');
         Route::post('fill-in-the-blank', 'createFillInTheBlankContent')->name('admin.lesson-contents.create-fill-in-the-blank');
+        Route::post('multiple-choice', 'createMultipleChoiceContent')->name('admin.lesson-contents.create-multiple-choice');
     });
-    
 });

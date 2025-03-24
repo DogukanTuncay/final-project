@@ -5,16 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Str;
 use App\Traits\HasImage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class CourseChapterLesson extends Model 
 {
-    use HasTranslations, HasImage,HasFactory;
+    use HasTranslations, HasImage, HasFactory;
 
     /**
      * Çevirilecek alanlar
@@ -60,7 +62,8 @@ class CourseChapterLesson extends Model
      */
     protected $appends = [
         'thumbnail_url',
-        'is_completed'
+        'is_completed',
+        'missing_prerequisites'
     ];
 
     /**
@@ -98,11 +101,17 @@ class CourseChapterLesson extends Model
      */
     public function getIsCompletedAttribute(): bool
     {
-        if (!Auth::check()) {
+        try {
+            $user = JWTAuth::user();
+            if (!$user) {
+                return false;
+            }
+
+            return $this->completions()->where('user_id', $user->id)->exists();
+        } catch (\Exception $e) {
+            // Token bulunamadı veya geçersiz
             return false;
         }
-
-        return $this->completions()->where('user_id', Auth::id())->exists();
     }
 
     /**
@@ -154,4 +163,81 @@ class CourseChapterLesson extends Model
             ->where('is_active', true)
             ->orderBy('order');
     }
+
+    /**
+     * Bu dersin ön koşul dersleri
+     */
+    public function prerequisites(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            CourseChapterLesson::class,
+            'lesson_prerequisites',
+            'lesson_id',
+            'prerequisite_lesson_id'
+        );
+    }
+
+    /**
+     * Bu dersin ön koşulu olduğu dersler
+     */
+    public function prerequisiteFor(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            CourseChapterLesson::class,
+            'lesson_prerequisites',
+            'prerequisite_lesson_id',
+            'lesson_id'
+        );
+    }
+
+    /**
+     * Kullanıcının tamamlamadığı ön koşul derslerini döndürür
+     * 
+     * @return array
+     */
+    public function getMissingPrerequisitesAttribute(): array
+    {
+        // Kullanıcı giriş yapmamışsa boş dizi döndür
+        try {
+            $user = JWTAuth::user();
+            if (!$user) {
+                return [];
+            }
+            
+            $userId = $user->id;
+            
+            // Ön koşul yoksa boş dizi döndür
+            if (!$this->prerequisites()->exists()) {
+                return [];
+            }
+            
+            // Tüm ön koşulları al
+            $prerequisites = $this->prerequisites()->get();
+            
+            // Kullanıcının tamamladığı ders ID'lerini al
+            $completedLessonIds = LessonCompletion::where('user_id', $userId)
+                ->whereIn('lesson_id', $prerequisites->pluck('course_chapter_lessons.id'))
+                ->pluck('lesson_id')
+                ->toArray();
+            
+            // Tamamlanmamış ön koşulları filtrele
+            $missingPrerequisites = $prerequisites->filter(function($prerequisite) use ($completedLessonIds) {
+                return !in_array($prerequisite->id, $completedLessonIds);
+            });
+            
+            // İsim, id, slug bilgilerini içeren basit dizi formatında döndür
+            return $missingPrerequisites->map(function($lesson) {
+                return [
+                    'id' => $lesson->id,
+                    'name' => $lesson->name,
+                    'slug' => $lesson->slug
+                ];
+            })->toArray();
+        } catch (\Exception $e) {
+            // Token bulunamadı veya geçersiz
+            return [];
+        }
+    }
+
 }
+

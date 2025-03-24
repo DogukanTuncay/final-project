@@ -55,11 +55,6 @@ class AuthService extends BaseService implements AuthServiceInterface
             return ['error' => 'Email or Password is incorrect'];
         }
 
-        // Eğer kullanıcı emailini doğrulamamışsa hata döndür
-        if (!$user->hasVerifiedEmail()) {
-            return ['error' => 'Your email is not verified. Please check your email.'];
-        }
-
         // Kullanıcı doğrulanmışsa repository üzerinden giriş yaptır
         return $this->authRepository->login($credentials);
     }
@@ -78,12 +73,18 @@ class AuthService extends BaseService implements AuthServiceInterface
     {
         // Kullanıcının olup olmadığını kontrol et
         $user = $this->authRepository->findByEmail($email);
+        
+        if (!$user) {
+            return ['error' => 'Bu e-posta adresine sahip bir kullanıcı bulunamadı.'];
+        }
 
         // Şifre sıfırlama bağlantısını gönder
         $status = Password::sendResetLink(['email' => $email]);
 
         if ($status !== Password::RESET_LINK_SENT) {
-            return ['email' => 'Şifre sıfırlama bağlantısı gönderilemedi.'];
+            return ['error' => 'Şifre sıfırlama bağlantısı gönderilemedi.'];
         }
+        
+        return ['message' => 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.'];
     }
 }

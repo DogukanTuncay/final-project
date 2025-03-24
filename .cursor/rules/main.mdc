@@ -17,7 +17,7 @@ Authentication: JWT
 Dil Yönetimi: Spatie Laravel Translatable
 Yetkilendirme: Laravel Gates & Policies
 Validation: Laravel Request Validation
-
+Not : Ana proje src dizi içerisindedir. Docker kullanıldığı için doğrudan ana dizine yazdırmıyoruz.
 ## 1.2. Klasör Yapısı
 project/
 ├── app/

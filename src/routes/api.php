@@ -28,10 +28,12 @@ Route::group(['middleware' => ['JWT'], 'namespace' => 'App\Http\Controllers\Api'
     });
     
     // Course Chapter Lesson routes
-    Route::group(['prefix' => 'lessons', 'controller' => CourseChapterLessonController::class], function () {
-        Route::get('chapter/{chapterId}', 'byChapter');
-        Route::post('{id}/complete', 'markAsCompleted');
-        Route::get('{id}', 'show');
+    Route::prefix('lessons')->group(function () {
+        Route::get('chapter/{chapterId}', [CourseChapterLessonController::class, 'byChapter']);
+        Route::get('{id}', [CourseChapterLessonController::class, 'show']);
+        Route::get('{id}/prerequisites', [CourseChapterLessonController::class, 'prerequisites']);
+        Route::get('{id}/lock-status', [CourseChapterLessonController::class, 'checkLockStatus']);
+        Route::post('{id}/complete', [CourseChapterLessonController::class, 'markAsCompleted']);
     });
     
     // Ders İçerikleri (Lesson Contents) routes

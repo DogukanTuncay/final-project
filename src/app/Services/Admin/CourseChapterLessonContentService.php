@@ -8,6 +8,9 @@ use App\Services\BaseService;
 use App\Models\Contents\TextContent;
 use App\Models\Contents\VideoContent;
 use App\Models\FillInTheBlank;
+use App\Models\Quiz;
+use App\Models\MultipleChoiceQuestion;
+use App\Models\QuestionOption;
 use Illuminate\Database\Eloquent\Collection;
 
 class CourseChapterLessonContentService extends BaseService implements CourseChapterLessonContentServiceInterface
@@ -68,6 +71,46 @@ class CourseChapterLessonContentService extends BaseService implements CourseCha
     {
         $fillInTheBlank = new FillInTheBlank($contentData);
         return $this->repository->createWithContent($lessonId, $fillInTheBlank, $lessonContentData);
+    }
+    
+    /**
+     * Çoktan seçmeli soru içeriği oluştur
+     * 
+     * @param int $lessonId
+     * @param array $contentData
+     * @param array $lessonContentData
+     * @return mixed
+     */
+    public function createMultipleChoiceContent(int $lessonId, array $contentData, array $lessonContentData = [])
+    {
+        // Önce çoktan seçmeli soruyu oluştur
+        $mcq = new MultipleChoiceQuestion([
+            'question' => $contentData['question'],
+            'feedback' => $contentData['feedback'] ?? null,
+            'points' => $contentData['points'] ?? 1,
+            'is_multiple_answer' => $contentData['is_multiple_answer'] ?? false,
+            'shuffle_options' => $contentData['shuffle_options'] ?? true,
+            'created_by' => $contentData['created_by'] ?? auth()->id(),
+            'is_active' => true,
+        ]);
+        
+        $mcq->save();
+        
+        // Seçenekleri oluştur
+        if (isset($contentData['options']) && is_array($contentData['options'])) {
+            foreach ($contentData['options'] as $index => $optionData) {
+                QuestionOption::create([
+                    'question_id' => $mcq->id,
+                    'text' => $optionData['text'],
+                    'is_correct' => $optionData['is_correct'] ?? false,
+                    'order' => $optionData['order'] ?? $index,
+                    'feedback' => $optionData['feedback'] ?? null,
+                ]);
+            }
+        }
+        
+        // İçerik oluştur ve ilişkilendir
+        return $this->repository->createWithContent($lessonId, $mcq, $lessonContentData);
     }
     
     /**

@@ -113,8 +113,8 @@ return [
     
     'lesson_completion' => [
         // Başarı Mesajları
-        'completed' => 'Ders başarıyla tamamlandı olarak işaretlendi.',
-        'already_completed' => 'Bu ders zaten tamamlandı olarak işaretlenmiş.',
+        'completed' => 'Ders başarıyla tamamlandı.',
+        'already_completed' => 'Bu ders zaten tamamlanmış.',
         'completion_failed' => 'Ders tamamlandı olarak işaretlenirken bir hata oluştu.',
         'not_authorized' => 'Bu dersi tamamlandı olarak işaretlemek için giriş yapmalısınız.',
         'lesson_not_found' => 'İşaretlenmek istenen ders bulunamadı.',
@@ -160,24 +160,82 @@ return [
             ],
             'create-fill-in-the-blank' => [
                 'success' => 'Boşluk doldurma içeriği başarıyla oluşturuldu.'
-            ]
+            ],
+            'create-multiple-choice' => [
+                'success' => 'Çoktan seçmeli soru içeriği başarıyla oluşturuldu.'
+            ],
+        ],
+        
+        'quiz' => [
+            // Quiz mesajları kaldırıldı
         ]
     ],
     
     // API tarafı için çeviriler
-    'api' => [
-        'lesson-contents' => [
-            'find' => [
-                'success' => 'Ders içeriği başarıyla bulundu.'
+        'api' => [
+            'lesson-contents' => [
+                'find' => [
+                    'success' => 'Ders içeriği başarıyla bulundu.'
+                ],
+                'by-lesson' => [
+                    'success' => 'Derse ait içerikler başarıyla listelendi.'
+                ],
+                'by-type' => [
+                    'success' => 'Belirtilen türdeki içerikler başarıyla listelendi.'
+                ],
+                'invalid-type' => 'Geçersiz içerik türü belirtildi.'
             ],
-            'by-lesson' => [
-                'success' => 'Derse ait içerikler başarıyla listelendi.'
-            ],
-            'by-type' => [
-                'success' => 'Belirtilen türdeki içerikler başarıyla listelendi.'
-            ],
-            'invalid-type' => 'Geçersiz içerik türü belirtildi.'
-        ]
-    ]
-    // Diğer modeller için benzer şekilde mesajlar eklenebilir
+            
+            'quiz' => [
+                'list' => [
+                    'success' => 'Quiz listesi başarıyla getirildi.'
+                ],
+                'show' => [
+                    'success' => 'Quiz detayları başarıyla getirildi.'
+                ],
+                'start' => [
+                    'success' => 'Quiz başarıyla başlatıldı.'
+                ],
+                'questions' => [
+                    'success' => 'Quiz soruları başarıyla getirildi.'
+                ],
+                'submit' => [
+                    'success' => 'Quiz cevapları başarıyla gönderildi.'
+                ],
+                'not_found' => 'Quiz bulunamadı.'
+            
+        ],
+    ],
+    'auth' => [
+        'register_success' => 'Kayıt işlemi başarılı. Lütfen e-posta adresinizi doğrulayın.',
+        'login_success' => 'Giriş başarılı.',
+        'logout_success' => 'Çıkış başarılı.',
+        'refresh_success' => 'Token başarıyla yenilendi.',
+        'forgot_password_success' => 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
+        'profile_success' => 'Profil bilgileri başarıyla getirildi.',
+        'email_not_verified' => 'E-posta adresiniz doğrulanmamış. Lütfen e-postanızı kontrol edin.',
+        'invalid_credentials' => 'E-posta adresi veya şifre hatalı.',
+        'invalid_token' => 'Geçersiz veya süresi dolmuş token.',
+        'email_already_verified' => 'E-posta adresiniz zaten doğrulanmış.',
+    ],
+    'verification' => [
+        'success' => 'E-posta adresiniz başarıyla doğrulandı.',
+        'already_verified' => 'E-posta adresiniz zaten doğrulanmış.',
+        'invalid_link' => 'Geçersiz doğrulama bağlantısı veya bağlantının süresi dolmuş.',
+        'user_not_found' => 'Bu e-posta adresine sahip bir kullanıcı bulunamadı.',
+        'link_sent' => 'Doğrulama bağlantısı e-posta adresinize gönderildi.',
+    ],
+    'course_chapter_lesson' => [
+        'not_found' => 'Ders bulunamadı.',
+        'list_by_chapter_success' => 'Bölüme ait dersler başarıyla listelendi.',
+        'detail_success' => 'Ders detayı başarıyla getirildi.',
+        'prerequisites_list_success' => 'Ders ön koşulları başarıyla listelendi.',
+        'lock_status_success' => 'Ders kilit durumu başarıyla getirildi.',
+        'locked' => 'Bu dersi görüntülemek için önce :prerequisites derslerini tamamlamalısınız.',
+    ],
+    'lesson_completion' => [
+        'completed' => 'Ders başarıyla tamamlandı.',
+        'already_completed' => 'Bu ders zaten tamamlanmış.',
+    ],
+    
 ];

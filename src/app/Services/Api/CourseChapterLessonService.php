@@ -8,6 +8,7 @@ use App\Models\CourseChapterLesson;
 use App\Models\LessonCompletion;
 use Illuminate\Database\Eloquent\Collection;
 use Tymon\JWTAuth\Facades\JWTAuth;
+
 class CourseChapterLessonService implements CourseChapterLessonServiceInterface
 {
     private CourseChapterLessonRepositoryInterface $repository;
@@ -56,10 +57,75 @@ class CourseChapterLessonService implements CourseChapterLessonServiceInterface
         }
         
         // Yeni tamamlama kaydı oluştur
-        return LessonCompletion::create([
+        $completion = LessonCompletion::create([
             'lesson_id' => $id,
             'user_id' => $userId,
             'completed_at' => now()
         ]);
+
+        return $completion;
+    }
+
+    /**
+     * Dersin ön koşullarını getir
+     * @param int $id
+     * @return Collection
+     */
+    public function getPrerequisites(int $id)
+    {
+        $lesson = $this->findActive($id);
+        if (!$lesson) {
+            return collect();
+        }
+
+        return $lesson->prerequisites;
+    }
+
+    /**
+     * Dersin kilit durumunu kontrol et
+     * @param int $id
+     * @return array
+     */
+    public function checkLockStatus(int $id): array
+    {
+        $lesson = $this->findActive($id);
+        if (!$lesson) {
+            return [
+                'is_unlocked' => false,
+                'completed_prerequisites' => 0,
+                'total_prerequisites' => 0
+            ];
+        }
+
+        $user = JWTAuth::user();
+        if (!$user) {
+            return [
+                'is_unlocked' => false,
+                'completed_prerequisites' => 0,
+                'total_prerequisites' => 0
+            ];
+        }
+
+        $userId = $user->id;
+        $prerequisites = $lesson->prerequisites;
+        $totalPrerequisites = $prerequisites->count();
+        
+        if ($totalPrerequisites === 0) {
+            return [
+                'is_unlocked' => true,
+                'completed_prerequisites' => 0,
+                'total_prerequisites' => 0
+            ];
+        }
+
+        $completedPrerequisites = LessonCompletion::where('user_id', $userId)
+            ->whereIn('lesson_id', $prerequisites->pluck('course_chapter_lessons.id'))
+            ->count();
+
+        return [
+            'is_unlocked' => $completedPrerequisites === $totalPrerequisites,
+            'completed_prerequisites' => $completedPrerequisites,
+            'total_prerequisites' => $totalPrerequisites
+        ];
     }
 }

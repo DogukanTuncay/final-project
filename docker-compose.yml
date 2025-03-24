@@ -37,7 +37,7 @@ services:
         volumes:
           - postgresql:/data/postgres
         ports:
-          - "${FORWARD_DB_PORT:-5432}:5432"
+          - "${FORWARD_DB_PORT:-54321}:5432"
         networks:
           - laravel
         restart: unless-stopped

@@ -25,7 +25,7 @@ class CourseChapterLessonContentController extends Controller
     public function findById($id)
     {
         $content = $this->service->findById($id);
-        return $this->successResponse(new CourseChapterLessonContentResource($content), 'api.lesson-contents.find.success');
+        return $this->successResponse(new CourseChapterLessonContentResource($content), 'responses.api.lesson-contents.find.success');
     }
     
     /**
@@ -34,7 +34,7 @@ class CourseChapterLessonContentController extends Controller
     public function getByLessonId($lessonId)
     {
         $contents = $this->service->getByLessonId($lessonId);
-        return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'api.lesson-contents.by-lesson.success');
+        return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'responses.api.lesson-contents.by-lesson.success');
     }
     
     /**
@@ -49,7 +49,7 @@ class CourseChapterLessonContentController extends Controller
         }
         
         $contents = $this->service->getByContentType($lessonId, $contentTypeClass);
-        return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'api.lesson-contents.by-type.success');
+        return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'responses.api.lesson-contents.by-type.success');
     }
     
     /**
@@ -61,6 +61,7 @@ class CourseChapterLessonContentController extends Controller
             'text' => 'App\\Models\\Contents\\TextContent',
             'video' => 'App\\Models\\Contents\\VideoContent',
             'fill-in-the-blank' => 'App\\Models\\FillInTheBlank',
+            'quiz' => 'App\\Models\\Quiz',
         ];
         
         return $typeMap[$type] ?? null;

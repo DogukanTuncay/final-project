@@ -51,6 +51,16 @@ interface CourseChapterLessonContentServiceInterface
     public function createFillInTheBlankContent(int $lessonId, array $contentData, array $lessonContentData = []);
     
     /**
+     * Çoktan seçmeli soru içeriği oluştur
+     * 
+     * @param int $lessonId
+     * @param array $contentData
+     * @param array $lessonContentData
+     * @return mixed
+     */
+    public function createMultipleChoiceContent(int $lessonId, array $contentData, array $lessonContentData = []);
+    
+    /**
      * İçerik sıralamasını güncelle
      * 
      * @param int $contentId

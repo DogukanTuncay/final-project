@@ -24,4 +24,18 @@ interface CourseChapterLessonServiceInterface
      * @return \App\Models\LessonCompletion
      */
     public function markAsCompleted(int $id);
+
+    /**
+     * Dersin ön koşullarını getir
+     * @param int $id
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getPrerequisites(int $id);
+
+    /**
+     * Dersin kilit durumunu kontrol et
+     * @param int $id
+     * @return array
+     */
+    public function checkLockStatus(int $id);
 }

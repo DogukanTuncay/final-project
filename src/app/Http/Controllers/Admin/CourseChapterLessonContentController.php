@@ -164,4 +164,50 @@ class CourseChapterLessonContentController extends Controller
         
         return $this->successResponse(new CourseChapterLessonContentResource($content), 'responses.admin.lesson-contents.create-fill-in-the-blank.success');
     }
+    
+    /**
+     * Çoktan seçmeli soru içeriği oluştur
+     */
+    public function createMultipleChoiceContent(Request $request)
+    {
+        $request->validate([
+            'lesson_id' => 'required|exists:course_chapter_lessons,id',
+            'question' => 'required|array',
+            'question.tr' => 'required|string',
+            'question.en' => 'required|string',
+            'feedback' => 'nullable|array',
+            'points' => 'nullable|integer|min:1',
+            'is_multiple_answer' => 'boolean',
+            'shuffle_options' => 'boolean',
+            'options' => 'required|array|min:2',
+            'options.*.text' => 'required|array',
+            'options.*.text.tr' => 'required|string',
+            'options.*.text.en' => 'required|string',
+            'options.*.is_correct' => 'required|boolean',
+            'order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'meta_data' => 'nullable|array'
+        ]);
+        
+        $content = $this->service->createMultipleChoiceContent(
+            $request->lesson_id,
+            [
+                'question' => $request->question,
+                'feedback' => $request->feedback,
+                'points' => $request->points ?? 1,
+                'is_multiple_answer' => $request->is_multiple_answer ?? false,
+                'shuffle_options' => $request->shuffle_options ?? true,
+                'created_by' => auth()->id(),
+                'is_active' => true,
+                'options' => $request->options
+            ],
+            [
+                'order' => $request->order ?? 0,
+                'is_active' => $request->is_active ?? true,
+                'meta_data' => $request->meta_data ?? null
+            ]
+        );
+        
+        return $this->successResponse(new CourseChapterLessonContentResource($content), 'responses.admin.lesson-contents.create-multiple-choice.success');
+    }
 }

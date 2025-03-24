@@ -73,12 +73,15 @@ return [
         'status_updated' => 'Course lesson status updated successfully.',
         'order_updated' => 'Course lesson order updated successfully.',
         'list_success' => 'Course lessons listed successfully.',
-        'detail_success' => 'Course lesson details retrieved successfully.',
-        'list_by_chapter_success' => 'Course lessons for the specified chapter listed successfully.',
+        'detail_success' => 'Lesson details retrieved successfully.',
+        'list_by_chapter_success' => 'Lessons by chapter listed successfully.',
         'lesson_completed' => 'Lesson has been marked as completed successfully.',
+        'prerequisites_list_success' => 'Lesson prerequisites listed successfully.',
+        'lock_status_success' => 'Lesson lock status retrieved successfully.',
+        'locked' => 'You need to complete :prerequisites lessons first to view this lesson.',
         
         // Error Messages
-        'not_found' => 'Course lesson not found.',
+        'not_found' => 'Lesson not found.',
         'already_exists' => 'A course lesson with this name already exists.',
         'create_failed' => 'Failed to create course lesson.',
         'update_failed' => 'Failed to update course lesson.',
@@ -113,12 +116,33 @@ return [
     
     'lesson_completion' => [
         // Success Messages
-        'completed' => 'Lesson has been marked as completed successfully.',
-        'already_completed' => 'This lesson has already been marked as completed.',
+        'completed' => 'Lesson completed successfully.',
+        'already_completed' => 'This lesson is already completed.',
         'completion_failed' => 'Failed to mark the lesson as completed.',
         'not_authorized' => 'You must be logged in to mark this lesson as completed.',
         'lesson_not_found' => 'The lesson to be marked was not found.',
         'progress_updated' => 'Lesson progress has been updated.',
+    ],
+    
+    'auth' => [
+        'register_success' => 'Registration successful. Please verify your email address.',
+        'login_success' => 'Login successful.',
+        'logout_success' => 'Logout successful.',
+        'refresh_success' => 'Token refreshed successfully.',
+        'forgot_password_success' => 'Password reset link has been sent to your email.',
+        'profile_success' => 'Profile information retrieved successfully.',
+        'email_not_verified' => 'Your email address is not verified. Please check your email.',
+        'invalid_credentials' => 'Invalid email or password.',
+        'invalid_token' => 'Invalid or expired token.',
+        'email_already_verified' => 'Your email is already verified.',
+    ],
+    
+    'verification' => [
+        'success' => 'Your email has been verified successfully.',
+        'already_verified' => 'Your email is already verified.',
+        'invalid_link' => 'Invalid verification link or link has expired.',
+        'user_not_found' => 'User with this email address not found.',
+        'link_sent' => 'Verification link has been sent to your email.',
     ],
     
     // Lesson content translations
@@ -160,7 +184,14 @@ return [
             ],
             'create-fill-in-the-blank' => [
                 'success' => 'Fill in the blank content created successfully.'
-            ]
+            ],
+            'create-multiple-choice' => [
+                'success' => 'Multiple choice question content created successfully.'
+            ],
+        ],
+        
+        'quiz' => [
+            // Quiz mesajları kaldırıldı
         ]
     ],
     
@@ -177,6 +208,10 @@ return [
                 'success' => 'Lesson contents of the specified type listed successfully.'
             ],
             'invalid-type' => 'Invalid content type specified.'
+        ],
+        
+        'quiz' => [
+            // Quiz mesajları kaldırıldı
         ]
     ]
     // Similar messages for other models

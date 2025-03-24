@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Http\Resources\Auth\VerificationResource;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+
 class VerificationController extends BaseController
 {
     protected $verificationService;
@@ -17,49 +19,79 @@ class VerificationController extends BaseController
         $this->verificationService = $verificationService;
     }
 
+    /**
+     * Email adresini doğrula
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse|\Illuminate\Http\Response
+     */
     public function verify(Request $request, $id)
     {
         if (!$request->hasValidSignature()) {
-            return response()->json([
-                'message' => 'Invalid verification link or link has expired.'
-            ], 400);
+            if ($request->wantsJson()) {
+                return $this->errorResponse('responses.verification.invalid_link', 400);
+            }
+            
+            return abort(403, __('responses.verification.invalid_link'));
         }
 
         try {
             $result = $this->verificationService->verify($id, $request->hash);
+            
+            if ($request->wantsJson()) {
+                if ($result['verified']) {
+                    return $this->successResponse(
+                        ['user' => new VerificationResource($result['user'])],
+                        'responses.verification.success'
+                    );
+                }
 
-            if ($result['verified']) {
-                return response()->json([
-                    'message' => 'Email verified successfully',
-                    'user' => new VerificationResource($result['user'])
-                ]);
+                return $this->successResponse(
+                    ['user' => new VerificationResource($result['user'])],
+                    'responses.verification.already_verified'
+                );
             }
-
-            return response()->json([
-                'message' => 'Email already verified',
-                'user' => new VerificationResource($result['user'])
+            
+            // Web isteği için görünüm döndür
+            return view('auth.email-verified', [
+                'user' => $result['user'],
+                'verified' => $result['verified']
             ]);
+            
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 400);
+            if ($request->wantsJson()) {
+                return $this->errorResponse($e->getMessage(), 400);
+            }
+            
+            return abort(400, $e->getMessage());
         }
     }
 
-    public function resend(VerifyEmailRequest $request)
+    /**
+     * Doğrulama emailini tekrar gönder
+     *
+     * @param VerifyEmailRequest $request
+     * @return JsonResponse
+     */
+    public function resend(VerifyEmailRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        $email = $request->email;
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return $this->errorResponse('responses.verification.user_not_found', 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return $this->errorResponse('responses.verification.already_verified', 400);
+        }
 
         try {
             $this->verificationService->resendVerificationEmail($user);
-
-            return response()->json([
-                'message' => 'Verification link sent to your email'
-            ]);
+            return $this->successResponse(null, 'responses.verification.link_sent');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 400);
+            return $this->errorResponse($e->getMessage(), 400);
         }
     }
 }
