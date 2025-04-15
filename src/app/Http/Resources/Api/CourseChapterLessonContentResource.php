@@ -8,7 +8,8 @@ class CourseChapterLessonContentResource extends BaseResource
 {
     public function toArray($request)
     {
-        $translated = $this->getTranslated($this->resource->contentable);
+
+        $translated = $this->getTranslated($this->resource->contentable ? $this->resource->contentable : $this->resource);
         
         return [
             'id' => $this->id,
@@ -28,6 +29,10 @@ class CourseChapterLessonContentResource extends BaseResource
             'App\\Models\\Contents\\TextContent' => 'text',
             'App\\Models\\Contents\\VideoContent' => 'video',
             'App\\Models\\FillInTheBlank' => 'fill-in-the-blank',
+            'App\\Models\\MultipleChoiceQuestion' => 'multiple-choice',
+            'App\\Models\\TrueFalseQuestion' => 'true-false',
+            'App\\Models\\ShortAnswerQuestion' => 'short-answer',
+            'App\\Models\\MatchingQuestion' => 'matching',
         ];
         
         return $types[$contentableType] ?? 'unknown';
@@ -64,6 +69,56 @@ class CourseChapterLessonContentResource extends BaseResource
                 return [
                     'question' => $translated['question'] ?? $contentable->question,
                     'answers' => $translated['answers'] ?? $contentable->answers,
+                    'feedback' => $translated['feedback'] ?? $contentable->feedback,
+                    'points' => $contentable->points,
+                    'case_sensitive' => $contentable->case_sensitive,
+                ];
+                
+            case 'multiple-choice':
+                return [
+                    'question' => $translated['question'] ?? $contentable->question,
+                    'feedback' => $translated['feedback'] ?? $contentable->feedback,
+                    'points' => $contentable->points,
+                    'is_multiple_answer' => $contentable->is_multiple_answer,
+                    'shuffle_options' => $contentable->shuffle_options,
+                    'options' => $contentable->options ? QuestionOptionResource::collection($contentable->options) : [],
+                ];
+                
+            case 'true-false':
+                return [
+                    'question' => $translated['question'] ?? $contentable->question,
+                    'feedback' => $translated['feedback'] ?? $contentable->feedback,
+                    'points' => $contentable->points,
+                    'correct_answer' => $contentable->correct_answer,
+                    'custom_text' => $translated['custom_text'] ?? $contentable->custom_text,
+                ];
+                
+            case 'short-answer':
+                return [
+                    'question' => $translated['question'] ?? $contentable->question,
+                    'feedback' => $translated['feedback'] ?? $contentable->feedback,
+                    'points' => $contentable->points,
+                    'allowed_answers' => $translated['allowed_answers'] ?? $contentable->allowed_answers,
+                    'case_sensitive' => $contentable->case_sensitive,
+                    'max_attempts' => $contentable->max_attempts,
+                ];
+                
+            case 'matching':
+                $pairs = $contentable->pairs ? $contentable->pairs->map(function($pair) {
+                    return [
+                        'id' => $pair->id,
+                        'left_item' => $pair->getTranslations('left_item'),
+                        'right_item' => $pair->getTranslations('right_item'),
+                        'order' => $pair->order,
+                    ];
+                }) : [];
+                
+                return [
+                    'question' => $translated['question'] ?? $contentable->question,
+                    'feedback' => $translated['feedback'] ?? $contentable->feedback,
+                    'points' => $contentable->points,
+                    'shuffle_items' => $contentable->shuffle_items,
+                    'pairs' => $pairs,
                 ];
                 
             default:

@@ -34,6 +34,9 @@ class CourseChapterController extends BaseController
     public function byCourse(int $courseId)
     {
         $courseChapters = $this->service->findByCourse($courseId);
+        if(!$courseChapters){
+            return $this->errorResponse('responses.course_chapters.not_found', 404);
+        }
         return $this->successResponse(CourseChapterResource::collection($courseChapters), 'responses.course_chapters.list_by_course_success');
     }
 
@@ -45,6 +48,9 @@ class CourseChapterController extends BaseController
     public function show(int $id)
     {
         $courseChapter = $this->service->findActiveWithCourse($id);
+        if(!$courseChapter){
+            return $this->errorResponse('responses.course_chapter.not_found', 404);
+        }
         return $this->successResponse(new CourseChapterResource($courseChapter), 'responses.course_chapter.detail_success');
     }
 }

@@ -4,14 +4,13 @@ namespace App\Repositories\Api;
 
 use App\Models\MultipleChoiceQuestion;
 use App\Interfaces\Repositories\Api\MultipleChoiceQuestionRepositoryInterface;
+use App\Repositories\BaseRepository;
 
-class MultipleChoiceQuestionRepository implements MultipleChoiceQuestionRepositoryInterface
+class MultipleChoiceQuestionRepository extends BaseRepository implements MultipleChoiceQuestionRepositoryInterface
 {
-    protected $model;
-
     public function __construct(MultipleChoiceQuestion $model)
     {
-        $this->model = $model;
+        parent::__construct($model);
     }
 
     public function findById($id)
@@ -41,6 +40,32 @@ class MultipleChoiceQuestionRepository implements MultipleChoiceQuestionReposito
         // Sayfalama
         $perPage = $params['per_page'] ?? 15;
         return $query->paginate($perPage);
+    }
+
+    /**
+     * İlişkisel verileri sorguya ekle
+     * 
+     * @param array|string $relations
+     * @return $this
+     */
+    public function with($relations)
+    {
+        $this->model = $this->model->with($relations);
+        return $this;
+    }
+    
+    /**
+     * Sorgu sonuçlarını sayfalandır
+     * 
+     * @param int $perPage
+     * @param array $columns
+     * @param string $pageName
+     * @param int|null $page
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null)
+    {
+        return $this->model->paginate($perPage, $columns, $pageName, $page);
     }
 
     // Burada API için gerekli diğer metodları ekleyebilirsiniz

@@ -17,13 +17,12 @@ class MultipleChoiceQuestionResource extends BaseResource
             'shuffle_options' => $this->shuffle_options,
             'is_active' => $this->is_active,
             'created_by' => $this->created_by,
-            'creator' => $this->whenLoaded('creator', function() {
-                return [
-                    'id' => $this->creator->id,
-                    'name' => $this->creator->name,
-                ];
-            }),
-            'options' => QuestionOptionResource::collection($this->whenLoaded('options')),
+            'creator' => $this->creator ? [
+                'id' => $this->creator->id,
+                'name' => $this->creator->name,
+            ] : null,
+           'options' => QuestionOptionResource::collection($this->options),
+
             'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
             'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
         ]);

@@ -2,11 +2,8 @@
 
 namespace App\Interfaces\Repositories\Admin;
 
-interface MatchingQuestionRepositoryInterface
+use App\Interfaces\Repositories\BaseRepositoryInterface;
+interface MatchingQuestionRepositoryInterface extends BaseRepositoryInterface
 {
-    public function all();
-    public function find($id);
-    public function create(array $data);
-    public function update($id, array $data);
-    public function delete($id);
+   
 }

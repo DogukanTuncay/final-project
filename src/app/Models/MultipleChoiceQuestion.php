@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Translatable\HasTranslations;
 
 class MultipleChoiceQuestion extends Model
@@ -61,8 +61,8 @@ class MultipleChoiceQuestion extends Model
     /**
      * Bu içerik modeli için ders içeriği ilişkisi
      */
-    public function lessonContent(): MorphOne
+    public function lessonContent(): MorphMany
     {
-        return $this->morphOne(CourseChapterLessonContent::class, 'contentable');
+        return $this->morphMany(CourseChapterLessonContent::class, 'contentable')->cascadeOnDelete();
     }
 }

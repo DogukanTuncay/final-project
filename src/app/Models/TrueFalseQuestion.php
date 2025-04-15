@@ -14,17 +14,19 @@ class TrueFalseQuestion extends Model
     /**
      * Çevirilecek alanlar
      */
-    public $translatable = ['true_text', 'false_text', 'true_feedback', 'false_feedback'];
+    public $translatable = ['question', 'feedback', 'custom_text'];
     
     /**
      * Toplu atama yapılabilecek alanlar
      */
     protected $fillable = [
+        'question',
         'correct_answer',
-        'true_text',
-        'false_text',
-        'true_feedback',
-        'false_feedback'
+        'custom_text',
+        'feedback',
+        'points',
+        'created_by',
+        'is_active'
     ];
     
     /**
@@ -32,15 +34,44 @@ class TrueFalseQuestion extends Model
      */
     protected $casts = [
         'correct_answer' => 'boolean',
+        'points' => 'integer',
+        'is_active' => 'boolean',
+        'question' => 'array',
+        'custom_text' => 'array',
+        'feedback' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
     
     /**
-     * Ana soru içeriği ile ilişki
+     * Soruyu oluşturan kullanıcı
      */
-    public function questionContent(): MorphOne
+    public function creator()
     {
-        return $this->morphOne(QuestionContent::class, 'contentable');
+        return $this->belongsTo(User::class, 'created_by');
+    }
+    
+    /**
+     * Bu içerik modeli için ders içeriği ilişkisi
+     */
+    public function lessonContent(): MorphOne
+    {
+        return $this->morphOne(CourseChapterLessonContent::class, 'contentable');
+    }
+
+    /**
+     * Sadece aktif soruları getir
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Belirli bir kullanıcının sorularını getir
+     */
+    public function scopeByUser($query, $userId)
+    {
+        return $query->where('created_by', $userId);
     }
 }

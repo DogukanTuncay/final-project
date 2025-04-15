@@ -19,6 +19,19 @@ class MatchingQuestionService implements MatchingQuestionServiceInterface
         return $this->repository->findById($id);
     }
 
+    /**
+     * ID'ye göre eşleştirme sorusunu ve çiftlerini getir
+     * 
+     * @param int $id
+     * @return mixed
+     */
+    public function findByIdWithPairs($id)
+    {
+        return $this->repository->with(['pairs' => function($query) {
+            $query->orderBy('order', 'asc');
+        }])->findById($id);
+    }
+
     public function findBySlug($slug)
     {
         return $this->repository->findBySlug($slug);
@@ -26,7 +39,11 @@ class MatchingQuestionService implements MatchingQuestionServiceInterface
 
     public function getWithPagination(array $params)
     {
-        return $this->repository->getWithPagination($params);
+        $perPage = $params['per_page'] ?? 15;
+        
+        return $this->repository->with(['pairs' => function($query) {
+            $query->orderBy('order', 'asc');
+        }])->paginate($perPage);
     }
 
     // Burada API için gerekli diğer metodları ekleyebilirsiniz

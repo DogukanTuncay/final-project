@@ -13,12 +13,16 @@ return new class extends Migration
     {
         Schema::create('true_false_questions', function (Blueprint $table) {
             $table->id();
+            $table->json('question')->comment('Soru metni');
             $table->boolean('correct_answer')->comment('Doğru cevap (true veya false)');
-            $table->json('true_text')->nullable()->comment('True seçeneği için özel metin');
-            $table->json('false_text')->nullable()->comment('False seçeneği için özel metin');
-            $table->json('true_feedback')->nullable()->comment('True seçeneği için geribildirim');
-            $table->json('false_feedback')->nullable()->comment('False seçeneği için geribildirim');
+            $table->json('custom_text')->nullable()->comment('True/False için özel metinler');
+            $table->json('feedback')->nullable()->comment('Geribildirim');
+            $table->unsignedInteger('points')->default(1)->comment('Soru puanı');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
+            
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
         });
     }
 

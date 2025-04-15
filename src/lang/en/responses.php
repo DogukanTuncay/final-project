@@ -32,7 +32,7 @@ return [
         'list_success' => 'Course chapters listed successfully.',
         'detail_success' => 'Course chapter details retrieved successfully.',
         'list_by_course_success' => 'Course chapters for the specified course listed successfully.',
-        
+
         // Error Messages
         'not_found' => 'Course chapter not found.',
         'already_exists' => 'A course chapter with this name already exists.',
@@ -45,16 +45,16 @@ return [
         'list_by_course_failed' => 'Failed to list course chapters for the specified course.',
         'detail_failed' => 'Failed to retrieve course chapter details.',
         'validation_failed' => 'The provided data is invalid.',
-        
+
         // Authorization Messages
         'unauthorized' => 'You are not authorized to perform this action.',
         'forbidden' => 'You do not have access to this resource.',
-        
+
         // Information Messages
         'no_items' => 'No course chapters have been created yet.',
         'no_items_in_course' => 'No chapters have been created for this course yet.',
     ],
-    
+
     'course_chapters' => [
         // Plural forms for API response format
         'list_success' => 'Course chapters listed successfully.',
@@ -64,7 +64,7 @@ return [
         'no_items' => 'No course chapters have been created yet.',
         'no_items_in_course' => 'No chapters have been created for this course yet.',
     ],
-    
+
     'course_chapter_lesson' => [
         // Success Messages
         'created' => 'Course lesson created successfully.',
@@ -79,7 +79,7 @@ return [
         'prerequisites_list_success' => 'Lesson prerequisites listed successfully.',
         'lock_status_success' => 'Lesson lock status retrieved successfully.',
         'locked' => 'You need to complete :prerequisites lessons first to view this lesson.',
-        
+
         // Error Messages
         'not_found' => 'Lesson not found.',
         'already_exists' => 'A course lesson with this name already exists.',
@@ -93,17 +93,17 @@ return [
         'detail_failed' => 'Failed to retrieve course lesson details.',
         'validation_failed' => 'The provided data is invalid.',
         'completion_failed' => 'Failed to mark the lesson as completed.',
-        
+
         // Authorization Messages
         'unauthorized' => 'You are not authorized to perform this action.',
         'forbidden' => 'You do not have access to this resource.',
-        
+
         // Information Messages
         'no_items' => 'No course lessons have been created yet.',
         'no_items_in_chapter' => 'No lessons have been created for this chapter yet.',
         'already_completed' => 'This lesson has already been marked as completed.',
     ],
-    
+
     'course_chapter_lessons' => [
         // Plural forms for API response format
         'list_success' => 'Course lessons listed successfully.',
@@ -113,7 +113,7 @@ return [
         'no_items' => 'No course lessons have been created yet.',
         'no_items_in_chapter' => 'No lessons have been created for this chapter yet.',
     ],
-    
+
     'lesson_completion' => [
         // Success Messages
         'completed' => 'Lesson completed successfully.',
@@ -123,7 +123,7 @@ return [
         'lesson_not_found' => 'The lesson to be marked was not found.',
         'progress_updated' => 'Lesson progress has been updated.',
     ],
-    
+
     'auth' => [
         'register_success' => 'Registration successful. Please verify your email address.',
         'login_success' => 'Login successful.',
@@ -136,7 +136,7 @@ return [
         'invalid_token' => 'Invalid or expired token.',
         'email_already_verified' => 'Your email is already verified.',
     ],
-    
+
     'verification' => [
         'success' => 'Your email has been verified successfully.',
         'already_verified' => 'Your email is already verified.',
@@ -144,7 +144,7 @@ return [
         'user_not_found' => 'User with this email address not found.',
         'link_sent' => 'Verification link has been sent to your email.',
     ],
-    
+
     // Lesson content translations
     'admin' => [
         'lesson-contents' => [
@@ -188,13 +188,30 @@ return [
             'create-multiple-choice' => [
                 'success' => 'Multiple choice question content created successfully.'
             ],
+            'create-true-false' => [
+                'success' => 'True/False question content created successfully.'
+            ]
         ],
-        
+
         'quiz' => [
             // Quiz mesajları kaldırıldı
-        ]
+        ],
+        'Missions' => [
+            'create' => [
+                'success' => 'Mission created successfully.',
+            ],
+            'update' => [
+                'success' => 'Mission updated successfully.',
+            ],
+            'delete' => [
+                'success' => 'Mission deleted successfully.',
+            ],
+            'toggleStatus' => [
+                'success' => 'Mission status updated successfully.',
+            ],
+        ],
     ],
-    
+
     // API translations
     'api' => [
         'lesson-contents' => [
@@ -207,11 +224,27 @@ return [
             'by-type' => [
                 'success' => 'Lesson contents of the specified type listed successfully.'
             ],
-            'invalid-type' => 'Invalid content type specified.'
+            'invalid-type' => 'Invalid content type specified.',
+            'not_found' => 'Content not found.'
         ],
-        
+
         'quiz' => [
             // Quiz mesajları kaldırıldı
+        ],
+        'Missions' => [
+            'list' => [
+                'success' => 'Missions listed successfully.',
+            ],
+            'show' => [
+                'success' => 'Mission details retrieved successfully.',
+            ],
+            'complete' => [
+                'success' => 'Mission completed successfully.',
+                'already_completed' => 'You have already completed this mission.',
+            ],
+            'available' => [
+                'success' => 'Available missions retrieved successfully.',
+            ],
         ]
     ]
     // Similar messages for other models

@@ -24,7 +24,7 @@ Route::prefix('auth')->group(function () {
     })->name('verification.notice');
 
     // Protected routes
-    Route::middleware(['JWT', 'verified'])->group(function () {
+    Route::middleware(['verified'])->group(function () {
         Route::get('logout', [AuthController::class, 'logout']);
         Route::get('refresh', [AuthController::class, 'refresh']);
         Route::get('me', [AuthController::class, 'me']);

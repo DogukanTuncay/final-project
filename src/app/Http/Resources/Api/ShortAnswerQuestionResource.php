@@ -12,7 +12,11 @@ class ShortAnswerQuestionResource extends BaseResource
         
         return array_merge($translated, [
             'id' => $this->id,
-            // Add other non-translatable attributes here
+            'case_sensitive' => $this->case_sensitive,
+            'max_attempts' => $this->max_attempts,
+            'points' => $this->points,
+            'is_active' => $this->is_active,
+            // API'de allowed_answers göstermiyoruz, kullanıcılar cevapları göremesin
         ]);
     }
 }

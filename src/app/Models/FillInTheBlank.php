@@ -11,18 +11,59 @@ class FillInTheBlank extends Model
 {
     use HasFactory, HasTranslations;
 
-    protected $fillable = ['question', 'answers'];
+    /**
+     * Çevirilecek alanlar
+     */
+    public $translatable = ['question', 'answers', 'feedback'];
 
-    // Hangi alanların çok dilli olduğunu belirtmek için $translatable kullanılır
-    public $translatable = ['question', 'answers'];
-
-    protected $casts = [
-        'answers' => 'array', // answers alanını array olarak cast etmek
+    /**
+     * Toplu atama yapılabilecek alanlar
+     */
+    protected $fillable = [
+        'title',
+        'slug',
+        'description',
+        'text',
+        'answers',
+        'is_active',
+        'points',
+        'feedback',
+        'created_by',
+        'case_sensitive'
     ];
 
     /**
+     * Veri tipi dönüşümleri
+     */
+    protected $casts = [
+        'answers' => 'array',
+        'points' => 'integer',
+        'is_active' => 'boolean',
+        'case_sensitive' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Yeni kayıt oluşturulurken slug otomatik oluşturulur
+        static::creating(function ($fillInTheBlank) {
+            $fillInTheBlank->slug = Str::slug($fillInTheBlank->getTranslation('question', 'en'));
+        });
+    }
+    /**
+     * Soruyu oluşturan kullanıcı
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
      * Bu içerik modeli için ders içeriği ilişkisi
-     * Bu metod, içerik modelini bir dersle ilişkilendirmek için kullanılır
      */
     public function lessonContent(): MorphOne
     {

@@ -16,8 +16,8 @@ class LessonCompletionTestSeeder extends Seeder
     public function run(): void
     {
         // Test kullanıcısını bul veya oluştur
-        $user = User::whereEmail('test@example.com')->first();
-        
+        $user = User::first();
+        $this->command->info($user->name);
         if (!$user) {
             $user = User::create([
                 'name' => 'Test User',

@@ -7,6 +7,8 @@ use Illuminate\Support\ServiceProvider;
 use App\Repositories\BaseRepository;
 use App\Repositories\Auth\AuthRepository;
 use App\Models\User;
+use App\Observers\UserObserver;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -22,6 +24,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuthRepository::class, function ($app) {
             return new AuthRepository();
         });
+
+        // UserExperience Service için binding
+        $this->app->bind(
+            \App\Interfaces\Services\Api\UserExperienceServiceInterface::class,
+            \App\Services\Api\UserExperienceService::class
+        );
+
+        // FillInTheBlank Service bağlantısı
+        $this->app->bind(
+            \App\Services\Interfaces\FillInTheBlankServiceInterface::class,
+            \App\Services\FillInTheBlankService::class
+        );
     }
 
     /**
@@ -32,5 +46,8 @@ class AppServiceProvider extends ServiceProvider
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
+        
+        // User modelini UserObserver ile gözlemle
+        User::observe(UserObserver::class);
     }
 }

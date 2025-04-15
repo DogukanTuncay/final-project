@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Interfaces\Services\Admin\QuestionContentServiceInterface;
 use App\Http\Requests\Admin\QuestionContentRequest;
 use App\Http\Resources\Admin\QuestionContentResource;
-use App\Traits\ApiResponseTrait;
+use App\Http\Controllers\BaseController;
 
-class QuestionContentController extends Controller
+class QuestionContentController extends BaseController
 {
-    use ApiResponseTrait;
     
     protected $service;
 

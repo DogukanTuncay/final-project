@@ -56,7 +56,17 @@ class AuthService extends BaseService implements AuthServiceInterface
         }
 
         // Kullanıcı doğrulanmışsa repository üzerinden giriş yaptır
-        return $this->authRepository->login($credentials);
+        $loginResult = $this->authRepository->login($credentials);
+
+        // Eğer başarılıysa ve token dönmüşse user bilgisi ile birleştir
+        if (isset($loginResult['token'])) {
+            // UserResource kullanarak kullanıcı bilgilerini zenginleştir
+            $userResource = new \App\Http\Resources\Api\UserResource($user);
+            $loginResult['user'] = $userResource;
+
+        }
+
+        return $loginResult;
     }
 
     public function logout()

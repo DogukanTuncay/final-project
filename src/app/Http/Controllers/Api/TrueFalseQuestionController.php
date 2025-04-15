@@ -2,38 +2,81 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Interfaces\Services\Api\TrueFalseQuestionServiceInterface;
+use App\Http\Controllers\BaseController;
 use App\Http\Resources\Api\TrueFalseQuestionResource;
+use App\Interfaces\Services\Api\TrueFalseQuestionServiceInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Response;
 
-class TrueFalseQuestionController extends Controller
+class TrueFalseQuestionController extends BaseController
 {
-    use ApiResponseTrait;
-    
-    protected $service;
+    private TrueFalseQuestionServiceInterface $trueFalseQuestionService;
 
-    public function __construct(TrueFalseQuestionServiceInterface $service)
+    public function __construct(TrueFalseQuestionServiceInterface $trueFalseQuestionService)
     {
-        $this->service = $service;
+        $this->trueFalseQuestionService = $trueFalseQuestionService;
     }
 
-    public function index(Request $request)
+    /**
+     * Belirli bir Doğru/Yanlış sorusunu göster
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function show(int $id): JsonResponse
     {
-        $items = $this->service->getWithPagination($request->all());
-        return $this->successResponse(TrueFalseQuestionResource::collection($items), 'api.TrueFalseQuestion.list.success');
+        try {
+            $question = $this->trueFalseQuestionService->findActive($id);
+            
+            if (!$question) {
+                return $this->errorResponse('errors.true_false_question.not_found', Response::HTTP_NOT_FOUND);
+            }
+            
+            return $this->successResponse(
+                new TrueFalseQuestionResource($question),
+                'responses.true_false_question.retrieve_success'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'errors.true_false_question.retrieve_failed',
+                Response::HTTP_BAD_REQUEST,
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 
-    public function show($id)
+    /**
+     * Sorunun cevabını kontrol et
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function checkAnswer(Request $request, int $id): JsonResponse
     {
-        $item = $this->service->findById($id);
-        return $this->successResponse(new TrueFalseQuestionResource($item), 'api.TrueFalseQuestion.show.success');
-    }
-
-    public function showBySlug($slug)
-    {
-        $item = $this->service->findBySlug($slug);
-        return $this->successResponse(new TrueFalseQuestionResource($item), 'api.TrueFalseQuestion.show.success');
+        try {
+            $validator = validator($request->all(), [
+                'answer' => 'required|boolean',
+            ]);
+            
+            if ($validator->fails()) {
+                return $this->errorResponse(
+                    'errors.validation',
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                    $validator->errors()
+                );
+            }
+            
+            $result = $this->trueFalseQuestionService->checkAnswer($id, $request->answer);
+            
+            return $this->successResponse($result, 'responses.true_false_question.answer_checked');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'errors.true_false_question.check_answer_failed',
+                Response::HTTP_BAD_REQUEST,
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 }

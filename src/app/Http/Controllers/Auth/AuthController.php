@@ -44,9 +44,15 @@ class AuthController extends BaseController
     {
         $result = $this->authService->login($request->validated());
 
-        return isset($result['error'])
-            ? $this->errorResponse($result['error'], 401)
-            : $this->successResponse($result, 'responses.auth.login_success');
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error'], 401);
+        }
+
+        // UserResource'un içeriğini JSON'a dönüştür, direkt olarak UserResource nesnesi dönmemesi için
+        if (isset($result['user']) && $result['user'] instanceof \Illuminate\Http\Resources\Json\JsonResource) {
+            $result['user'] = $result['user']->resolve(request());
+        }
+        return $this->successResponse($result, 'responses.auth.login_success');
     }
 
     /**
@@ -96,6 +102,14 @@ class AuthController extends BaseController
     public function me(): JsonResponse
     {
         $user = auth()->user();
-        return $this->successResponse($user, 'responses.auth.profile_success');
+        
+        if (!$user) {
+            return $this->errorResponse('errors.auth.unauthorized', 401);
+        }
+        
+        // UserResource kullanarak seviye bilgilerini de içeren zengin veri dön
+        $userResource = new \App\Http\Resources\Api\UserResource($user);
+        
+        return $this->successResponse($userResource, 'responses.auth.profile_success');
     }
 }

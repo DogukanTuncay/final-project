@@ -32,7 +32,7 @@ return [
         'list_success' => 'Kurs bölümleri başarıyla listelendi.',
         'detail_success' => 'Kurs bölümü detayları başarıyla getirildi.',
         'list_by_course_success' => 'Kursa ait bölümler başarıyla listelendi.',
-        
+
         // Hata Mesajları
         'not_found' => 'Kurs bölümü bulunamadı.',
         'already_exists' => 'Bu isimde bir kurs bölümü zaten mevcut.',
@@ -45,16 +45,16 @@ return [
         'list_by_course_failed' => 'Kursa ait bölümler listelenirken bir hata oluştu.',
         'detail_failed' => 'Kurs bölümü detayları getirilirken bir hata oluştu.',
         'validation_failed' => 'Girilen bilgiler geçerli değil.',
-        
+
         // Yetkilendirme Mesajları
         'unauthorized' => 'Bu işlemi yapmak için yetkiniz bulunmamaktadır.',
         'forbidden' => 'Bu kaynağa erişim izniniz bulunmamaktadır.',
-        
+
         // Bilgilendirme Mesajları
         'no_items' => 'Henüz bir kurs bölümü oluşturulmamış.',
         'no_items_in_course' => 'Bu kursa ait henüz bir bölüm oluşturulmamış.',
     ],
-    
+
     'course_chapters' => [
         // API response formatında çoğul kullanımlar için
         'list_success' => 'Kurs bölümleri başarıyla listelendi.',
@@ -64,7 +64,7 @@ return [
         'no_items' => 'Henüz bir kurs bölümü oluşturulmamış.',
         'no_items_in_course' => 'Bu kursa ait henüz bir bölüm oluşturulmamış.',
     ],
-    
+
     'course_chapter_lesson' => [
         // Başarı Mesajları
         'created' => 'Kurs dersi başarıyla oluşturuldu.',
@@ -76,7 +76,7 @@ return [
         'detail_success' => 'Kurs dersi detayları başarıyla getirildi.',
         'list_by_chapter_success' => 'Bölüme ait dersler başarıyla listelendi.',
         'lesson_completed' => 'Ders başarıyla tamamlandı olarak işaretlendi.',
-        
+
         // Hata Mesajları
         'not_found' => 'Kurs dersi bulunamadı.',
         'already_exists' => 'Bu isimde bir kurs dersi zaten mevcut.',
@@ -90,17 +90,17 @@ return [
         'detail_failed' => 'Kurs dersi detayları getirilirken bir hata oluştu.',
         'validation_failed' => 'Girilen bilgiler geçerli değil.',
         'completion_failed' => 'Ders tamamlandı olarak işaretlenirken bir hata oluştu.',
-        
+
         // Yetkilendirme Mesajları
         'unauthorized' => 'Bu işlemi yapmak için yetkiniz bulunmamaktadır.',
         'forbidden' => 'Bu kaynağa erişim izniniz bulunmamaktadır.',
-        
+
         // Bilgilendirme Mesajları
         'no_items' => 'Henüz bir kurs dersi oluşturulmamış.',
         'no_items_in_chapter' => 'Bu bölüme ait henüz bir ders oluşturulmamış.',
         'already_completed' => 'Bu ders zaten tamamlandı olarak işaretlenmiş.',
     ],
-    
+
     'course_chapter_lessons' => [
         // API response formatında çoğul kullanımlar için
         'list_success' => 'Kurs dersleri başarıyla listelendi.',
@@ -110,7 +110,7 @@ return [
         'no_items' => 'Henüz bir kurs dersi oluşturulmamış.',
         'no_items_in_chapter' => 'Bu bölüme ait henüz bir ders oluşturulmamış.',
     ],
-    
+
     'lesson_completion' => [
         // Başarı Mesajları
         'completed' => 'Ders başarıyla tamamlandı.',
@@ -120,7 +120,7 @@ return [
         'lesson_not_found' => 'İşaretlenmek istenen ders bulunamadı.',
         'progress_updated' => 'Ders ilerleme durumu güncellendi.',
     ],
-    
+
     // Ders içerikleri için çeviriler
     'admin' => [
         'lesson-contents' => [
@@ -165,12 +165,26 @@ return [
                 'success' => 'Çoktan seçmeli soru içeriği başarıyla oluşturuldu.'
             ],
         ],
-        
+
         'quiz' => [
             // Quiz mesajları kaldırıldı
-        ]
+        ],
+        'Missions' => [
+            'create' => [
+                'success' => 'Görev başarıyla oluşturuldu.',
+            ],
+            'update' => [
+                'success' => 'Görev başarıyla güncellendi.',
+            ],
+            'delete' => [
+                'success' => 'Görev başarıyla silindi.',
+            ],
+            'toggleStatus' => [
+                'success' => 'Görev durumu başarıyla güncellendi.',
+            ],
+        ],
     ],
-    
+
     // API tarafı için çeviriler
         'api' => [
             'lesson-contents' => [
@@ -183,9 +197,10 @@ return [
                 'by-type' => [
                     'success' => 'Belirtilen türdeki içerikler başarıyla listelendi.'
                 ],
-                'invalid-type' => 'Geçersiz içerik türü belirtildi.'
+                'invalid-type' => 'Geçersiz içerik türü belirtildi.',
+                'not_found' => 'İçerik bulunamadı.'
             ],
-            
+
             'quiz' => [
                 'list' => [
                     'success' => 'Quiz listesi başarıyla getirildi.'
@@ -203,7 +218,22 @@ return [
                     'success' => 'Quiz cevapları başarıyla gönderildi.'
                 ],
                 'not_found' => 'Quiz bulunamadı.'
-            
+
+        ],
+        'Missions' => [
+            'list' => [
+                'success' => 'Görevler başarıyla listelendi.',
+            ],
+            'show' => [
+                'success' => 'Görev detayları başarıyla getirildi.',
+            ],
+            'complete' => [
+                'success' => 'Görev başarıyla tamamlandı.',
+                'already_completed' => 'Bu görevi zaten tamamladınız.',
+            ],
+            'available' => [
+                'success' => 'Uygun görevler başarıyla getirildi.',
+            ],
         ],
     ],
     'auth' => [
@@ -237,5 +267,14 @@ return [
         'completed' => 'Ders başarıyla tamamlandı.',
         'already_completed' => 'Bu ders zaten tamamlanmış.',
     ],
-    
+    'true_false_question' => [
+        'list_success' => 'Doğru/Yanlış soruları başarıyla listelendi.',
+        'create_success' => 'Doğru/Yanlış sorusu başarıyla oluşturuldu.',
+        'retrieve_success' => 'Doğru/Yanlış sorusu başarıyla getirildi.',
+        'update_success' => 'Doğru/Yanlış sorusu başarıyla güncellendi.',
+        'delete_success' => 'Doğru/Yanlış sorusu başarıyla silindi.',
+        'status_active' => 'Doğru/Yanlış sorusu aktif duruma getirildi.',
+        'status_inactive' => 'Doğru/Yanlış sorusu pasif duruma getirildi.',
+        'add_to_lesson_success' => 'Doğru/Yanlış sorusu derse başarıyla eklendi.',
+    ],
 ];

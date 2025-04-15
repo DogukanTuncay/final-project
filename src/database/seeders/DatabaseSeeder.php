@@ -21,12 +21,14 @@ class DatabaseSeeder extends Seeder
 
         // Kurs, bölüm ve dersler için seederları çağır
         $this->call([
+            // Temel veriler önce
+            LevelSeeder::class, // Level'lar diğer modelleri ilgilendirdiği için ilk sıralarda olmalı
             CourseSeeder::class,
             CourseChapterSeeder::class,
             CourseChapterLessonSeeder::class,
             LessonPrerequisiteSeeder::class,
             LessonCompletionTestSeeder::class,
-            QuizSeeder::class,
+            QuestionSeeder::class, // Soru modelleri için seeder
         ]);
     }
 }

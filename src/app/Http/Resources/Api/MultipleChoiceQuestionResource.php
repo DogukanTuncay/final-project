@@ -12,7 +12,12 @@ class MultipleChoiceQuestionResource extends BaseResource
         
         return array_merge($translated, [
             'id' => $this->id,
-            // Add other non-translatable attributes here
+            'points' => $this->points,
+            'is_multiple_answer' => $this->is_multiple_answer,
+            'shuffle_options' => $this->shuffle_options,
+            'options' => QuestionOptionResource::collection($this->options),
+            'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
+            'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
         ]);
     }
 }

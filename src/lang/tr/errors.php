@@ -47,5 +47,22 @@ return [
         'content_data_missing' => 'İçerik verileri eksik veya geçersiz.',
         'duplicate_content' => 'Bu içerik zaten eklenmiş.',
         'invalid_lesson_id' => 'Geçersiz ders ID\'si.'
+    ],
+
+    'true_false_question' => [
+        'not_found' => 'Doğru/Yanlış sorusu bulunamadı.',
+        'create_failed' => 'Doğru/Yanlış sorusu oluşturulamadı.',
+        'update_failed' => 'Doğru/Yanlış sorusu güncellenemedi.',
+        'delete_failed' => 'Doğru/Yanlış sorusu silinemedi.',
+        'status_update_failed' => 'Doğru/Yanlış sorusu durumu güncellenemedi.',
+        'add_to_lesson_failed' => 'Doğru/Yanlış sorusu derse eklenemedi.',
+        'question_required' => 'Soru metni gereklidir.',
+        'question_tr_required' => 'Türkçe soru metni gereklidir.',
+        'question_en_required' => 'İngilizce soru metni gereklidir.',
+        'correct_answer_required' => 'Doğru cevap belirtilmelidir.',
+        'correct_answer_boolean' => 'Doğru cevap bir boolean değer olmalıdır.',
+        'points_integer' => 'Puan tam sayı olmalıdır.',
+        'points_min' => 'Puan en az 0 olmalıdır.',
+        'points_max' => 'Puan en fazla 100 olmalıdır.',
     ]
 ]; 

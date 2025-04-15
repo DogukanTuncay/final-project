@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CourseChapterLessonContentRequest;
 use App\Http\Resources\Admin\CourseChapterLessonContentResource;
 use App\Interfaces\Services\Admin\CourseChapterLessonContentServiceInterface;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
+use App\Http\Controllers\BaseController;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use App\Interfaces\Services\Admin\TrueFalseQuestionServiceInterface;
 
-class CourseChapterLessonContentController extends Controller
+class CourseChapterLessonContentController extends BaseController
 {
-    use ApiResponseTrait;
     
     protected $service;
     
@@ -35,6 +37,9 @@ class CourseChapterLessonContentController extends Controller
     public function show($id)
     {
         $content = $this->service->find($id);
+        if(!$content){
+            return $this->errorResponse('responses.admin.lesson-contents.not_found', 404);
+        }
         return $this->successResponse(new CourseChapterLessonContentResource($content), 'responses.admin.lesson-contents.show.success');
     }
     
@@ -52,6 +57,10 @@ class CourseChapterLessonContentController extends Controller
      */
     public function update(CourseChapterLessonContentRequest $request, $id)
     {
+        $content = $this->service->find($id);
+        if(!$content){
+            return $this->errorResponse('responses.admin.lesson-contents.not_found', 404);
+        }
         $content = $this->service->update($id, $request->validated());
         return $this->successResponse(new CourseChapterLessonContentResource($content), 'responses.admin.lesson-contents.update.success');
     }
@@ -61,6 +70,10 @@ class CourseChapterLessonContentController extends Controller
      */
     public function destroy($id)
     {
+        $content = $this->service->find($id);
+        if(!$content){
+            return $this->errorResponse('responses.admin.lesson-contents.not_found', 404);
+        }
         $this->service->delete($id);
         return $this->successResponse(null, 'responses.admin.lesson-contents.delete.success');
     }
@@ -70,6 +83,10 @@ class CourseChapterLessonContentController extends Controller
      */
     public function toggleStatus(Request $request, $id)
     {
+        $content = $this->service->find($id);
+        if(!$content){
+            return $this->errorResponse('responses.admin.lesson-contents.not_found', 404);
+        }
         $content = $this->service->update($id, ['is_active' => $request->is_active]);
         return $this->successResponse(new CourseChapterLessonContentResource($content), 'responses.admin.lesson-contents.status.success');
     }
@@ -79,6 +96,10 @@ class CourseChapterLessonContentController extends Controller
      */
     public function updateOrder(Request $request, $id)
     {
+        $content = $this->service->find($id);
+        if(!$content){
+            return $this->errorResponse('responses.admin.lesson-contents.not_found', 404);
+        }
         $this->service->updateOrder($id, $request->order);
         return $this->successResponse(null, 'responses.admin.lesson-contents.order.success');
     }
@@ -98,6 +119,10 @@ class CourseChapterLessonContentController extends Controller
     public function byLesson($lessonId)
     {
         $contents = $this->service->getByLessonId($lessonId);
+        if(!$contents){
+            return $this->errorResponse('responses.admin.lesson-contents.not_found', 404);
+        }
+
         return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'responses.admin.lesson-contents.by-lesson.success');
     }
     
@@ -209,5 +234,73 @@ class CourseChapterLessonContentController extends Controller
         );
         
         return $this->successResponse(new CourseChapterLessonContentResource($content), 'responses.admin.lesson-contents.create-multiple-choice.success');
+    }
+    
+    /**
+     * Doğru/Yanlış soru içeriği oluştur
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function createTrueFalseContent(Request $request): JsonResponse
+    {
+        try {
+            $validator = validator($request->all(), [
+                'lesson_id' => 'required|exists:course_chapter_lessons,id',
+                'question' => 'required|array',
+                'question.tr' => 'required|string|min:2|max:1000',
+                'question.en' => 'required|string|min:2|max:1000',
+                'correct_answer' => 'required|boolean',
+                'custom_text' => 'nullable|array',
+                'feedback' => 'nullable|array',
+                'points' => 'nullable|integer|min:0|max:100',
+                'order' => 'nullable|integer|min:0',
+                'is_active' => 'nullable|boolean',
+                'meta_data' => 'nullable|array'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->errorResponse(
+                    'errors.validation',
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                    $validator->errors()
+                );
+            }
+
+            // TrueFalseQuestion oluştur
+            $trueFalseService = app(TrueFalseQuestionServiceInterface::class);
+            $question = $trueFalseService->create([
+                'question' => $request->question,
+                'correct_answer' => $request->correct_answer,
+                'custom_text' => $request->custom_text,
+                'feedback' => $request->feedback,
+                'points' => $request->points ?? 10,
+                'created_by' => auth()->id(),
+                'is_active' => true
+            ]);
+
+            // Ders içeriği olarak ekle
+            $lessonContent = $this->service->createWithContent(
+                $request->lesson_id,
+                $question,
+                [
+                    'order' => $request->order ?? 0,
+                    'is_active' => $request->is_active ?? true,
+                    'meta_data' => $request->meta_data
+                ]
+            );
+
+            return $this->successResponse(
+                new CourseChapterLessonContentResource($lessonContent),
+                'responses.lesson_content.true_false_created',
+                Response::HTTP_CREATED
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'errors.lesson_content.create_failed',
+                Response::HTTP_BAD_REQUEST,
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 }

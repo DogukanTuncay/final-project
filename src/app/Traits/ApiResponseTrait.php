@@ -8,7 +8,7 @@ trait ApiResponseTrait
 {
     $locale = LocaleHelper::getUserLocale();
     $message = $messageKey ? __($messageKey, $messageParams, $locale) : 'Success';
-    
+
     return response()->json([
         'status' => 'success',
         'message' => $message,

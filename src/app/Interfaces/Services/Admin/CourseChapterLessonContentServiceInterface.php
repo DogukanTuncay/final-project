@@ -76,4 +76,14 @@ interface CourseChapterLessonContentServiceInterface
      * @return bool
      */
     public function bulkUpdateOrder(array $orderData): bool;
+    
+    /**
+     * Mevcut bir içerikle ders içeriği oluştur
+     * 
+     * @param int $lessonId
+     * @param object $contentable
+     * @param array $lessonContentData
+     * @return mixed
+     */
+    public function createWithContent(int $lessonId, object $contentable, array $lessonContentData = []);
 }

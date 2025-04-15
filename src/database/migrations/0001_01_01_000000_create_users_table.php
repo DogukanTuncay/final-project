@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('zip_code')->nullable();
             $table->string('locale')->default('en');
+            $table->foreignId('level_id')->nullable()->constrained()->onDelete('set null');
+            $table->integer('experience_points')->default(0);
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

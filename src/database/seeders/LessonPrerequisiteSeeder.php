@@ -15,10 +15,7 @@ class LessonPrerequisiteSeeder extends Seeder
      */
     public function run(): void
     {
-        // Önce verileri temizle - UYARI: Bu tüm ön koşul ilişkilerini silecektir
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        DB::table('lesson_prerequisites')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+      
         
         $this->command->info('Ders ön koşul ilişkileri temizlendi.');
         

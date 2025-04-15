@@ -25,6 +25,9 @@ class CourseChapterLessonContentController extends Controller
     public function findById($id)
     {
         $content = $this->service->findById($id);
+        if(!$content){
+            return $this->errorResponse('responses.api.lesson-contents.not_found', 404);
+        }
         return $this->successResponse(new CourseChapterLessonContentResource($content), 'responses.api.lesson-contents.find.success');
     }
     
@@ -34,6 +37,9 @@ class CourseChapterLessonContentController extends Controller
     public function getByLessonId($lessonId)
     {
         $contents = $this->service->getByLessonId($lessonId);
+        if($contents->isEmpty()){
+            return $this->errorResponse('responses.api.lesson-contents.not_found', 404);
+        }
         return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'responses.api.lesson-contents.by-lesson.success');
     }
     
@@ -49,6 +55,9 @@ class CourseChapterLessonContentController extends Controller
         }
         
         $contents = $this->service->getByContentType($lessonId, $contentTypeClass);
+        if(!$contents){
+            return $this->errorResponse('responses.api.lesson-contents.not_found', 404);
+        }
         return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'responses.api.lesson-contents.by-type.success');
     }
     

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api;
 
 use App\Http\Resources\BaseResource;
+use App\Http\Resources\Api\MatchingPairResource;
 
 class MatchingQuestionResource extends BaseResource
 {
@@ -12,7 +13,11 @@ class MatchingQuestionResource extends BaseResource
         
         return array_merge($translated, [
             'id' => $this->id,
-            // Add other non-translatable attributes here
+            'shuffle_items' => $this->shuffle_items,
+            'points' => $this->points,
+            'pairs' => $this->when($this->resource->relationLoaded('pairs'), function () {
+                return MatchingPairResource::collection($this->resource->pairs);
+            })
         ]);
     }
 }
