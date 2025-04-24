@@ -27,6 +27,8 @@ return new class extends Migration
             $table->json('objectives');
             $table->json('meta_title')->nullable();
             $table->json('meta_description')->nullable();
+            $table->softDeletes();
+
             $table->timestamps();
         });
     }

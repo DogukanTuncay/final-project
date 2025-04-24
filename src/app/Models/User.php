@@ -9,10 +9,15 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use Illuminate\Support\Str;
+
 class User extends Authenticatable implements JWTSubject,MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable,HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -37,6 +42,51 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
      * @var array
      */
     protected $with = ['level'];
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->username)) {
+                $user->username = static::generateUniqueUsername($user->email ?? $user->name);
+            }
+        });
+    }
+
+    /**
+     * Generate a unique username based on email or name.
+     *
+     * @param string $source
+     * @return string
+     */
+    protected static function generateUniqueUsername(string $source): string
+    {
+        if (filter_var($source, FILTER_VALIDATE_EMAIL)) {
+            // Use email prefix
+            $baseUsername = Str::slug(explode('@', $source)[0], '_');
+        } else {
+            // Use name
+            $baseUsername = Str::slug($source, '_');
+        }
+
+        // Handle cases where slug might be empty (e.g., only symbols in name/email prefix)
+        if (empty($baseUsername)) {
+            $baseUsername = 'user';
+        }
+
+        $username = $baseUsername;
+        $counter = 1;
+
+        // Check if username exists and append number if needed
+        while (static::where('username', $username)->exists()) {
+            $username = $baseUsername . '_' . $counter;
+            $counter++;
+        }
+
+        return $username;
+    }
 
     public function getJWTIdentifier()
     {
@@ -152,5 +202,17 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
             'new_level' => $levelChanged ? $newLevel : null,
             'old_level' => $levelChanged ? $oldLevel : null,
         ];
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll() // Log all attributes
+            ->logOnlyDirty() // Only log changes
+            ->useLogName('user')
+            ->setDescriptionForEvent(fn(string $eventName) => "User {$this->name} ({$this->email}) has been {$eventName}");
     }
 }

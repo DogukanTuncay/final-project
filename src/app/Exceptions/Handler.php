@@ -19,6 +19,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use App\Exceptions\UniqueConstraintException;
+use Spatie\Permission\Exceptions\UnauthorizedException;
 
 class Handler extends ExceptionHandler
 {
@@ -116,6 +117,32 @@ class Handler extends ExceptionHandler
                 
                 return $this->errorResponse('errors.database_error', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
+            return null;
+        });
+
+        // Spatie UnauthorizedException için özel yanıt
+        $this->renderable(function (UnauthorizedException $e, $request) {
+            // Sadece API istekleri için JSON yanıtı döndür
+            if ($request->expectsJson() || $request->is('api/*') || $request->is('admin/*')) {
+                // Hata mesajı anahtarını belirle (lang dosyasından alınabilir)
+                $messageKey = 'auth.unauthorized_role'; // Örnek anahtar
+                
+                // Mesajı çevir (opsiyonel, doğrudan mesaj da yazılabilir)
+                // $message = __($messageKey, ['roles' => implode(', ', $e->getRequiredRoles())]);
+                
+                // Doğrudan mesaj:
+                $message = 'Bu işlemi yapmak için gerekli role sahip değilsiniz.'; 
+                if ($e->getMessage() !== 'User does not have the right roles.' && $e->getMessage() !== 'User does not have the right permissions.'){
+                     // Eğer mesaj standart değilse, orijinal mesajı kullan
+                     $message = $e->getMessage();
+                }
+                
+                return $this->errorResponse(
+                    $message, // Doğrudan mesajı veya çevrilmiş mesajı kullan
+                    Response::HTTP_FORBIDDEN // 403 Forbidden
+                );
+            }
+            // API isteği değilse, varsayılan işleyiciye devam etsin
             return null;
         });
     }

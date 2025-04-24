@@ -27,7 +27,6 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
             'password' => Hash::make($data['password']),
         ]);
 
-        $user->token = JWTAuth::fromUser($user);
 
         return $user;
     }

@@ -11,7 +11,7 @@ use App\Http\Controllers\Admin\MatchingQuestionController;
 use App\Http\Controllers\Admin\FillInTheBlankController;
 use App\Http\Controllers\Admin\MissionsController;
 
-Route::group(['middleware' => ['JWT'], 'prefix' => 'admin', 'namespace' => 'App\Http\Controllers\Admin'], function () {
+Route::group(['middleware' => ['JWT','role:admin|super-admin'], 'prefix' => 'admin', 'namespace' => 'App\Http\Controllers\Admin'], function () {
 
     Route::group(['prefix' => 'courses', 'controller' => CourseController::class], function () {
         Route::get('/', 'index')->name('admin.courses.index');

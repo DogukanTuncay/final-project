@@ -13,12 +13,13 @@ use App\Http\Controllers\Api\UserLevelController;
 use App\Http\Controllers\Api\MatchingQuestionController;
 use App\Http\Controllers\Api\FillInTheBlankController;
 use App\Http\Controllers\Api\MissionsController;
+use App\Http\Controllers\Api\UserController;
 
 Route::middleware('JWT')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['middleware' => ['JWT'], 'namespace' => 'App\Http\Controllers\Api'], function () {
+Route::group(['middleware' => ['JWT', 'role:user'], 'namespace' => 'App\Http\Controllers\Api'], function () {
     // Course routes
     Route::group(['prefix' => 'courses', 'controller' => CourseController::class], function () {
         Route::get('/', 'index');
@@ -92,24 +93,29 @@ Route::group(['middleware' => ['JWT'], 'namespace' => 'App\Http\Controllers\Api'
     Route::get('user/level', [UserLevelController::class, 'getUserExperience']);
     Route::get('user/level/next', [UserLevelController::class, 'getNextLevel']);
 
-
+    // Görevler
     Route::prefix('missions')->name('missions.')->group(function () {
+        Route::get('/', [MissionsController::class, 'index'])->name('index');
+        Route::get('{id}', [MissionsController::class, 'show'])->name('show')->where('id', '[0-9]+');
+        Route::get('/available', [MissionsController::class, 'availableForUser'])->name('available');
+        Route::get('/{id}/complete', [MissionsController::class, 'complete'])->name('complete');
+    });
 
-        // Görevler listesi
-        Route::get('/', [MissionsController::class, 'index'])
-            ->name('index'); // Listeleme işlemi
+    // === YENİ KULLANICI ROTALARI ===
+    Route::group(['prefix' => 'user', 'controller' => UserController::class], function () {
+        // Profil bilgilerini getirme
+        Route::get('/profile', 'profile')->name('user.profile');
 
+        // Profil bilgilerini güncelleme (PATCH veya PUT)
+        Route::patch('/profile', 'updateProfile')->name('user.updateProfile');
 
+        // Dil tercihini güncelleme
+        Route::patch('/locale', 'updateLocale')->name('user.updateLocale');
 
-        // Görev detayını getir
-        Route::get('{id}', [MissionsController::class, 'show'])
-            ->name('show') // Görev detayını gösterme
-            ->where('id', '[0-9]+'); // ID'nin sadece sayılar olmasını sağla
-
-            Route::get('/available', [MissionsController::class, 'availableForUser'])->name('available');
-            Route::get('/{id}/complete', [MissionsController::class, 'complete'])->name('complete');
-
-});
+        // Gelecekte diğer kullanıcı endpointleri eklenebilir (örn: şifre değiştirme)
+        // Route::patch('/password', 'updatePassword')->name('user.updatePassword');
+    });
+    // === YENİ KULLANICI ROTALARI BİTİŞ ===
 
 });
 

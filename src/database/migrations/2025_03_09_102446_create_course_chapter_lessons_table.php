@@ -23,14 +23,21 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->string('thumbnail')->nullable();
             $table->integer('duration')->default(0)->comment('Ders süresi (saniye)');
+            $table->boolean('is_free')->default(false)->comment('Ders ücretsiz mi?');
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 
     /**
+     * Reverse the migrations.
      */
     public function down(): void
     {
+        Schema::table('course_chapter_lessons', function (Blueprint $table) {
+            $table->dropSoftDeletes();
+        });
         Schema::dropIfExists('course_chapter_lessons');
     }
 };

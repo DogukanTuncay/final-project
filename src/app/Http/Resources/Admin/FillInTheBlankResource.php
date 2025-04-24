@@ -2,25 +2,29 @@
 
 namespace App\Http\Resources\Admin;
 
-use App\Http\Resources\BaseResource;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Admin\UserResource;
-
+use App\Http\Resources\BaseResource;
 class FillInTheBlankResource extends BaseResource
 {
-    public function toArray($request)
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
     {
         $translated = $this->getTranslated($this->resource);
         
         return array_merge($translated, [
             'id' => $this->id,
-            'answers' => $this->resource->getTranslations('answers'),
-            'points' => $this->points,
-            'feedback' => $this->resource->getTranslations('feedback'),
-            'case_sensitive' => $this->case_sensitive,
-            'created_by' => $this->created_by,
+            'answers' => $this->answers,
             'is_active' => $this->is_active,
-            'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
-            'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
+            'case_sensitive' => $this->case_sensitive,
+            'points' => $this->points,
+            'created_at' => $this->created_at ? $this->created_at->toIso8601String() : null,
+            'updated_at' => $this->updated_at ? $this->updated_at->toIso8601String() : null,
             'creator' => $this->when($this->resource->relationLoaded('creator'), function () {
                 return new UserResource($this->resource->creator);
             }),

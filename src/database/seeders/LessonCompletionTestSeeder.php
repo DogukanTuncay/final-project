@@ -15,16 +15,24 @@ class LessonCompletionTestSeeder extends Seeder
      */
     public function run(): void
     {
+        // Sadece production olmayan ortamlarda çalıştır
+        if (app()->environment('production')) {
+            $this->command->info('Skipping LessonCompletionTestSeeder in production.');
+            return;
+        }
+
         // Test kullanıcısını bul veya oluştur
-        $user = User::first();
-        $this->command->info($user->name);
+        $user = User::where('email', 'test@example.com')->first(); // Test kullanıcısını email ile bulalım
         if (!$user) {
-            $user = User::create([
+            $user = User::factory()->create([
                 'name' => 'Test User',
                 'email' => 'test@example.com',
                 'password' => bcrypt('password'),
                 'email_verified_at' => now()
             ]);
+            // Test kullanıcısına 'user' rolünü ata
+            $userRole = \Spatie\Permission\Models\Role::where('name', 'user')->first();
+            if($userRole) $user->assignRole($userRole);
             
             $this->command->info('Test kullanıcısı oluşturuldu: ' . $user->email);
         } else {

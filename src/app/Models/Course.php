@@ -8,9 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class Course extends Model
 {
-    use HasImage, HasTranslations,HasFactory;
+    use HasImage, HasTranslations, HasFactory, SoftDeletes, LogsActivity;
 
     /**
      * Çevirilecek alanlar
@@ -41,7 +45,9 @@ class Course extends Model
         'description',
         'objectives',
         'meta_title',
-        'meta_description'
+        'meta_description',
+        'level_id',
+        'category_id',
     ];
 
     /**
@@ -91,16 +97,56 @@ class Course extends Model
     ];
 
     /**
-     * Model oluşturulurken çalışacak metod
+     * The "booted" method of the model.
      */
-    protected static function boot()
+    protected static function booted(): void
     {
         parent::boot();
-        
-        // Yeni kayıt oluşturulurken slug otomatik oluşturulur
-        static::creating(function ($course) {
-            $course->slug = Str::slug($course->getTranslation('name', 'en'));
+
+        static::creating(function (Course $course) {
+            if (empty($course->slug)) {
+                $source = $course->getTranslation('name', 'en', false) ?: (is_array($course->name) ? reset($course->name) : 'course');
+                $course->slug = static::generateUniqueSlug($source);
+            }
         });
+
+        static::updating(function (Course $course) {
+            if ($course->isDirty('name') && !$course->isDirty('slug')) {
+                $source = $course->getTranslation('name', 'en', false) ?: (is_array($course->name) ? reset($course->name) : 'course');
+                $course->slug = static::generateUniqueSlug($source, $course->id);
+            }
+        });
+    }
+
+    /**
+     * Generate a unique slug.
+     *
+     * @param string $name
+     * @param int|null $ignoreId
+     * @return string
+     */
+    protected static function generateUniqueSlug(string $name, int $ignoreId = null): string
+    {
+        $baseSlug = Str::slug($name);
+        if(empty($baseSlug)) $baseSlug = 'course';
+        $slug = $baseSlug;
+        $counter = 1;
+
+        $query = static::where('slug', $slug);
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        while ($query->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+            $query = static::where('slug', $slug);
+             if ($ignoreId) {
+                $query->where('id', '!=', $ignoreId);
+            }
+        }
+
+        return $slug;
     }
 
     /**
@@ -201,5 +247,28 @@ class Course extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('order');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(CourseCategory::class, 'category_id');
+    }
+
+    public function level()
+    {
+        return $this->belongsTo(Level::class);
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        $name = is_array($this->name) ? ($this->name['en'] ?? reset($this->name)) : $this->name;
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('course')
+            ->setDescriptionForEvent(fn(string $eventName) => "Course '{$name}' has been {$eventName}");
     }
 }

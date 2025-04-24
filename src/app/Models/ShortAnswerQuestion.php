@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class ShortAnswerQuestion extends Model
 {
-    use HasFactory, HasTranslations;
+    use HasFactory, HasTranslations, SoftDeletes, LogsActivity;
     
     /**
      * Çevirilecek alanlar
@@ -57,5 +60,17 @@ class ShortAnswerQuestion extends Model
     public function lessonContent(): MorphOne
     {
         return $this->morphOne(CourseChapterLessonContent::class, 'contentable');
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable() // Log all fillable attributes
+            ->logOnlyDirty() // Only log changes
+            ->useLogName('short_answer')
+            ->setDescriptionForEvent(fn(string $eventName) => "ShortAnswer Question '{$this->title}' has been {$eventName}");
     }
 }

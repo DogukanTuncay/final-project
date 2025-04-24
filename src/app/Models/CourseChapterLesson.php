@@ -13,10 +13,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class CourseChapterLesson extends Model 
 {
-    use HasTranslations, HasImage, HasFactory;
+    use HasTranslations, HasImage, HasFactory, SoftDeletes, LogsActivity;
 
     /**
      * Çevirilecek alanlar
@@ -42,6 +45,7 @@ class CourseChapterLesson extends Model
         'is_active',    
         'thumbnail',
         'duration',
+        'is_free',
     ];
 
     /**
@@ -49,6 +53,7 @@ class CourseChapterLesson extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'is_free' => 'boolean',
         'duration' => 'integer',
         'order' => 'integer',
         'name' => 'array',
@@ -237,6 +242,18 @@ class CourseChapterLesson extends Model
             // Token bulunamadı veya geçersiz
             return [];
         }
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable() // Log all fillable attributes
+            ->logOnlyDirty() // Only log changes
+            ->useLogName('course_chapter_lesson')
+            ->setDescriptionForEvent(fn(string $eventName) => "Lesson '{$this->name}' has been {$eventName}");
     }
 
 }

@@ -5,11 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\FillInTheBlankRequest;
 use App\Interfaces\Services\Admin\FillInTheBlankServiceInterface;
-use Illuminate\Http\Request;
+use App\Traits\ApiResponseTrait;
+use App\Http\Resources\Admin\FillInTheBlankResource;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
 
 class FillInTheBlankController extends Controller
 {
+    use ApiResponseTrait;
+
     protected $fillInTheBlankService;
 
     public function __construct(FillInTheBlankServiceInterface $fillInTheBlankService)
@@ -20,43 +25,34 @@ class FillInTheBlankController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(): JsonResponse
     {
         try {
             $fillInTheBlanks = $this->fillInTheBlankService->all();
-            return view('admin.fill-in-the-blank.index', compact('fillInTheBlanks'));
+            return $this->successResponse(FillInTheBlankResource::collection($fillInTheBlanks), 'messages.fill_in_the_blank.list_success');
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return redirect()->back()->with('error', 'Bir hata oluştu!');
+            Log::error('FillInTheBlankController Index Error: ' . $e->getMessage());
+            return $this->errorResponse('errors.general_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        return view('admin.fill-in-the-blank.create');
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param  \App\Http\Requests\Admin\FillInTheBlankRequest  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(FillInTheBlankRequest $request)
+    public function store(FillInTheBlankRequest $request): JsonResponse
     {
         try {
-            $this->fillInTheBlankService->create($request->validated());
-            return redirect()->route('admin.fill-in-the-blank.index')->with('success', 'Boşluk doldurma sorusu başarıyla oluşturuldu!');
+            $validatedData = $request->validated();
+            $fillInTheBlank = $this->fillInTheBlankService->create($validatedData);
+            return $this->successResponse(new FillInTheBlankResource($fillInTheBlank), 'messages.fill_in_the_blank.create_success', Response::HTTP_CREATED);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return redirect()->back()->with('error', 'Boşluk doldurma sorusu oluşturulurken bir hata oluştu!')->withInput();
+            Log::error('FillInTheBlankController Store Error: ' . $e->getMessage());
+            return $this->errorResponse('errors.fill_in_the_blank.create_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -64,39 +60,19 @@ class FillInTheBlankController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function show($id)
+    public function show(int $id): JsonResponse
     {
         try {
             $fillInTheBlank = $this->fillInTheBlankService->find($id);
             if (!$fillInTheBlank) {
-                return redirect()->back()->with('error', 'Boşluk doldurma sorusu bulunamadı!');
+                return $this->errorResponse('errors.fill_in_the_blank.not_found', Response::HTTP_NOT_FOUND);
             }
-            return view('admin.fill-in-the-blank.show', compact('fillInTheBlank'));
+            return $this->successResponse(new FillInTheBlankResource($fillInTheBlank), 'messages.fill_in_the_blank.show_success');
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return redirect()->back()->with('error', 'Bir hata oluştu!');
-        }
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        try {
-            $fillInTheBlank = $this->fillInTheBlankService->find($id);
-            if (!$fillInTheBlank) {
-                return redirect()->back()->with('error', 'Boşluk doldurma sorusu bulunamadı!');
-            }
-            return view('admin.fill-in-the-blank.edit', compact('fillInTheBlank'));
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return redirect()->back()->with('error', 'Bir hata oluştu!');
+            Log::error('FillInTheBlankController Show Error: ' . $e->getMessage());
+            return $this->errorResponse('errors.general_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -105,19 +81,29 @@ class FillInTheBlankController extends Controller
      *
      * @param  \App\Http\Requests\Admin\FillInTheBlankRequest  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(FillInTheBlankRequest $request, $id)
+    public function update(FillInTheBlankRequest $request, int $id): JsonResponse
     {
         try {
-            $updated = $this->fillInTheBlankService->update($id, $request->validated());
+            $validatedData = $request->validated();
+            $updated = $this->fillInTheBlankService->update($id, $validatedData);
             if (!$updated) {
-                return redirect()->back()->with('error', 'Boşluk doldurma sorusu bulunamadı!');
+                $fillInTheBlank = $this->fillInTheBlankService->find($id);
+                if(!$fillInTheBlank) {
+                    return $this->errorResponse('errors.fill_in_the_blank.not_found', Response::HTTP_NOT_FOUND);
+                }                 
+                return $this->successResponse(new FillInTheBlankResource($fillInTheBlank), 'messages.fill_in_the_blank.update_success');
+            } else {
+                $fillInTheBlank = $this->fillInTheBlankService->find($id);
+                return $this->successResponse(new FillInTheBlankResource($fillInTheBlank), 'messages.fill_in_the_blank.update_success');
             }
-            return redirect()->route('admin.fill-in-the-blank.index')->with('success', 'Boşluk doldurma sorusu başarıyla güncellendi!');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('FillInTheBlankController Update Warning: ' . $e->getMessage());
+            return $this->errorResponse('errors.fill_in_the_blank.not_found', Response::HTTP_NOT_FOUND);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return redirect()->back()->with('error', 'Boşluk doldurma sorusu güncellenirken bir hata oluştu!')->withInput();
+            Log::error('FillInTheBlankController Update Error: ' . $e->getMessage());
+            return $this->errorResponse('errors.fill_in_the_blank.update_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -125,19 +111,19 @@ class FillInTheBlankController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
         try {
             $deleted = $this->fillInTheBlankService->delete($id);
             if (!$deleted) {
-                return redirect()->back()->with('error', 'Boşluk doldurma sorusu bulunamadı!');
+                return $this->errorResponse('errors.fill_in_the_blank.not_found', Response::HTTP_NOT_FOUND);
             }
-            return redirect()->route('admin.fill-in-the-blank.index')->with('success', 'Boşluk doldurma sorusu başarıyla silindi!');
+            return $this->successResponse([], 'messages.fill_in_the_blank.delete_success');
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return redirect()->back()->with('error', 'Boşluk doldurma sorusu silinirken bir hata oluştu!');
+            Log::error('FillInTheBlankController Destroy Error: ' . $e->getMessage());
+            return $this->errorResponse('errors.fill_in_the_blank.delete_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -145,19 +131,20 @@ class FillInTheBlankController extends Controller
      * Toggle the status of the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function toggleStatus($id)
+    public function toggleStatus(int $id): JsonResponse
     {
         try {
             $status = $this->fillInTheBlankService->toggleStatus($id);
-            if ($status === false) {
-                return response()->json(['error' => 'Boşluk doldurma sorusu bulunamadı!'], 404);
+            if ($status === null) {
+                return $this->errorResponse('errors.fill_in_the_blank.not_found', Response::HTTP_NOT_FOUND);
             }
-            return response()->json(['success' => true, 'status' => $status]);
+            $messageKey = $status ? 'messages.fill_in_the_blank.status_activated' : 'messages.fill_in_the_blank.status_deactivated';
+            return $this->successResponse(['is_active' => $status], $messageKey);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Bir hata oluştu!'], 500);
+            Log::error('FillInTheBlankController ToggleStatus Error: ' . $e->getMessage());
+            return $this->errorResponse('errors.general_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 } 

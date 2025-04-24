@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class TrueFalseQuestion extends Model
 {
-    use HasFactory, HasTranslations;
+    use HasFactory, HasTranslations, SoftDeletes, LogsActivity;
     
     /**
      * Çevirilecek alanlar
@@ -73,5 +76,17 @@ class TrueFalseQuestion extends Model
     public function scopeByUser($query, $userId)
     {
         return $query->where('created_by', $userId);
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable() // Log all fillable attributes
+            ->logOnlyDirty() // Only log changes
+            ->useLogName('true_false')
+            ->setDescriptionForEvent(fn(string $eventName) => "TrueFalse Question '{$this->question}' has been {$eventName}");
     }
 }

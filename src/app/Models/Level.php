@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Level extends Model
 {
-    use HasTranslations, HasFactory;
+    use HasTranslations, HasFactory, SoftDeletes ,LogsActivity;
 
     /**
      * Çevirilecek alanlar
@@ -30,7 +33,9 @@ class Level extends Model
         'max_xp',
         'icon',
         'color_code',
-        'is_active'
+        'is_active',
+        'required_exp',
+        'order'
     ];
 
     /**
@@ -42,7 +47,8 @@ class Level extends Model
         'max_xp' => 'integer',
         'is_active' => 'boolean',
         'title' => 'array',
-        'description' => 'array'
+        'description' => 'array',
+        'required_exp' => 'integer'
     ];
 
     /**
@@ -101,5 +107,22 @@ class Level extends Model
             ->where('max_xp', '>', $xpAmount)
             ->active()
             ->first();
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('level')
+            ->setDescriptionForEvent(fn(string $eventName) => "Level '{$this->title}' has been {$eventName}");
+    }
+
+    public function courses()
+    {
+        return $this->hasMany(Course::class);
     }
 } 

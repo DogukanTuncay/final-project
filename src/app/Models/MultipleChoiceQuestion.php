@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class MultipleChoiceQuestion extends Model
 {
-    use HasFactory, HasTranslations;
+    use HasFactory, HasTranslations, SoftDeletes, LogsActivity;
     
     /**
      * Çevirilecek alanlar
@@ -64,5 +67,17 @@ class MultipleChoiceQuestion extends Model
     public function lessonContent(): MorphMany
     {
         return $this->morphMany(CourseChapterLessonContent::class, 'contentable')->cascadeOnDelete();
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable() // Log all fillable attributes
+            ->logOnlyDirty() // Only log changes
+            ->useLogName('multiple_choice')
+            ->setDescriptionForEvent(fn(string $eventName) => "MultipleChoice Question '{$this->title}' has been {$eventName}");
     }
 }

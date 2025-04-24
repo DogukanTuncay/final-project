@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class CourseChapterLessonContent extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
      * Toplu atama yapılabilecek alanlar
@@ -83,5 +86,17 @@ class CourseChapterLessonContent extends Model
     public function scopeOfType($query, string $type)
     {
         return $query->where('contentable_type', $type);
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable() // Log all fillable attributes
+            ->logOnlyDirty() // Only log changes
+            ->useLogName('lesson_content')
+            ->setDescriptionForEvent(fn(string $eventName) => "Lesson Content '{$this->title}' (Type: {$this->type}) has been {$eventName}");
     }
 }

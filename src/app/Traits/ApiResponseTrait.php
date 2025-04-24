@@ -4,7 +4,7 @@ namespace App\Traits;
 use App\Helpers\LocaleHelper;
 trait ApiResponseTrait
 {
-    protected function successResponse($data = [], string $messageKey = null, int $status = 200, array $messageParams = [])
+    public function successResponse($data = [], string $messageKey = null, int $status = 200, array $messageParams = [])
 {
     $locale = LocaleHelper::getUserLocale();
     $message = $messageKey ? __($messageKey, $messageParams, $locale) : 'Success';
@@ -17,7 +17,7 @@ trait ApiResponseTrait
     ], $status);
 }
 
-protected function errorResponse(string $messageKey, int $status = 400, $errors = [], array $messageParams = [])
+public function errorResponse(string $messageKey, int $status = 400, $errors = [], array $messageParams = [])
 {
     $locale = LocaleHelper::getUserLocale();
     $message = __($messageKey, $messageParams, $locale);

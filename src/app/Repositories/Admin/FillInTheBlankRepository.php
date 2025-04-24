@@ -4,10 +4,11 @@ namespace App\Repositories\Admin;
 
 use App\Models\FillInTheBlank;
 use App\Interfaces\Repositories\Admin\FillInTheBlankRepositoryInterface;
+use App\Repositories\BaseRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class FillInTheBlankRepository implements FillInTheBlankRepositoryInterface
+class FillInTheBlankRepository extends BaseRepository implements FillInTheBlankRepositoryInterface
 {
     protected $model;
     protected $with = [];
@@ -34,27 +35,7 @@ class FillInTheBlankRepository implements FillInTheBlankRepositoryInterface
         return $this;
     }
 
-    /**
-     * Tüm boşluk doldurma sorularını getirir
-     *
-     * @return Collection
-     */
-    public function all(): Collection
-    {
-        return $this->model->with($this->with)->get();
-    }
-
-    /**
-     * ID'ye göre boşluk doldurma sorusunu getirir
-     *
-     * @param int $id
-     * @return FillInTheBlank|null
-     */
-    public function find(int $id): ?FillInTheBlank
-    {
-        return $this->model->with($this->with)->find($id);
-    }
-
+   
     /**
      * Slug'a göre boşluk doldurma sorusunu getirir
      *
@@ -66,51 +47,7 @@ class FillInTheBlankRepository implements FillInTheBlankRepositoryInterface
         return $this->model->with($this->with)->where('slug', $slug)->first();
     }
 
-    /**
-     * Yeni bir boşluk doldurma sorusu oluşturur
-     *
-     * @param array $data
-     * @return FillInTheBlank
-     */
-    public function create(array $data): FillInTheBlank
-    {
-        return $this->model->create($data);
-    }
-
-    /**
-     * Var olan bir boşluk doldurma sorusunu günceller
-     *
-     * @param int $id
-     * @param array $data
-     * @return FillInTheBlank|null
-     */
-    public function update(int $id, array $data): ?FillInTheBlank
-    {
-        $model = $this->find($id);
-        if (!$model) {
-            return null;
-        }
-
-        $model->update($data);
-        return $model;
-    }
-
-    /**
-     * Bir boşluk doldurma sorusunu siler
-     *
-     * @param int $id
-     * @return bool
-     */
-    public function delete(int $id): bool
-    {
-        $model = $this->find($id);
-        if (!$model) {
-            return false;
-        }
-
-        return $model->delete();
-    }
-
+   
     /**
      * Sayfalama ile boşluk doldurma sorularını getirir
      *

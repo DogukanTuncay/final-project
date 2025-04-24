@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class CourseChapter extends Model
 {
-    use HasTranslations,HasFactory;
+    use HasTranslations, HasFactory, SoftDeletes, LogsActivity;
 
     /**
      * Çevirilecek alanlar
@@ -70,5 +73,17 @@ class CourseChapter extends Model
     public function lessons()
     {
         return $this->hasMany(CourseChapterLesson::class)->orderBy('order');
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable() // Log all fillable attributes
+            ->logOnlyDirty() // Only log changes
+            ->useLogName('course_chapter')
+            ->setDescriptionForEvent(fn(string $eventName) => "Course Chapter '{$this->name}' has been {$eventName}");
     }
 }

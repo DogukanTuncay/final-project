@@ -6,24 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use Illuminate\Support\Str;
 
 class FillInTheBlank extends Model
 {
-    use HasFactory, HasTranslations;
+    use HasFactory, HasTranslations, SoftDeletes, LogsActivity;
 
     /**
      * Çevirilecek alanlar
      */
-    public $translatable = ['question', 'answers', 'feedback'];
+    public $translatable = ['question', 'feedback'];
 
     /**
      * Toplu atama yapılabilecek alanlar
      */
     protected $fillable = [
-        'title',
-        'slug',
-        'description',
-        'text',
+        'question',
         'answers',
         'is_active',
         'points',
@@ -44,16 +45,16 @@ class FillInTheBlank extends Model
         'updated_at' => 'datetime',
     ];
 
-    
-    protected static function boot()
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
     {
         parent::boot();
-        
-        // Yeni kayıt oluşturulurken slug otomatik oluşturulur
-        static::creating(function ($fillInTheBlank) {
-            $fillInTheBlank->slug = Str::slug($fillInTheBlank->getTranslation('question', 'en'));
-        });
+       
     }
+
+
     /**
      * Soruyu oluşturan kullanıcı
      */
@@ -68,5 +69,17 @@ class FillInTheBlank extends Model
     public function lessonContent(): MorphOne
     {
         return $this->morphOne(CourseChapterLessonContent::class, 'contentable');
+    }
+
+    /**
+     * Configure the options for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable() // Log all fillable attributes
+            ->logOnlyDirty() // Only log changes
+            ->useLogName('fill_in_the_blank')
+            ->setDescriptionForEvent(fn(string $eventName) => "FillInTheBlank Question '{$this->title}' has been {$eventName}");
     }
 }
