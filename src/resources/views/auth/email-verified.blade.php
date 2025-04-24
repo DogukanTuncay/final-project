@@ -70,7 +70,7 @@
             {{ __('Teşekkürler! E-posta adresiniz başarıyla doğrulandı. Artık hesabınızın tüm özelliklerini kullanabilirsiniz.') }}
         </p>
         
-        <a href="{{ config('app.url') }}" class="button">
+        <a href="/" class="button">
             {{ __('Ana Sayfaya Dön') }}
         </a>
     </div>

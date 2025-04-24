@@ -37,7 +37,8 @@ abstract class BaseRepository
     public function update($id, array $data)
     {
         $record = $this->find($id);
-        return $record->update($data);
+        $record->update($data);
+        return $record;
     }
 
     public function delete($id)

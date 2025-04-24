@@ -21,10 +21,11 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
             'name' => $data['name'],
             'username' => $data['username'],
             'email' => $data['email'],
-            'phone' => $data['phone'],
-            'zip_code' => $data['zip_code'],
-            'locale' => $data['locale'],
+            'phone' => $data['phone'] ?? null,
+            'zip_code' => $data['zip_code'] ?? null,
+            'locale' => $data['locale'] ?? null,
             'password' => Hash::make($data['password']),
+            'onesignal_api_key' => $data['onesignal_api_key'] ?? null,
         ]);
 
 
@@ -33,11 +34,27 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
 
     public function login(array $credentials)
     {
+        // onesignal_api_key'i credentialsdan ayır, attempt için gereksiz
+        $onesignalApiKey = $credentials['onesignal_api_key'] ?? null;
+        $authCredentials = [
+            'email' => $credentials['email'],
+            'password' => $credentials['password']
+        ];
 
-        if (!$token = JWTAuth::attempt($credentials)) {
+        if (!$token = JWTAuth::attempt($authCredentials)) {
             return ['error' => 'Email or Password is dismatch'];
         }
+        
         $user = auth()->user();
+
+        // Eğer istekte geçerli bir onesignal_api_key varsa ve kullanıcınınkinden farklıysa güncelle
+        if (!is_null($onesignalApiKey) && $user->onesignal_api_key !== $onesignalApiKey) {
+            $user->onesignal_api_key = $onesignalApiKey;
+            $user->save();
+            // Kullanıcı nesnesini yeniden yükleyerek güncel veriyi al (isteğe bağlı, token aynı kalır)
+            // $user = $user->fresh(); 
+        }
+
         return compact('token', 'user');
     }
 

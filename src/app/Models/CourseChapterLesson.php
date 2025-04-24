@@ -45,7 +45,8 @@ class CourseChapterLesson extends Model
         'is_active',    
         'thumbnail',
         'duration',
-        'is_free',
+        'is_free',  
+        'xp_reward',
     ];
 
     /**

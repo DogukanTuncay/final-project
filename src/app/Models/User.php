@@ -34,6 +34,8 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
         'password',
         'level_id',
         'experience_points',
+        'xp',
+        'onesignal_api_key',
     ];
 
     /**
@@ -179,29 +181,22 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
      * @param int|null $actionId
      * @return array
      */
-    public function addExperiencePoints(int $xpAmount, string $actionType = null, int $actionId = null)
+    public function addExperiencePoints(int $xpAmount): bool
     {
-        $oldLevel = $this->level;
-        $oldXp = $this->experience_points;
+        if ($xpAmount <= 0) {
+            return false; // Eklenecek XP pozitif olmalı
+        }
 
-        // Deneyim puanını güncelle
+        // Deneyim puanını (xp sütununu) güncelle
+        // increment kullanımı atomik işlem sağlar ve daha verimlidir.
+        // return $this->increment('xp', $xpAmount);
+
+        // Veya save() kullanarak:
         $this->experience_points += $xpAmount;
+        return $this->save();
 
-        // Değişiklikleri kaydet
-        $this->save();
-
-        // Observer updated metodunda seviye kontrolü yapacak
-        // Ancak burada sonuçları hesaplayıp döndürmemiz gerekiyor
-        $newLevel = $this->level;
-        $levelChanged = $oldLevel && $newLevel && $oldLevel->id != $newLevel->id;
-
-        return [
-            'experience_gained' => $xpAmount,
-            'total_experience' => $this->experience_points,
-            'level_changed' => $levelChanged,
-            'new_level' => $levelChanged ? $newLevel : null,
-            'old_level' => $levelChanged ? $oldLevel : null,
-        ];
+        // Önceki seviye kontrolü mantığı kaldırıldı.
+        // Seviye atlama mantığı gerekiyorsa ayrı bir yerde ele alınmalıdır.
     }
 
     /**

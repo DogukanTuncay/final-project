@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->date('completed_at')->nullable(); // Görev tamamlandıysa tarih
             $table->timestamps();
-
+            $table->integer('xp_reward')->default(0);
             $table->unique(['mission_id', 'user_id', 'completed_at']); // Her gün için bir kayıt
         });
     }

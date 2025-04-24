@@ -48,6 +48,7 @@ class Course extends Model
         'meta_description',
         'level_id',
         'category_id',
+        'xp_reward',
     ];
 
     /**

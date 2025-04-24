@@ -18,6 +18,7 @@ class CourseChapterLessonResource extends BaseResource
             'is_active' => $this->is_active,
             'thumbnail_url' => $this->thumbnail_url,
             'duration' => $this->duration,
+            'xp_reward' => $this->xp_reward,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'course_chapter' => $this->whenLoaded('courseChapter', function() {

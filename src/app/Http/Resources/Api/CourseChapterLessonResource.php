@@ -56,6 +56,8 @@ class CourseChapterLessonResource extends JsonResource
             'description' => $this->description,
             'meta_title' => $this->meta_title,
             'meta_description' => $this->meta_description,
+            'xp_reward' => $this->xp_reward,
+
             'order' => $this->order,
             'is_active' => $this->is_active,
             'is_locked' => $is_locked,

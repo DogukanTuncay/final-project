@@ -12,10 +12,7 @@ class MissionsResource extends BaseResource
 
         return array_merge($translated, [
             'id' => $this->id,
-            'title' => $this->getTranslations('title'),
-            'description' => $this->getTranslations('description'),
             'type' => $this->type,
-            'requirements' => $this->requirements,
             'xp_reward' => $this->xp_reward,
             'is_active' => $this->is_active,
             'created_at' => $this->created_at?->toDateTimeString(),

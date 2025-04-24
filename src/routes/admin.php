@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ShortAnswerQuestionController;
 use App\Http\Controllers\Admin\MatchingQuestionController;
 use App\Http\Controllers\Admin\FillInTheBlankController;
 use App\Http\Controllers\Admin\MissionsController;
+use App\Http\Controllers\Admin\StoryCategoryController;
 
 Route::group(['middleware' => ['JWT','role:admin|super-admin'], 'prefix' => 'admin', 'namespace' => 'App\Http\Controllers\Admin'], function () {
 
@@ -160,5 +161,6 @@ Route::group(['middleware' => ['JWT','role:admin|super-admin'], 'prefix' => 'adm
             ->where('id', '[0-9]+'); // ID'nin sadece sayılar olmasını sağla
     });
 
+    Route::resource('story-categories', StoryCategoryController::class)->names('admin.story-categories');
 
 });

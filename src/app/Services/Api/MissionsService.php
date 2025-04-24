@@ -61,7 +61,7 @@ class MissionsService implements MissionsServiceInterface
     ]);
 
     // XP eklenir
-    $user->addExperiencePoints($mission->xp_reward, 'mission', $mission->id);
+    $user->addExperiencePoints($mission->xp_reward);
 
     return true;
     }

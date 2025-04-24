@@ -14,12 +14,14 @@ use App\Http\Controllers\Api\MatchingQuestionController;
 use App\Http\Controllers\Api\FillInTheBlankController;
 use App\Http\Controllers\Api\MissionsController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\LeaderboardController;
+use App\Http\Controllers\Api\StoryCategoryController;
 
 Route::middleware('JWT')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['middleware' => ['JWT', 'role:user'], 'namespace' => 'App\Http\Controllers\Api'], function () {
+Route::group(['middleware' => ['JWT', 'role:user|admin|super-admin'], 'namespace' => 'App\Http\Controllers\Api'], function () {
     // Course routes
     Route::group(['prefix' => 'courses', 'controller' => CourseController::class], function () {
         Route::get('/', 'index');
@@ -116,6 +118,15 @@ Route::group(['middleware' => ['JWT', 'role:user'], 'namespace' => 'App\Http\Con
         // Route::patch('/password', 'updatePassword')->name('user.updatePassword');
     });
     // === YENİ KULLANICI ROTALARI BİTİŞ ===
+
+    // Leaderboard
+    Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+
+    // Story Categories
+    Route::get('/story-categories', [StoryCategoryController::class, 'index'])->name('api.story-categories.index');
+    Route::get('/story-categories/{slug}', [StoryCategoryController::class, 'showBySlug'])->name('api.story-categories.showBySlug');
+    // Belirli bir kategoriye ait story'leri getirecek route daha sonra eklenecek
+    // Route::get('/story-categories/{category_slug}/stories', [\App\Http\Controllers\Api\StoryController::class, 'byCategorySlug'])->name('api.stories.byCategorySlug');
 
 });
 

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->json('meta_description')->nullable();
             $table->integer('order')->default(0);
             $table->boolean('is_active')->default(true);
+            $table->unsignedInteger('xp_reward')->default(0);
             $table->string('thumbnail')->nullable();
             $table->integer('duration')->default(0)->comment('Ders süresi (saniye)');
             $table->boolean('is_free')->default(false)->comment('Ders ücretsiz mi?');

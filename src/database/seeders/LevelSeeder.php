@@ -95,11 +95,44 @@ class LevelSeeder extends Seeder
             ]
         ];
 
-        foreach ($levels as $level) {
-            Level::updateOrCreate(
-                ['level_number' => $level['level_number']],
-                $level
-            );
-        }
+       // Mevcut son seviyeyi al
+$last = end($levels);
+$minXp = $last['max_xp'];
+$xpStep = $last['max_xp'] - $last['min_xp'];
+$levelNumber = 6;
+
+for ($i = 0; $i < 45; $i++) {
+    $xpStep = (int)($xpStep * 1.25);
+    $maxXp = $minXp + $xpStep;
+
+    $levels[] = [
+        'level_number' => $levelNumber,
+        'title' => [
+            'tr' => "Seviye $levelNumber",
+            'en' => "Level $levelNumber"
+        ],
+        'description' => [
+            'tr' => "Seviye $levelNumber için açıklama.",
+            'en' => "Description for level $levelNumber."
+        ],
+        'min_xp' => $minXp,
+        'max_xp' => $maxXp,
+        'icon' => null,
+        'color_code' => null,
+        'is_active' => true
+    ];
+
+    $minXp = $maxXp;
+    $levelNumber++;
+}
+
+// Kaydet
+foreach ($levels as $level) {
+    Level::updateOrCreate(
+        ['level_number' => $level['level_number']],
+        $level
+    );
+}
+
     }
 } 

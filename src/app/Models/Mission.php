@@ -9,7 +9,7 @@ class Mission extends Model
     use HasTranslations;
     protected $table = 'missions';
 
-    public $translatable = ['title', 'description'];
+    public $translatable = ['title', 'description','requirements'];
 
     protected $fillable = [
         'title',

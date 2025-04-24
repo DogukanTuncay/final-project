@@ -4,17 +4,21 @@ namespace App\Services\Api;
 
 use App\Interfaces\Services\Api\CourseChapterLessonServiceInterface;
 use App\Interfaces\Repositories\Api\CourseChapterLessonRepositoryInterface;
+use App\Models\User;
 use App\Models\CourseChapterLesson;
 use App\Models\LessonCompletion;
 use Illuminate\Database\Eloquent\Collection;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CourseChapterLessonService implements CourseChapterLessonServiceInterface
 {
     private CourseChapterLessonRepositoryInterface $repository;
 
-    public function __construct(CourseChapterLessonRepositoryInterface $repository)
-    {
+    public function __construct(
+        CourseChapterLessonRepositoryInterface $repository
+    ) {
         $this->repository = $repository;
     }
 
@@ -39,31 +43,91 @@ class CourseChapterLessonService implements CourseChapterLessonServiceInterface
     }
     
     /**
-     * Bir dersi tamamlandı olarak işaretle
-     * @param int $id
-     * @return LessonCompletion
+     * Bir dersi tamamlandı olarak işaretle ve dersin XP ödülünü ver
+     * @param int $id Ders ID'si
+     * @return LessonCompletion|null
      */
-    public function markAsCompleted(int $id)
+    public function markAsCompleted(int $id): ?LessonCompletion
     {
-        $userId = JWTAuth::user()->id;
-        
-        // Daha önce tamamlanmış mı kontrol et
-        $existing = LessonCompletion::where('lesson_id', $id)
-            ->where('user_id', $userId)
-            ->first();
-            
-        if ($existing) {
-            return null;
+        $user = JWTAuth::user();
+        if (!$user) return null;
+        $userId = $user->id;
+
+        // Dersin varlığını ve ilişkilerini kontrol etmeye gerek yok,
+        // sadece dersi bulmak yeterli.
+        $lesson = $this->repository->findActive($id); // findActive veya find ile dersi al
+        if (!$lesson) {
+             Log::warning("CourseChapterLessonService::markAsCompleted - Lesson not found for lesson ID: {$id}");
+             return null;
         }
         
-        // Yeni tamamlama kaydı oluştur
-        $completion = LessonCompletion::create([
-            'lesson_id' => $id,
-            'user_id' => $userId,
-            'completed_at' => now()
-        ]);
+        // $course = $lesson->chapter->course; // Artık gerekli değil
+        // $courseId = $course->id; // Artık gerekli değil
 
-        return $completion;
+        return DB::transaction(function () use ($id, $userId, $user, $lesson) { // $course ve $courseId kaldırıldı
+            // Daha önce tamamlanmış mı kontrol et (lock ile)
+            $existing = LessonCompletion::where('lesson_id', $id)
+                ->where('user_id', $userId)
+                ->lockForUpdate()
+                ->first();
+                
+            if ($existing) {
+                return null; // Zaten tamamlanmış
+            }
+            
+            // Yeni tamamlama kaydı oluştur
+            $completion = LessonCompletion::create([
+                'lesson_id' => $id,
+                'user_id' => $userId,
+                'completed_at' => now()
+            ]);
+
+            // Dersin XP ödülünü ver (eğer varsa)
+            if ($lesson->xp_reward > 0) {
+                // $this->checkAndAwardCourseCompletionXp($user, $courseId); // Eski kurs tamamlama kontrolü kaldırıldı
+                Log::info("Awarding XP for lesson completion. User ID: {$userId}, Lesson ID: {$id}, XP: {$lesson->xp_reward}");
+                $user->addExperiencePoints($lesson->xp_reward);
+            }
+
+            return $completion;
+        });
+    }
+
+    /**
+     * Kullanıcının bir kursu tamamlayıp tamamlamadığını kontrol eder ve XP verir.
+     * @param User $user
+     * @param int $courseId
+     * @return void
+     */
+    // Bu metot artık `markAsCompleted` içinde çağrılmıyor.
+    // Eğer kurs tamamlandığında ayrıca bir ödül verilmesi gerekiyorsa,
+    // bu mantık farklı bir şekilde (örn. Observer ile) ele alınmalıdır.
+    private function checkAndAwardCourseCompletionXp(User $user, int $courseId): void
+    {
+        // ... (Metot içeriği şimdilik burada kalabilir veya tamamen silinebilir)
+        $userId = $user->id;
+        $totalLessonsInCourseIds = CourseChapterLesson::query()
+            ->whereHas('chapter', fn($q) => $q->where('course_id', $courseId))
+            ->where('is_active', true)
+            ->pluck('id');
+
+        $totalLessonsCount = $totalLessonsInCourseIds->count();
+
+        if ($totalLessonsCount === 0) {
+            return;
+        }
+
+        $completedLessonsCount = LessonCompletion::where('user_id', $userId)
+            ->whereIn('lesson_id', $totalLessonsInCourseIds)
+            ->count();
+
+        if ($completedLessonsCount === $totalLessonsCount) {
+            $course = \App\Models\Course::find($courseId);
+            if ($course && $course->xp_reward > 0) {
+                Log::info("Awarding XP for course completion. User ID: {$userId}, Course ID: {$courseId}, XP: {$course->xp_reward}");
+                $user->addExperiencePoints($course->xp_reward);
+            }
+        }
     }
 
     /**
@@ -119,9 +183,9 @@ class CourseChapterLessonService implements CourseChapterLessonServiceInterface
         }
 
         $completedPrerequisites = LessonCompletion::where('user_id', $userId)
-            ->whereIn('lesson_id', $prerequisites->pluck('course_chapter_lessons.id'))
+            ->whereIn('lesson_id', $prerequisites->pluck('id'))
             ->count();
-
+            
         return [
             'is_unlocked' => $completedPrerequisites === $totalPrerequisites,
             'completed_prerequisites' => $completedPrerequisites,

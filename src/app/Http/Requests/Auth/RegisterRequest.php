@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\BaseRequest;
+use Illuminate\Validation\Rule;
 
 
 class RegisterRequest extends BaseRequest
@@ -29,6 +30,7 @@ class RegisterRequest extends BaseRequest
             'locale'    => 'nullable|string|max:10',
             'email'     => 'required|string|email|max:255|unique:users',
             'password'  => 'required|string|min:6|confirmed',
+            'onesignal_api_key' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

@@ -29,6 +29,7 @@ class LoginRequest extends BaseRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'onesignal_api_key' => ['nullable', 'string'],
         ];
     }
 
