@@ -30,7 +30,7 @@ class RegisterRequest extends BaseRequest
             'locale'    => 'nullable|string|max:10',
             'email'     => 'required|string|email|max:255|unique:users',
             'password'  => 'required|string|min:6|confirmed',
-            'onesignal_api_key' => ['nullable', 'string', 'max:255'],
+            'onesignal_player_id' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

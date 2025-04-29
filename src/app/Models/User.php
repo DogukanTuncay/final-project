@@ -39,7 +39,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'level_id',
         'experience_points',
         'xp',
-        'onesignal_api_key',
+        'onesignal_player_id',
         'profile_image',
         'onesignal_player_id',
     ];

@@ -25,7 +25,7 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
             'zip_code' => $data['zip_code'] ?? null,
             'locale' => $data['locale'] ?? null,
             'password' => Hash::make($data['password']),
-            'onesignal_api_key' => $data['onesignal_api_key'] ?? null,
+            'onesignal_player_id' => $data['onesignal_player_id'] ?? null,
         ]);
 
 
@@ -34,8 +34,8 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
 
     public function login(array $credentials)
     {
-        // onesignal_api_key'i credentialsdan ayır, attempt için gereksiz
-        $onesignalApiKey = $credentials['onesignal_api_key'] ?? null;
+        // onesignal_player_id'i credentialsdan ayır, attempt için gereksiz
+        $onesignalApiKey = $credentials['onesignal_player_id'] ?? null;
         $authCredentials = [
             'email' => $credentials['email'],
             'password' => $credentials['password']
@@ -47,9 +47,9 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
         
         $user = auth()->user();
 
-        // Eğer istekte geçerli bir onesignal_api_key varsa ve kullanıcınınkinden farklıysa güncelle
-        if (!is_null($onesignalApiKey) && $user->onesignal_api_key !== $onesignalApiKey) {
-            $user->onesignal_api_key = $onesignalApiKey;
+        // Eğer istekte geçerli bir onesignal_player_id varsa ve kullanıcınınkinden farklıysa güncelle
+        if (!is_null($onesignalApiKey) && $user->onesignal_player_id !== $onesignalApiKey) {
+            $user->onesignal_player_id = $onesignalApiKey;
             $user->save();
             // Kullanıcı nesnesini yeniden yükleyerek güncel veriyi al (isteğe bağlı, token aynı kalır)
             // $user = $user->fresh(); 
