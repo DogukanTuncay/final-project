@@ -77,6 +77,14 @@ class CourseChapterLessonContent extends Model
     }
 
     /**
+     * Soft delete edilmeyen içerikleri filtrele
+     */
+    public function scopeWithoutTrashedContentable($query)
+    {
+        return $query->whereHas('contentable');
+    }
+
+    /**
      * Belirli bir içerik türüne ait içerikleri getir
      * 
      * @param \Illuminate\Database\Eloquent\Builder $query
@@ -94,9 +102,25 @@ class CourseChapterLessonContent extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable() // Log all fillable attributes
-            ->logOnlyDirty() // Only log changes
-            ->useLogName('lesson_content')
-            ->setDescriptionForEvent(fn(string $eventName) => "Lesson Content '{$this->title}' (Type: {$this->type}) has been {$eventName}");
+            ->logOnly(['course_chapter_lesson_id', 'contentable_id', 'contentable_type', 'order', 'is_active', 'meta_data'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            // Eğer order değeri verilmemişse, bu ders için en yüksek sıraya sahip içeriğin üzerine ekle
+            if (empty($model->order)) {
+                $maxOrder = self::where('course_chapter_lesson_id', $model->course_chapter_lesson_id)
+                    ->max('order');
+                $model->order = $maxOrder ? $maxOrder + 1 : 0;
+            }
+        });
     }
 }

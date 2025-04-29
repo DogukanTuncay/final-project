@@ -33,6 +33,10 @@ class CourseChapterRequest extends BaseRequest
             'meta_description' => 'nullable|array',
             'meta_description.tr' => 'nullable|string',
             'meta_description.en' => 'nullable|string',
+            
+            'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images' => 'sometimes|nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
 
         return $rules;

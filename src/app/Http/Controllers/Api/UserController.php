@@ -9,6 +9,7 @@ use App\Interfaces\Services\Api\UserServiceInterface;
 use App\Traits\ApiResponseTrait;
 use App\Http\Resources\Api\UserLocaleResource;
 use App\Http\Resources\Api\UserProfileResource;
+use App\Http\Resources\Api\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -65,23 +66,51 @@ class UserController extends Controller
             $validated = $request->validated();
             $userId = auth()->id();
 
+            // Kimlik doğrulama kontrolü
             if (!$userId) {
                 return $this->errorResponse('errors.unauthenticated', Response::HTTP_UNAUTHORIZED);
             }
 
+            // Kullanıcıyı bul
+            $user = $this->userService->getProfile($userId);
+            if (!$user) {
+                return $this->errorResponse('errors.user.profile_not_found', Response::HTTP_NOT_FOUND);
+            }
+
+            // Profil resmi yükleme işlemi
+            if ($request->hasFile('profile_image')) {
+                $user->uploadImage($request->file('profile_image'), 'profile_image');
+                // Yüklenen resim HasImage trait'i tarafından kaydedildi, bu alanı validated dizisinden çıkar
+                unset($validated['profile_image']);
+            }
+
+            // Güncellenecek alan yoksa hata vermek yerine mevcut profili döndür
+            if (empty($validated)) {
+                return $this->successResponse(
+                    new UserProfileResource($user),
+                    'messages.user.profile_no_changes'
+                );
+            }
+
+            // Profil güncelleme işlemini gerçekleştir
             $updatedUser = $this->userService->updateProfile($userId, $validated);
 
             if (!$updatedUser) {
                 return $this->errorResponse('errors.user.profile_update_failed', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
 
+            // Güncellenmiş profil bilgilerini döndür
             return $this->successResponse(
-                new UserProfileResource($updatedUser), // Güncellenmiş tam profili döndür
+                new UserProfileResource($updatedUser),
                 'messages.user.profile_updated'
             );
 
         } catch (\Exception $e) {
-            Log::error('UserController updateProfile Error: ' . $e->getMessage());
+            Log::error('UserController updateProfile Error: ' . $e->getMessage(), [
+                'user_id' => auth()->id() ?? 'unknown',
+                'data' => $request->except(['password', 'profile_image'])
+            ]);
+            
             return $this->errorResponse('errors.general_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -97,7 +126,6 @@ class UserController extends Controller
         try {
             $validated = $request->validated();
             $userId = auth()->id(); // Authenticated user ID
-
             if (!$userId) {
                 // Bu durum normalde middleware tarafından yakalanmalı ama yine de kontrol edelim
                 return $this->errorResponse('errors.unauthenticated', Response::HTTP_UNAUTHORIZED);
@@ -119,6 +147,29 @@ class UserController extends Controller
             Log::error('UserController updateLocale Error: ' . $e->getMessage());
             return $this->errorResponse('errors.general_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Kullanıcının OneSignal player ID'sini günceller
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateOneSignalPlayerId(Request $request): JsonResponse
+    {
+        $request->validate([
+            'player_id' => 'required|string|max:255',
+        ]);
+
+        $user = auth()->user();
+        $user->update([
+            'onesignal_player_id' => $request->input('player_id'),
+        ]);
+
+        return $this->successResponse(
+            [],
+            'user.onesignal_updated'
+        );
     }
 
     // Gelecekte diğer kullanıcı işlemleri buraya eklenebilir (örn: get profile)

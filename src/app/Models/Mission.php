@@ -3,13 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
 class Mission extends Model
 {
     use HasTranslations;
     protected $table = 'missions';
 
-    public $translatable = ['title', 'description','requirements'];
+    public $translatable = ['title', 'description', 'requirements'];
 
     protected $fillable = [
         'title',
@@ -17,7 +22,11 @@ class Mission extends Model
         'type',
         'requirements',
         'xp_reward',
-        'is_active'
+        'is_active',
+        'completable_id',
+        'completable_type',
+        'required_amount',
+        'trigger_event',
     ];
 
     protected $casts = [
@@ -25,25 +34,45 @@ class Mission extends Model
         'description' => 'array',
         'requirements' => 'array',
         'is_active' => 'boolean',
-        'xp_reward' => 'integer'
+        'xp_reward' => 'integer',
+        'required_amount' => 'integer',
     ];
 
-
-    public function users()
+    /**
+     * Bu görevin tamamlanmasını gerektiren ilişkili model (Course, Chapter vb.).
+     */
+    public function completable(): MorphTo
     {
-        return $this->belongsToMany(User::class)
-                    ->withPivot('completed_at')
-                    ->withTimestamps();
+        return $this->morphTo();
     }
 
-    public function isCompletedBy(User $user, $date = null)
+    /**
+     * Bu görevin kullanıcılar üzerindeki ilerlemeleri.
+     */
+    public function userProgresses(): HasMany
     {
-        $date = $date ?? now()->toDateString();
-
-        return $this->users()
-            ->wherePivot('user_id', $user->id)
-            ->wherePivot('completed_at', $date)
-            ->exists();
+        return $this->hasMany(UserMissionProgress::class);
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Belirli bir kullanıcının bu görevdeki ilerlemesi.
+     */
+    public function getProgressForUser(User $user): ?UserMissionProgress
+    {
+        return $this->userProgresses()->where('user_id', $user->id)->first();
+    }
+
+    /**
+     * Belirli bir kullanıcının bu görevi tamamlayıp tamamlamadığını kontrol et.
+     */
+    public function isCompletedByUser(User $user): bool
+    {
+        $progress = $this->getProgressForUser($user);
+        return $progress ? $progress->isCompleted() : false;
+    }
 }

@@ -19,10 +19,9 @@ class LevelResource extends BaseResource
         
         return array_merge($translated, [
            'id' => $this->id,
-            'name' => $translated['title'], // Seviye adı (muhtemelen çevrilebilir)
-            'level_number' => $this->level_number, // Seviye numarası (varsa)
-            'min_xp' => $this->min_xp, // Bu seviye için minimum XP
-            'max_xp' => $this->max_xp, // Bu seviyeden sonraki seviye için gereken XP
+            'level_number' => $this->level_number,
+            'min_xp' => $this->min_xp,
+            'max_xp' => $this->max_xp,
         ]);
     }
 } 

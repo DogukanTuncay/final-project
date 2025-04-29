@@ -173,7 +173,7 @@ class CourseChapterController extends BaseController
      */
     public function toggleStatus(int $id): JsonResponse
     {
-        $courseChapter = $this->courseChapterService->toggleStatus($id);
+        $courseChapter = $this->courseChapterService->find($id);
         
         if (!$courseChapter) {
             return $this->errorResponse(
@@ -181,6 +181,7 @@ class CourseChapterController extends BaseController
                 Response::HTTP_NOT_FOUND
             );
         }
+        $courseChapter = $this->courseChapterService->toggleStatus($id);
         
         return $this->successResponse(
             new CourseChapterResource($courseChapter),
@@ -197,19 +198,19 @@ class CourseChapterController extends BaseController
      */
     public function updateOrder(int $id,   CourseChapterOrderRequest $request): JsonResponse
     {
-        
-        
-        $courseChapter = $this->courseChapterService->updateOrder($id, $request->input('order'));
-        
+        $courseChapter = $this->courseChapterService->find($id);
         if (!$courseChapter) {
             return $this->errorResponse(
                 'responses.course_chapter.not_found',
                 Response::HTTP_NOT_FOUND
             );
         }
+
+        $result = $this->courseChapterService->updateOrder($id, $request->input('order'));
         
+
         return $this->successResponse(
-            new CourseChapterResource($courseChapter),
+            new CourseChapterResource($result),
             'responses.course_chapter.order_updated'
         );
     }

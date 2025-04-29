@@ -1,9 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Models\CourseChapter;
-use Illuminate\Http\Request;
-use App\Exceptions\UniqueConstraintException;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,14 +17,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Admin routes
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-    // ... existing code ...
-    
-    // Fill in the blank routes
-    Route::resource('fill-in-the-blanks', 'Admin\FillInTheBlankController');
-    Route::post('fill-in-the-blanks/{id}/toggle-status', 'Admin\FillInTheBlankController@toggleStatus')->name('fill-in-the-blanks.toggle-status');
-    
-    // ... existing code ...
-});
+// Web uygulaması için ek rotalar buraya eklenebilir
+// NOT: Admin, API ve Auth rotaları kendi dosyalarında tanımlanmıştır
 

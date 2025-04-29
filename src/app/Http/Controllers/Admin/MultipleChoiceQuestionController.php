@@ -37,6 +37,9 @@ class MultipleChoiceQuestionController extends BaseController
     public function show($id)
     {
         $item = $this->service->find($id);
+        if(!$item){
+            return $this->errorResponse('responses.multiple_choice_question.not_found', 404);
+        }
         return $this->successResponse(new MultipleChoiceQuestionResource($item), 'Çoktan seçmeli soru başarıyla gösterildi.');
     }
     

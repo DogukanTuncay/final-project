@@ -89,6 +89,10 @@ class CourseChapterLessonService implements CourseChapterLessonServiceInterface
                 $user->addExperiencePoints($lesson->xp_reward);
             }
 
+            // LessonCompleted olayını tetikle
+            event(new \App\Events\LessonCompleted($user, $lesson));
+            Log::info("LessonCompleted event triggered for User ID: {$userId}, Lesson ID: {$id}");
+
             return $completion;
         });
     }

@@ -1,0 +1,552 @@
+{
+	"info": {
+		"_postman_id": "b8d5c1e0-5d1f-4f6e-8a2a-3f5f4c6d7e8f",
+		"name": "VideoContent API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"description": "VideoContent ile ilgili API endpointleri"
+	},
+	"item": [
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "VideoContent Listesi",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/video-contents?title=&provider=h5p&is_active=1&per_page=15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"video-contents"
+							],
+							"query": [
+								{
+									"key": "title",
+									"value": ""
+								},
+								{
+									"key": "provider",
+									"value": "h5p"
+								},
+								{
+									"key": "is_active",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "15"
+								}
+							]
+						},
+						"description": "Video içeriklerini listeler. İsteğe bağlı filtreleme parametreleri kullanılabilir."
+					},
+					"response": []
+				},
+				{
+					"name": "VideoContent Detayı",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/video-contents/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"video-contents",
+								"1"
+							]
+						},
+						"description": "ID'ye göre video içerik detayını getirir."
+					},
+					"response": []
+				},
+				{
+					"name": "VideoContent Oluşturma",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": {\n    \"tr\": \"H5P Örnek Video\",\n    \"en\": \"H5P Sample Video\"\n  },\n  \"description\": {\n    \"tr\": \"H5P ile hazırlanmış örnek bir video içeriği\",\n    \"en\": \"A sample video content created with H5P\"\n  },\n  \"video_url\": \"https://www.h5p.org/content/12345\",\n  \"duration\": 300,\n  \"is_active\": true,\n  \"metadata\": {\n    \"author\": \"Test User\",\n    \"tags\": [\"eğitim\", \"h5p\", \"video\"]\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/video-contents",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"video-contents"
+							]
+						},
+						"description": "Yeni bir video içeriği oluşturur."
+					},
+					"response": []
+				},
+				{
+					"name": "VideoContent Güncelleme",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": {\n    \"tr\": \"Güncellenmiş H5P Örnek Video\",\n    \"en\": \"Updated H5P Sample Video\"\n  },\n  \"description\": {\n    \"tr\": \"H5P ile hazırlanmış güncellenmiş örnek bir video içeriği\",\n    \"en\": \"An updated sample video content created with H5P\"\n  },\n  \"video_url\": \"https://www.h5p.org/content/54321\",\n  \"duration\": 400,\n  \"is_active\": true,\n  \"metadata\": {\n    \"author\": \"Test User\",\n    \"tags\": [\"eğitim\", \"h5p\", \"video\", \"güncellendi\"]\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/video-contents/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"video-contents",
+								"1"
+							]
+						},
+						"description": "Var olan bir video içeriğini günceller."
+					},
+					"response": []
+				},
+				{
+					"name": "VideoContent Silme",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/video-contents/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"video-contents",
+								"1"
+							]
+						},
+						"description": "Video içeriğini siler (soft delete)."
+					},
+					"response": []
+				},
+				{
+					"name": "VideoContent Toplu Güncelleme",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ids\": [1, 2, 3],\n  \"data\": {\n    \"is_active\": false\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/video-contents/bulk-update",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"video-contents",
+								"bulk-update"
+							]
+						},
+						"description": "Birden fazla video içeriğini toplu olarak günceller."
+					},
+					"response": []
+				},
+				{
+					"name": "VideoContent URL Analizi",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://www.h5p.org/content/12345\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/video-contents/parse-url",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"video-contents",
+								"parse-url"
+							]
+						},
+						"description": "Video URL'sini analiz eder ve provider/video_id bilgisini döndürür."
+					},
+					"response": []
+				}
+			],
+			"description": "Admin tarafı için VideoContent API endpointleri"
+		},
+		{
+			"name": "API",
+			"item": [
+				{
+					"name": "VideoContent Listesi",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/video-contents?provider=h5p&is_active=1&per_page=15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"video-contents"
+							],
+							"query": [
+								{
+									"key": "provider",
+									"value": "h5p"
+								},
+								{
+									"key": "is_active",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "15"
+								}
+							]
+						},
+						"description": "Video içeriklerini listeler. İsteğe bağlı filtreleme parametreleri kullanılabilir."
+					},
+					"response": []
+				},
+				{
+					"name": "VideoContent Detayı (ID)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/video-contents/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"video-contents",
+								"1"
+							]
+						},
+						"description": "ID'ye göre video içerik detayını getirir."
+					},
+					"response": []
+				},
+				{
+					"name": "VideoContent Detayı (Slug)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/video-contents/slug/h5p-ornek-video",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"video-contents",
+								"slug",
+								"h5p-ornek-video"
+							]
+						},
+						"description": "Slug'a göre video içerik detayını getirir."
+					},
+					"response": []
+				},
+				{
+					"name": "Aktif VideoContentler",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/video-contents/active?limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"video-contents",
+								"active"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Aktif video içeriklerini getirir."
+					},
+					"response": []
+				},
+				{
+					"name": "Provider'a Göre VideoContentler",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/video-contents/provider/h5p?limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"video-contents",
+								"provider",
+								"h5p"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Belirli bir provider'a ait video içeriklerini getirir."
+					},
+					"response": []
+				},
+				{
+					"name": "Video URL Doğrulama",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://www.h5p.org/content/12345\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/video-contents/validate-url",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"video-contents",
+								"validate-url"
+							]
+						},
+						"description": "Video URL'sinin geçerli olup olmadığını kontrol eder."
+					},
+					"response": []
+				}
+			],
+			"description": "Kullanıcı API'si için VideoContent endpointleri"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your_auth_token_here",
+			"type": "string"
+		}
+	]
+} 

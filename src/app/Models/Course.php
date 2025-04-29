@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Course extends Model
 {
@@ -76,19 +78,6 @@ class Course extends Model
     ];
 
     /**
-     * Sabit kategori listesi
-     */
-    public const CATEGORIES = [
-        'aqidah' => 'Akaid',      // İnanç esasları
-        'worship' => 'İbadet',    // İbadetler
-        'seerah' => 'Siyer',      // Hz. Muhammed'in hayatı
-        'quran' => 'Kur\'an',     // Kur'an eğitimi
-        'hadith' => 'Hadis',      // Hadis eğitimi
-        'ethics' => 'Ahlak',      // İslami ahlak
-        'fiqh' => 'Fıkıh'         // İslam hukuku
-    ];
-
-    /**
      * Sabit zorluk seviyeleri
      */
     public const DIFFICULTIES = [
@@ -150,13 +139,7 @@ class Course extends Model
         return $slug;
     }
 
-    /**
-     * Kategori adını insan dostu formatta döndürür
-     */
-    public function getCategoryTextAttribute(): string
-    {
-        return self::CATEGORIES[$this->category] ?? $this->category;
-    }
+   
 
     /**
      * Zorluk seviyesini insan dostu formatta döndürür
@@ -166,8 +149,7 @@ class Course extends Model
         return self::DIFFICULTIES[$this->difficulty] ?? $this->difficulty;
     }
 
-    /*
-      Kullanıcının kurs tamamlama durumunu döndürür
+    
 
     public function getCompletionStatusAttribute(): array
     {
@@ -193,21 +175,59 @@ class Course extends Model
             'completed_lessons' => $completedLessons
         ];
     }
+     
+   
+    /**
+     * Sabit kategori listesi
      */
-    /*
-     * Kursun dersleri ile ilişkisi
+    public const CATEGORIES = [
+        'aqidah' => 'Akaid',      // İnanç esasları
+        'worship' => 'İbadet',    // İbadetler
+        'seerah' => 'Siyer',      // Hz. Muhammed'in hayatı
+        'quran' => 'Kur\'an',     // Kur'an eğitimi
+        'hadith' => 'Hadis',      // Hadis eğitimi
+        'ethics' => 'Ahlak',      // İslami ahlak
+        'fiqh' => 'Fıkıh'         // İslam hukuku
+    ];
 
-    public function lessons(): HasMany
-    {
-        return $this->hasMany(Lesson::class)->orderBy('order');
-    }
+    /**
+     * Kursun derslerine doğrudan erişim
+     *
+     * @return HasManyThrough
      */
+    public function lessons(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            \App\Models\CourseChapterLesson::class,
+            \App\Models\CourseChapter::class,
+            'course_id', // CourseChapter tablosundaki foreign key
+            'course_chapter_id', // CourseChapterLesson tablosundaki foreign key
+            'id', // Course tablosundaki local key
+            'id'  // CourseChapter tablosundaki local key
+        )->orderBy('course_chapter_lessons.order');
+    }
+    /**
+     * Kategori adını insan dostu formatta döndürür
+     */
+    public function getCategoryTextAttribute(): string
+    {
+        return self::CATEGORIES[$this->category] ?? $this->category;
+    }
+
     /**
      * Kursun bölümleri ile ilişkisi
      */
     public function chapters(): HasMany
     {
         return $this->hasMany(CourseChapter::class)->orderBy('order');
+    }
+
+    /**
+     * Bu kursun tamamlanmasını gerektiren görevler (Missions).
+     */
+    public function missions(): MorphMany
+    {
+        return $this->morphMany(Mission::class, 'completable');
     }
 
     /**
@@ -265,11 +285,10 @@ class Course extends Model
      */
     public function getActivitylogOptions(): LogOptions
     {
-        $name = is_array($this->name) ? ($this->name['en'] ?? reset($this->name)) : $this->name;
         return LogOptions::defaults()
             ->logFillable()
             ->logOnlyDirty()
             ->useLogName('course')
-            ->setDescriptionForEvent(fn(string $eventName) => "Course '{$name}' has been {$eventName}");
+            ->setDescriptionForEvent(fn(string $eventName) => "Course \"{$this->getTranslation('name', 'en', false)}\" (ID: {$this->id}) has been {$eventName}");
     }
 }

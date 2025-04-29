@@ -19,6 +19,7 @@ class StoryCategoryRequest extends BaseRequest
     {
         $rules = [
             'name' => ['required', 'array'], // Translatable alanlar array olmalı
+            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'is_active' => ['sometimes', 'boolean'],
             'order' => ['sometimes', 'integer', 'min:0'],
             // Çevrilecek her dil için name kontrolü

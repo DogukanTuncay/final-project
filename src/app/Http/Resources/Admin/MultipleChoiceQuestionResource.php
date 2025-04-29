@@ -8,6 +8,7 @@ class MultipleChoiceQuestionResource extends BaseResource
 {
     public function toArray($request)
     {
+
         $translated = $this->getTranslated($this->resource);
         
         return array_merge($translated, [

@@ -38,6 +38,7 @@ class UpdateUserProfileRequest extends FormRequest
             ],
             'phone' => 'sometimes|nullable|string|max:20', // Formatı daha spesifik hale getirebilirsiniz
             'zip_code' => 'sometimes|nullable|string|max:10',
+            'profile_image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             // Email, locale, password gibi alanlar bu request ile güncellenmemeli
         ];
     }
@@ -60,6 +61,9 @@ class UpdateUserProfileRequest extends FormRequest
            'username.unique'   => 'Bu kullanıcı adı zaten alınmış.',
            'phone.max'         => 'Telefon numarası en fazla 20 karakter olabilir.',
            'zip_code.max'      => 'Posta kodu en fazla 10 karakter olabilir.',
+           'profile_image.image' => 'Profil resmi bir görsel dosyası olmalıdır.',
+           'profile_image.mimes' => 'Profil resmi jpeg, png, jpg veya gif formatında olmalıdır.',
+           'profile_image.max'  => 'Profil resmi en fazla 2MB olabilir.',
        ];
    }
 } 

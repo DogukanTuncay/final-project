@@ -5,8 +5,10 @@ namespace App\Http\Resources\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Api\LevelResource; // LevelResource varsa
+use App\Http\Resources\BaseResource;
+use Carbon\Carbon;
 
-class UserProfileResource extends JsonResource
+class UserProfileResource extends BaseResource
 {
     /**
      * Transform the resource into an array.
@@ -15,7 +17,21 @@ class UserProfileResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+        $translated = $this->getTranslated($this->resource);
+        
+        // Kullanıcı istatistikleri için verileri hazırlayalım
+        $completedMissions = $this->missions()
+            ->wherePivotNotNull('completed_at')
+            ->count();
+            
+        // Tamamlanan dersler
+        $completedLessonsCount = $this->whenLoaded(
+            'completedLessons', 
+            fn() => $this->completedLessons->count(), 
+            fn() => \App\Models\LessonCompletion::where('user_id', $this->id)->count()
+        );
+        
+        return array_merge($translated, [
             'id' => $this->id,
             'name' => $this->name,
             'username' => $this->username,
@@ -38,8 +54,18 @@ class UserProfileResource extends JsonResource
             'roles' => $this->getRoleNames(), // Spatie HasRoles trait
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
-            // İzinleri de eklemek isterseniz:
-            // 'permissions' => $this->getAllPermissions()->pluck('name'),
-        ];
+            
+            // Kullanıcı istatistikleri
+            'statistics' => [
+                'current_streak' => $this->current_streak,
+                'longest_streak' => $this->longest_streak,
+                'total_logins' => $this->logins()->count(),
+                'completed_missions' => $completedMissions,
+                'completed_lessons' => $completedLessonsCount,
+                'join_date' => $this->created_at?->toIso8601String(),
+                'join_days' => $this->created_at ? Carbon::now()->diffInDays($this->created_at) : 0,
+                'last_login' => $this->logins()->latest('login_date')->first()?->login_date?->toIso8601String(),
+            ],
+        ]);
     }
 } 

@@ -55,15 +55,27 @@ class AuthService extends BaseService implements AuthServiceInterface
             return ['error' => 'Email or Password is incorrect'];
         }
 
+        // E-posta doğrulama kontrolü
+        if (!$user->hasVerifiedEmail()) {
+            return ['error' => 'responses.auth.email_not_verified'];
+        }
+
         // Kullanıcı doğrulanmışsa repository üzerinden giriş yaptır
         $loginResult = $this->authRepository->login($credentials);
 
         // Eğer başarılıysa ve token dönmüşse user bilgisi ile birleştir
         if (isset($loginResult['token'])) {
+            // Kullanıcının giriş kaydını oluştur
+            try {
+                $user->recordLoginToday();
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Kullanıcı giriş kaydı oluşturulamadı: ' . $e->getMessage());
+                // Hata durumunda login işlemine devam ediyoruz
+            }
+            
             // UserResource kullanarak kullanıcı bilgilerini zenginleştir
             $userResource = new \App\Http\Resources\Api\UserResource($user);
             $loginResult['user'] = $userResource;
-
         }
 
         return $loginResult;

@@ -8,6 +8,8 @@ use App\Repositories\BaseRepository;
 use App\Repositories\Auth\AuthRepository;
 use App\Models\User;
 use App\Observers\UserObserver;
+use App\Interfaces\Services\Api\NotificationServiceInterface;
+use App\Services\Api\NotificationService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\Interfaces\FillInTheBlankServiceInterface::class,
             \App\Services\FillInTheBlankService::class
         );
+
+        // Notification Service bağlama
+        $this->app->bind(NotificationServiceInterface::class, NotificationService::class);
     }
 
     /**

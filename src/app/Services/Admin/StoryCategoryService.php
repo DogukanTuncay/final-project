@@ -7,6 +7,7 @@ use App\Interfaces\Services\Admin\StoryCategoryServiceInterface;
 use App\Services\BaseService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 class StoryCategoryService extends BaseService implements StoryCategoryServiceInterface
 {
@@ -29,4 +30,27 @@ class StoryCategoryService extends BaseService implements StoryCategoryServiceIn
     }
 
   
+    /**
+     * Kategori oluştur (image_url kontrolü ile)
+     *
+     * @param array $data
+     * @return Model
+     */
+    public function create(array $data)
+    {
+       return $this->repository->create($data);
+    }
+    
+    /**
+     * Kategori güncelle (image_url kontrolü ile)
+     *
+     * @param int $id
+     * @param array $data
+     * @return Model
+     */
+    public function update($id, array $data)
+    {
+        return $this->repository->update($id, $data);
+        
+    }
 }

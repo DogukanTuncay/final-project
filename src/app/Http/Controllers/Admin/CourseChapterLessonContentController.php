@@ -28,6 +28,9 @@ class CourseChapterLessonContentController extends BaseController
     public function index()
     {
         $contents = $this->service->all();
+        if(empty($contents)){
+            return $this->successResponse(null, 'responses.admin.lesson-contents.list.empty');
+        }
         return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'responses.admin.lesson-contents.list.success');
     }
     
@@ -119,11 +122,20 @@ class CourseChapterLessonContentController extends BaseController
     public function byLesson($lessonId)
     {
         $contents = $this->service->getByLessonId($lessonId);
-        if(!$contents){
+        
+        // Filter out contents with null contentable (soft deleted)
+        $filteredContents = $contents->filter(function ($content) {
+            return $content->contentable !== null;
+        });
+        
+        if($filteredContents->isEmpty()){
             return $this->errorResponse('responses.admin.lesson-contents.not_found', 404);
         }
 
-        return $this->successResponse(CourseChapterLessonContentResource::collection($contents), 'responses.admin.lesson-contents.by-lesson.success');
+        return $this->successResponse(
+            CourseChapterLessonContentResource::collection($filteredContents), 
+            'responses.admin.lesson-contents.by-lesson.success'
+        );
     }
     
     /**
@@ -145,24 +157,38 @@ class CourseChapterLessonContentController extends BaseController
     }
     
     /**
-     * Video içeriği oluştur
+     * Video içeriği oluştur (Sadeleştirilmiş)
+     * 
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function createVideoContent(Request $request)
+    public function createSimpleVideoContent(Request $request)
     {
+        $request->validate([
+            'lesson_id' => 'required|exists:course_chapter_lessons,id',
+            'video_url' => 'required|url',
+            'order' => 'nullable|integer|min:0',
+            'type' => 'nullable|string'
+        ]);
+        
         $content = $this->service->createVideoContent(
             $request->lesson_id,
             [
-                'title' => $request->title,
-                'description' => $request->description,
+                'title' => [
+                    'tr' => $request->title ?? 'Video İçeriği',
+                    'en' => $request->title_en ?? 'Video Content'
+                ],
+                'description' => [
+                    'tr' => $request->description ?? '',
+                    'en' => $request->description_en ?? ''
+                ],
                 'video_url' => $request->video_url,
                 'provider' => $request->provider ?? 'youtube',
-                'duration' => $request->duration,
-                'thumbnail' => $request->thumbnail,
             ],
             [
                 'order' => $request->order ?? 0,
-                'is_active' => $request->is_active ?? true,
-                'meta_data' => $request->meta_data ?? null
+                'is_active' => true,
+                'meta_data' => ['type' => $request->type ?? 'default']
             ]
         );
         
@@ -298,6 +324,51 @@ class CourseChapterLessonContentController extends BaseController
         } catch (\Exception $e) {
             return $this->errorResponse(
                 'errors.lesson_content.create_failed',
+                Response::HTTP_BAD_REQUEST,
+                ['error' => $e->getMessage()]
+            );
+        }
+    }
+    
+    /**
+     * Var olan video içeriğini bir derse bağla
+     * 
+     * @param Request $request
+     * @param int $videoContentId Video içeriğinin ID'si
+     * @return JsonResponse
+     */
+    public function attachVideoContent(Request $request, int $videoContentId): JsonResponse
+    {
+        $request->validate([
+            'lesson_id' => 'required|exists:course_chapter_lessons,id',
+            'order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'meta_data' => 'nullable|array'
+        ]);
+        
+        try {
+            // Video içeriğini bul
+            $videoContent = \App\Models\VideoContent::findOrFail($videoContentId);
+            
+            // Ders içeriği olarak ekle
+            $lessonContent = $this->service->createWithContent(
+                $request->lesson_id,
+                $videoContent,
+                [
+                    'order' => $request->order ?? 0,
+                    'is_active' => $request->is_active ?? true,
+                    'meta_data' => $request->meta_data ?? null
+                ]
+            );
+            
+            return $this->successResponse(
+                new CourseChapterLessonContentResource($lessonContent),
+                'responses.admin.lesson-contents.attach-video.success',
+                Response::HTTP_CREATED
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'errors.lesson_content.attach_failed',
                 Response::HTTP_BAD_REQUEST,
                 ['error' => $e->getMessage()]
             );

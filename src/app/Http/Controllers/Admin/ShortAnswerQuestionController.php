@@ -35,17 +35,28 @@ class ShortAnswerQuestionController extends BaseController
     public function show($id)
     {
         $item = $this->service->find($id);
+        if(!$item){
+            return $this->errorResponse('responses.short_answer_question.not_found', 404);
+        }
         return $this->successResponse(new ShortAnswerQuestionResource($item), 'admin.ShortAnswerQuestion.show.success');
     }
 
     public function update(ShortAnswerQuestionRequest $request, $id)
     {
+        $item = $this->service->find($id);
+        if(!$item){
+            return $this->errorResponse('responses.short_answer_question.not_found', 404);
+        }
         $item = $this->service->update($id, $request->validated());
         return $this->successResponse(new ShortAnswerQuestionResource($item), 'admin.ShortAnswerQuestion.update.success');
     }
 
     public function destroy($id)
     {
+        $item = $this->service->find($id);
+        if(!$item){
+            return $this->errorResponse('responses.short_answer_question.not_found', 404);
+        }
         $this->service->delete($id);
         return $this->successResponse(null, 'admin.ShortAnswerQuestion.delete.success');
     }

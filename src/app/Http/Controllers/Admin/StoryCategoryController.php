@@ -36,7 +36,16 @@ class StoryCategoryController extends BaseController
      */
     public function store(StoryCategoryRequest $request): JsonResponse
     {
-        $category = $this->service->create($request->validated());
+        $validatedData = $request->validated();
+        
+        // Resim yükleme işlemini burada yapma ihtiyacı olmayabilir, çünkü service'e taşıyoruz
+        $category = $this->service->create($validatedData);
+        
+        // Eğer request'te resim varsa, yükleyelim
+        if ($request->hasFile('image')) {
+            $category->uploadImage($request->file('image'), 'image');
+        }
+        
         return $this->successResponse(new StoryCategoryResource($category), 'responses.crud.create_success', 201);
     }
 
@@ -51,7 +60,23 @@ class StoryCategoryController extends BaseController
         if (!$category) {
             return $this->errorResponse('responses.crud.not_found', 404);
         }
-        $updatedCategory = $this->service->update($id, $request->validated());
+        
+        $validatedData = $request->validated();
+        
+        // Eğer request'te resim varsa
+        if ($request->hasFile('image')) {
+            $category->uploadImage($request->file('image'), 'image');
+            // Resim trait tarafından kaydedildiği için validatedData'dan çıkaralım
+            unset($validatedData['image']);
+        }
+        
+        // Diğer verileri güncelleyelim (eğer varsa)
+        if (!empty($validatedData)) {
+            $updatedCategory = $this->service->update($id, $validatedData);
+        } else {
+            $updatedCategory = $category;
+        }
+        
         return $this->successResponse(new StoryCategoryResource($updatedCategory), 'responses.crud.update_success');
     }
 

@@ -5,8 +5,8 @@ namespace App\Services\Admin;
 use App\Interfaces\Services\Admin\CourseChapterLessonContentServiceInterface;
 use App\Interfaces\Repositories\Admin\CourseChapterLessonContentRepositoryInterface;
 use App\Services\BaseService;
-use App\Models\Contents\TextContent;
-use App\Models\Contents\VideoContent;
+use App\Models\TextContent;
+use App\Models\VideoContent;
 use App\Models\FillInTheBlank;
 use App\Models\Quiz;
 use App\Models\MultipleChoiceQuestion;
@@ -29,7 +29,12 @@ class CourseChapterLessonContentService extends BaseService implements CourseCha
      */
     public function getByLessonId(int $lessonId): Collection
     {
-        return $this->repository->getByLessonId($lessonId);
+        $contents = $this->repository->getByLessonId($lessonId);
+        
+        // Soft delete edilmiş içerikleri filtrele
+        return $contents->filter(function ($content) {
+            return $content->contentable !== null;
+        });
     }
     
     /**

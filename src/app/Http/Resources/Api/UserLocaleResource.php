@@ -3,9 +3,9 @@
 namespace App\Http\Resources\Api;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\BaseResource;
 
-class UserLocaleResource extends JsonResource
+class UserLocaleResource extends BaseResource
 {
     /**
      * Transform the resource into an array.
@@ -14,9 +14,11 @@ class UserLocaleResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+        $translated = $this->getTranslated($this->resource);
+        
+        return array_merge($translated, [
             'id' => $this->id,
             'locale' => $this->locale,
-        ];
+        ]);
     }
 } 

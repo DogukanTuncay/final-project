@@ -16,7 +16,6 @@ class MatchingQuestionResource extends BaseResource
             'id' => $this->id,
             'shuffle_items' => $this->shuffle_items,
             'points' => $this->points,
-            'feedback' => $this->resource->getTranslations('feedback'),
             'created_by' => $this->created_by,
             'is_active' => $this->is_active,
             'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,

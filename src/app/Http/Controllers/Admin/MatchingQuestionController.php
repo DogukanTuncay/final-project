@@ -80,6 +80,9 @@ class MatchingQuestionController extends BaseController
     public function show($id)
     {
         $item = $this->service->find($id);
+        if(!$item){
+            return $this->errorResponse('responses.matching_question.not_found', 404);
+        }
         return $this->successResponse(new MatchingQuestionResource($item), 'admin.matching-questions.show.success');
     }
 

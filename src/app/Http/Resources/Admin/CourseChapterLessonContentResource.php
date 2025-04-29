@@ -8,9 +8,9 @@ class CourseChapterLessonContentResource extends BaseResource
 {
     public function toArray($request)
     {
-        $translated = $this->getTranslated($this->resource->contentable);
+        $translated = $this->getTranslated($this->resource);
         
-        return [
+        return array_merge($translated, [
             'id' => $this->id,
             'course_chapter_lesson_id' => $this->course_chapter_lesson_id,
             'contentable_id' => $this->contentable_id,
@@ -22,7 +22,7 @@ class CourseChapterLessonContentResource extends BaseResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'content' => $this->formatContent($this->contentable, $translated),
-        ];
+        ]);
     }
     
     /**
@@ -31,8 +31,8 @@ class CourseChapterLessonContentResource extends BaseResource
     private function getContentTypeName($contentableType)
     {
         $types = [
-            'App\\Models\\Contents\\TextContent' => 'text',
-            'App\\Models\\Contents\\VideoContent' => 'video',
+            'App\\Models\\TextContent' => 'text',
+            'App\\Models\\VideoContent' => 'video',
             'App\\Models\\FillInTheBlank' => 'fill-in-the-blank',
             'App\\Models\\MultipleChoiceQuestion' => 'multiple-choice',
             'App\\Models\\TrueFalseQuestion' => 'true-false',
@@ -53,7 +53,7 @@ class CourseChapterLessonContentResource extends BaseResource
         }
         
         $contentType = $this->getContentTypeName($this->contentable_type);
-        
+
         switch ($contentType) {
             case 'text':
                 return [

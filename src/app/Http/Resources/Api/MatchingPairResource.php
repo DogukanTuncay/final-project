@@ -8,11 +8,10 @@ class MatchingPairResource extends BaseResource
 {
     public function toArray($request)
     {
-        return [
+        $translated = $this->getTranslated($this->resource);
+        return array_merge($translated, [
             'id' => $this->id,
-            'left_item' => $this->resource->getTranslations('left_item'),
-            'right_item' => $this->resource->getTranslations('right_item'),
             'order' => $this->order
-        ];
+        ]);
     }
 } 

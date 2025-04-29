@@ -16,11 +16,17 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Rolleri oluştur (eğer yoksa)
+        // Web guard için rolleri oluştur
         $superAdminRole = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
         $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $editorRole = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
         $userRole = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
+        
+        // API guard için rolleri oluştur
+        $superAdminRoleApi = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'api']);
+        $adminRoleApi = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'api']);
+        $editorRoleApi = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'api']);
+        $userRoleApi = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'api']);
 
         // İlk seviyeyi al veya oluştur
         $firstLevel = Level::orderBy('level_number', 'asc')->first();
@@ -46,7 +52,8 @@ class UserSeeder extends Seeder
                 'locale' => 'tr', // Varsayılan dil
             ]
         );
-        $adminUser->assignRole($adminRole);
+        $adminUser->assignRole($adminRole); // Web için admin rolü
+        $adminUser->assignRole($adminRoleApi); // API için admin rolü
 
         // İsteğe bağlı: Super Admin Kullanıcısı Oluştur
         $superAdminUser = User::firstOrCreate(
@@ -61,14 +68,16 @@ class UserSeeder extends Seeder
                 'locale' => 'tr',
             ]
         );
-        $superAdminUser->assignRole($superAdminRole); // Super Admin rolünü ata
+        $superAdminUser->assignRole($superAdminRole); // Web için Super Admin rolü
+        $superAdminUser->assignRole($superAdminRoleApi); // API için Super Admin rolü
 
         // Örnek Kullanıcılar Oluştur (İsteğe Bağlı)
         if (app()->environment(['local', 'testing'])) {
             User::factory()->count(5)->create([
                 'level_id' => $firstLevel->id,
-            ])->each(function ($user) use ($userRole) {
-                $user->assignRole($userRole); // User rolünü ata
+            ])->each(function ($user) use ($userRole, $userRoleApi) {
+                $user->assignRole($userRole); // Web için user rolü
+                $user->assignRole($userRoleApi); // API için user rolü
             });
         }
     }

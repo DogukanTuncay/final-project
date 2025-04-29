@@ -10,6 +10,7 @@ use App\Http\Resources\Admin\FillInTheBlankResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Request;
 
 class FillInTheBlankController extends Controller
 {
@@ -145,6 +146,63 @@ class FillInTheBlankController extends Controller
         } catch (\Exception $e) {
             Log::error('FillInTheBlankController ToggleStatus Error: ' . $e->getMessage());
             return $this->errorResponse('errors.general_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Boşluk doldurma sorusunu bir derse ekle
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id Soru ID'si
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addToLesson(Request $request, int $id): JsonResponse
+    {
+        try {
+            $validator = validator($request->all(), [
+                'lesson_id' => 'required|exists:course_chapter_lessons,id',
+                'order' => 'nullable|integer|min:0',
+                'is_active' => 'nullable|boolean',
+                'meta_data' => 'nullable|array'
+            ]);
+            
+            if ($validator->fails()) {
+                return $this->errorResponse(
+                    'errors.validation',
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                    $validator->errors()->toArray()
+                );
+            }
+            
+            // Önce sorunun var olduğunu kontrol et
+            $question = $this->fillInTheBlankService->find($id);
+            
+            if (!$question) {
+                return $this->errorResponse('errors.fill_in_the_blank.not_found', Response::HTTP_NOT_FOUND);
+            }
+            
+            // CourseChapterLessonContentService'e enjekte et
+            $lessonContentService = app(\App\Interfaces\Services\Admin\CourseChapterLessonContentServiceInterface::class);
+            
+            // Boşluk doldurma sorusunu ders içeriği olarak ekle
+            $content = $lessonContentService->createWithContent(
+                $request->lesson_id,
+                $question,
+                [
+                    'order' => $request->order ?? 0,
+                    'is_active' => $request->is_active ?? true,
+                    'meta_data' => $request->meta_data ?? null
+                ]
+            );
+            
+            return $this->successResponse(
+                new \App\Http\Resources\Admin\CourseChapterLessonContentResource($content), 
+                'messages.fill_in_the_blank.add_to_lesson_success'
+            );
+            
+        } catch (\Exception $e) {
+            Log::error('FillInTheBlankController AddToLesson Error: ' . $e->getMessage());
+            return $this->errorResponse('errors.fill_in_the_blank.add_to_lesson_error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 } 

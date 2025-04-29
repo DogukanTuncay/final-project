@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources\Api;
 
-use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\BaseResource;
 
-class FillInTheBlankResource extends JsonResource
+class FillInTheBlankResource extends BaseResource
 {
     /**
      * Transform the resource into an array.
@@ -14,7 +14,9 @@ class FillInTheBlankResource extends JsonResource
      */
     public function toArray($request)
     {
-        return [
+        $translated = $this->getTranslated($this->resource);
+        
+        return array_merge($translated, [
             'id' => $this->id,
             'title' => $this->title,
             'slug' => $this->slug,
@@ -26,6 +28,6 @@ class FillInTheBlankResource extends JsonResource
             'is_active' => $this->is_active,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s')
-        ];
+        ]);
     }
 } 

@@ -26,8 +26,8 @@ class CourseChapterLessonContentResource extends BaseResource
     private function getContentTypeName($contentableType)
     {
         $types = [
-            'App\\Models\\Contents\\TextContent' => 'text',
-            'App\\Models\\Contents\\VideoContent' => 'video',
+            'App\\Models\\TextContent' => 'text',
+            'App\\Models\\VideoContent' => 'video',
             'App\\Models\\FillInTheBlank' => 'fill-in-the-blank',
             'App\\Models\\MultipleChoiceQuestion' => 'multiple-choice',
             'App\\Models\\TrueFalseQuestion' => 'true-false',
@@ -105,10 +105,11 @@ class CourseChapterLessonContentResource extends BaseResource
                 
             case 'matching':
                 $pairs = $contentable->pairs ? $contentable->pairs->map(function($pair) {
+                    $translated = $this->getTranslated($pair);
                     return [
                         'id' => $pair->id,
-                        'left_item' => $pair->getTranslations('left_item'),
-                        'right_item' => $pair->getTranslations('right_item'),
+                        'left_item' => $translated['left_item'] ?? $pair->left_item,
+                        'right_item' => $translated['right_item'] ?? $pair->right_item,
                         'order' => $pair->order,
                     ];
                 }) : [];

@@ -5,8 +5,9 @@ namespace App\Http\Resources\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Http\Resources\BaseResource;
 
-class CourseChapterLessonResource extends JsonResource
+class CourseChapterLessonResource extends BaseResource
 {
     /**
      * Transform the resource into an array.
@@ -47,17 +48,12 @@ class CourseChapterLessonResource extends JsonResource
             // Token bulunamadı veya geçersiz, ders kilitli değil
             $is_locked = false;
         }
-        
-        return [
+        $translated = $this->getTranslated($this->resource);
+        return array_merge($translated, [
             'id' => $this->id,
             'course_chapter_id' => $this->course_chapter_id,
             'slug' => $this->slug,
-            'name' => $this->name,
-            'description' => $this->description,
-            'meta_title' => $this->meta_title,
-            'meta_description' => $this->meta_description,
             'xp_reward' => $this->xp_reward,
-
             'order' => $this->order,
             'is_active' => $this->is_active,
             'is_locked' => $is_locked,
@@ -68,6 +64,6 @@ class CourseChapterLessonResource extends JsonResource
             'is_completed' => $this->is_completed,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-        ];
+        ]);
     }
 }

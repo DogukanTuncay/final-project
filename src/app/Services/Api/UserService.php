@@ -45,21 +45,49 @@ class UserService implements UserServiceInterface
     public function updateProfile(int $userId, array $data): ?User
     {
         try {
-            // Güvenlik için sadece izin verilen alanları güncelle
-            // Modeldeki $fillable alanlarından bazılarını hariç tutabiliriz (örn. email, level_id, experience_points)
-            // Veya Request sınıfında bu kontrolü daha sıkı yapabiliriz.
-            // Şimdilik Request'ten gelen $validated verisinin güvenli olduğunu varsayıyoruz.
-            // Ancak yine de hassas olabilecek alanları filtreleyelim:
-            $allowedData = Arr::except($data, ['email', 'password', 'level_id', 'experience_points', 'locale']);
-
-            if (empty($allowedData)) {
-                // Güncellenecek geçerli alan yoksa null döndür veya mevcut kullanıcıyı döndür
-                return $this->userRepository->findById($userId);
+            // Önce kullanıcının var olduğundan emin olalım
+            $user = $this->userRepository->findById($userId);
+            if (!$user) {
+                Log::warning('UserService: Profil güncellemesi için kullanıcı bulunamadı', ['user_id' => $userId]);
+                return null;
             }
 
-            return $this->userRepository->update($userId, $allowedData);
+            // Güvenlik için sadece güncellenmesine izin verilen alanları filtreleyelim
+            $allowedFields = ['name', 'username', 'phone', 'zip_code'];
+            $filteredData = array_intersect_key($data, array_flip($allowedFields));
+            
+            // Hiç güncellenecek alan yoksa boşuna repository çağırmayalım
+            if (empty($filteredData)) {
+                return $user;
+            }
+            
+            // Güncellemeleri loglamak için onceki değerleri kaydedelim
+            $logData = [];
+            foreach ($filteredData as $key => $value) {
+                if ($user->{$key} != $value) {
+                    $logData[$key] = [
+                        'old' => $user->{$key},
+                        'new' => $value
+                    ];
+                }
+            }
+
+            // Eğer değişiklik varsa logla
+            if (!empty($logData)) {
+                Log::info('UserService: Profil güncellemesi', [
+                    'user_id' => $userId,
+                    'changes' => $logData
+                ]);
+            }
+
+            // Repository üzerinden güncellemeyi yap
+            return $this->userRepository->update($userId, $filteredData);
+            
         } catch (\Exception $e) {
-            Log::error('UserService updateProfile error: ' . $e->getMessage(), ['user_id' => $userId, 'data' => $data]);
+            Log::error('UserService updateProfile error: ' . $e->getMessage(), [
+                'user_id' => $userId, 
+                'data' => $data
+            ]);
             return null;
         }
     }

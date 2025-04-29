@@ -20,7 +20,6 @@ return new class extends Migration
             $table->string('locale')->default('en');
             $table->foreignId('level_id')->nullable()->constrained()->onDelete('set null');
             $table->unsignedBigInteger('experience_points')->default(0);
-            $table->string('onesignal_api_key')->nullable(); // veya uygun bir sütundan sonra
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

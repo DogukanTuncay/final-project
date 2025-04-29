@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'JWT' => JwtMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'record.login' => \App\Http\Middleware\RecordUserLogin::class,
         ]);
 
         //

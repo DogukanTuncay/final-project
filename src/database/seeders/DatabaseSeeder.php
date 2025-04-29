@@ -25,24 +25,25 @@ class DatabaseSeeder extends Seeder
             CourseChapterSeeder::class,     // Bölümler (Kurslara ihtiyaç duyar)
             CourseChapterLessonSeeder::class, // Dersler (Bölümlere ihtiyaç duyar)
 
-            // 3. Soru Tipleri
-            // Not: Bu seeder'lar kendi içlerinde LessonContent de oluşturuyor.
-            // Eğer LessonContent ayrı yönetilecekse, soru seeder'ları içindeki
-            // CourseChapterLessonContent::create kısımları kaldırılıp
-            // ayrı bir CourseChapterLessonContentSeeder oluşturulmalı.
+            // 3. Hikayeler
+            StoryCategorySeeder::class,  // Hikaye Kategorileri
+            StorySeeder::class,          // Hikayeler (Kategorilere ihtiyaç duyar)
+
+            // 4. Soru Tipleri ve İçerikler
+            VideoContentSeeder::class,    // Video İçerikleri
             FillInTheBlankSeeder::class, 
             MultipleChoiceQuestionSeeder::class,
             TrueFalseQuestionSeeder::class,
             ShortAnswerQuestionSeeder::class,
             MatchingQuestionSeeder::class,
             
-            // 4. İlişkisel ve Diğer Veriler
+            // 5. İlişkisel ve Diğer Veriler
             LessonPrerequisiteSeeder::class, // Ders ön koşulları (Dersler oluşturulduktan sonra)
             CoursePermissionSeeder::class, // Kurs İzinleri
             MissionSeeder::class,         // Görevler
             // AchievementSeeder::class, // Başarımlar (Eklenecekse)
             
-            // 5. Test/Geliştirme Verileri (Sadece Gerekliyse)
+            // 6. Test/Geliştirme Verileri (Sadece Gerekliyse)
             // LessonCompletionTestSeeder::class, // Test tamamlama verileri (Development/Testing için)
         ]);
 

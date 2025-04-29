@@ -9,11 +9,11 @@ use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
-use App\Traits\HasImage; // Gerekirse diye ekledim, kategori için image olmayabilir
+use App\Traits\HasImage;
 
 class StoryCategory extends Model
 {
-    use HasFactory, SoftDeletes, HasTranslations, LogsActivity;
+    use HasFactory, SoftDeletes, HasTranslations, LogsActivity, HasImage;
 
     /**
      * Çevirilecek alanlar.
@@ -26,6 +26,7 @@ class StoryCategory extends Model
     protected $fillable = [
         'name',
         'slug',
+        'image',
         'is_active',
         'order',
     ];
@@ -37,6 +38,13 @@ class StoryCategory extends Model
         'is_active' => 'boolean',
         'name' => 'array',
         'order' => 'integer',
+    ];
+
+    /**
+     * Otomatik eklenen özellikler
+     */
+    protected $appends = [
+        'image_url',
     ];
 
     /**

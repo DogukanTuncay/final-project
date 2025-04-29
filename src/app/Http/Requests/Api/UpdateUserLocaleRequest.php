@@ -4,7 +4,6 @@ namespace App\Http\Requests\Api;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-
 class UpdateUserLocaleRequest extends FormRequest
 {
     /**
@@ -12,11 +11,6 @@ class UpdateUserLocaleRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize(): bool
-    {
-        // Sadece giriş yapmış kullanıcılar kendi locale'lerini değiştirebilir.
-        return auth()->check();
-    }
 
     /**
      * Get the validation rules that apply to the request.

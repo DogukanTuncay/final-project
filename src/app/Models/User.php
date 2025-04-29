@@ -13,11 +13,15 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Carbon\Carbon;
+use App\Traits\HasImage;
 
-class User extends Authenticatable implements JWTSubject,MustVerifyEmail
+class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity, HasImage;
 
     /**
      * The attributes that are mass assignable.
@@ -36,6 +40,8 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
         'experience_points',
         'xp',
         'onesignal_api_key',
+        'profile_image',
+        'onesignal_player_id',
     ];
 
     /**
@@ -44,6 +50,18 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
      * @var array
      */
     protected $with = ['level'];
+
+    /**
+     * Otomatik hesaplanan özellikler
+     * 
+     * @var array
+     */
+    protected $appends = [
+        'level_progress',
+        'current_streak',
+        'longest_streak',
+        'profile_image_url',
+    ];
 
     /**
      * The "booted" method of the model.
@@ -114,13 +132,11 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'onesignal_player_id' => 'string',
+    ];
 
     /**
      * Kullanıcının seviye bilgisi
@@ -130,20 +146,59 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
         return $this->belongsTo(Level::class);
     }
 
-
-    public function missions()
+    /**
+     * Kullanıcının görevlerdeki ilerlemesi.
+     */
+    public function missionProgresses(): HasMany
     {
-        return $this->belongsToMany(Mission::class)
-                    ->withPivot('completed_at')
+        return $this->hasMany(UserMissionProgress::class);
+    }
+
+    /**
+     * Kullanıcının giriş kayıtları
+     */
+    public function logins(): HasMany
+    {
+        return $this->hasMany(UserLogin::class);
+    }
+
+    /**
+     * Kullanıcının ilişkili olduğu tüm görevler (ilerleme üzerinden).
+     */
+    public function missions(): BelongsToMany
+    {
+        return $this->belongsToMany(Mission::class, 'user_mission_progress')
+                    ->using(UserMissionProgress::class) // İsterseniz özel pivot modeli kullanabilirsiniz
+                    ->withPivot('current_amount', 'completed_at')
                     ->withTimestamps();
     }
 
-    public function dailyCompletedMissions($date = null)
+    /**
+     * Kullanıcının kazandığı rozetler
+     */
+    public function badges(): BelongsToMany
     {
-        $date = $date ?? now()->toDateString();
+        return $this->belongsToMany(Badge::class, 'user_badges')
+                    ->withPivot('earned_at')
+                    ->withTimestamps();
+    }
+    
+    /**
+     * Kullanıcının kazandığı rozetleri getirir
+     */
+    public function earnedBadges()
+    {
+        return $this->badges()->wherePivotNotNull('earned_at');
+    }
 
+    /**
+     * Belirli bir tarihte tamamlanan görevler (Eski fonksiyona benzer ama yeni yapı ile).
+     */
+    public function completedMissionsOn(string $date)
+    {
         return $this->missions()
-            ->wherePivot('completed_at', $date)
+            ->wherePivotNotNull('completed_at')
+            ->whereDate('user_mission_progress.completed_at', $date) // Pivot tablo adını belirtmek önemli
             ->get();
     }
 
@@ -200,6 +255,96 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
     }
 
     /**
+     * Kullanıcının mevcut streak'ini hesaplar
+     * Streak, kullanıcının kesintisiz olarak kaç gün uygulamaya giriş yaptığını gösterir
+     * 
+     * @return int
+     */
+    public function getCurrentStreakAttribute(): int
+    {
+        $loginDates = $this->logins()
+            ->orderBy('login_date', 'desc')
+            ->pluck('login_date')
+            ->map(function($date) { 
+                return Carbon::parse($date)->startOfDay(); 
+            })
+            ->toArray();
+        
+        if (empty($loginDates)) {
+            return 0;
+        }
+        
+        $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
+        
+        // Son giriş bugün veya dün değilse, streak kırılmıştır
+        if ($loginDates[0]->ne($today) && $loginDates[0]->ne($yesterday)) {
+            return 0;
+        }
+        
+        $streak = 1; // En azından bir gün giriş yapmış
+        
+        for ($i = 0; $i < count($loginDates) - 1; $i++) {
+            $diff = $loginDates[$i]->diffInDays($loginDates[$i + 1]);
+            
+            // Ardışık günlerse streak'i arttır
+            if ($diff === 1) {
+                $streak++;
+            } else {
+                break; // Ardışık olmayan bir gün bulduğumuzda durakla
+            }
+        }
+        
+        return $streak;
+    }
+    
+    /**
+     * Kullanıcının en uzun streak'ini hesaplar
+     * 
+     * @return int
+     */
+    public function getLongestStreakAttribute(): int
+    {
+        $loginDates = $this->logins()
+            ->orderBy('login_date')
+            ->pluck('login_date')
+            ->map(function($date) { 
+                return Carbon::parse($date)->startOfDay(); 
+            })
+            ->toArray();
+        
+        if (empty($loginDates)) {
+            return 0;
+        }
+        
+        $longestStreak = 1;
+        $currentStreak = 1;
+        
+        for ($i = 0; $i < count($loginDates) - 1; $i++) {
+            $diff = $loginDates[$i]->diffInDays($loginDates[$i + 1]);
+            
+            if ($diff === 1) {
+                $currentStreak++;
+                $longestStreak = max($longestStreak, $currentStreak);
+            } else if ($diff > 1) {
+                $currentStreak = 1;
+            }
+        }
+        
+        return $longestStreak;
+    }
+
+    /**
+     * Bir kullanıcının giriş kayıtlarını bugün için kaydeder
+     * 
+     * @return UserLogin
+     */
+    public function recordLoginToday()
+    {
+        return UserLogin::recordLoginToday($this->id);
+    }
+
+    /**
      * Configure the options for activity logging.
      */
     public function getActivitylogOptions(): LogOptions
@@ -209,5 +354,21 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
             ->logOnlyDirty() // Only log changes
             ->useLogName('user')
             ->setDescriptionForEvent(fn(string $eventName) => "User {$this->name} ({$this->email}) has been {$eventName}");
+    }
+
+    /**
+     * Kullanıcının bildirim ayarları
+     */
+    public function notificationSettings()
+    {
+        return $this->hasOne(UserNotificationSetting::class);
+    }
+
+    /**
+     * Kullanıcının bildirim logları
+     */
+    public function notificationLogs()
+    {
+        return $this->hasMany(UserNotificationLog::class);
     }
 }

@@ -27,15 +27,36 @@ class UserRepository implements UserRepositoryInterface
      */
     public function update(int $userId, array $data): ?User
     {
-        $user = $this->findById($userId);
-        if ($user) {
-            // Parola ve locale gibi özel alanları doğrudan update ile değiştirmeyelim
-            // Bu örnekte sadece belirli alanların güncelleneceğini varsayıyoruz
-            // Daha güvenli bir yol, fillable'dan gelenleri filtrelemek olabilir
-            $user->update($data);
+        try {
+            $user = $this->findById($userId);
+
+            if (!$user) {
+                return null;
+            }
+
+            // İzin verilen alanların güncellenmesini sağla ve sadece değişen alanları güncelle
+            $dataChanged = false;
+            foreach ($data as $key => $value) {
+                if (in_array($key, $user->getFillable()) && $user->{$key} !== $value) {
+                    $user->{$key} = $value;
+                    $dataChanged = true;
+                }
+            }
+
+            // Sadece değişiklik varsa kaydet
+            if ($dataChanged) {
+                $user->save();
+            }
+
+            // Güncel kullanıcıyı döndür
             return $user->fresh();
+        } catch (\Exception $e) {
+            \Log::error('UserRepository update error: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'data' => $data
+            ]);
+            return null;
         }
-        return null;
     }
 
     /**

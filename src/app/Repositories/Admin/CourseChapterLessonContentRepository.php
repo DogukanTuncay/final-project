@@ -23,11 +23,17 @@ class CourseChapterLessonContentRepository extends BaseRepository implements Cou
      */
     public function getByLessonId(int $lessonId): Collection
     {
-        return $this->model
+        // Önce tüm içerikleri getir
+        $contents = $this->model
             ->with('contentable')
             ->where('course_chapter_lesson_id', $lessonId)
             ->orderBy('order')
             ->get();
+            
+        // Soft delete edilmiş içerikleri filtrele
+        return $contents->filter(function ($content) {
+            return $content->contentable !== null;
+        });
     }
     
     /**
@@ -39,12 +45,18 @@ class CourseChapterLessonContentRepository extends BaseRepository implements Cou
      */
     public function getByContentType(int $lessonId, string $contentType): Collection
     {
-        return $this->model
+        // Önce tüm içerikleri getir
+        $contents = $this->model
             ->with('contentable')
             ->where('course_chapter_lesson_id', $lessonId)
             ->where('contentable_type', $contentType)
             ->orderBy('order')
             ->get();
+            
+        // Soft delete edilmiş içerikleri filtrele
+        return $contents->filter(function ($content) {
+            return $content->contentable !== null;
+        });
     }
     
     /**

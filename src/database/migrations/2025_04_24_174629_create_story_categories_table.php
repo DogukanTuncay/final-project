@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->json('name'); // Translatable
             $table->string('slug')->unique();
+            $table->string('image_url')->nullable(); // Resim URL'si eklendi
             $table->boolean('is_active')->default(true);
             $table->integer('order')->default(0);
             $table->timestamps();

@@ -6,6 +6,8 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\User;
 
 class EnsureEmailIsVerified
@@ -13,20 +15,34 @@ class EnsureEmailIsVerified
     use ApiResponseTrait;
 
     /**
-     * Handle an incoming request.
+     * Gelen isteği işle.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Middleware'in `auth:api` (veya benzeri) bir kimlik doğrulama middleware'inden
+     * sonra çalıştırıldığı varsayılır.
+     *
+     * @param  \\Illuminate\\Http\\Request  $request
+     * @param  \\Closure(\\Illuminate\\Http\\Request): (\\Symfony\\Component\\HttpFoundation\\Response)  $next
+     * @return \\Symfony\\Component\\HttpFoundation\\Response
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return $this->errorResponse('responses.verification.user_not_found', 404);
-        }
-        if (!$user->hasVerifiedEmail()) {
+        $user = $request->user();
+
+        // Kullanıcı kimliği doğrulanmamışsa veya
+        // kullanıcı MustVerifyEmail arayüzünü uyguluyor ve e-postası doğrulanmamışsa
+        if (!$user ||
+            ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()))
+        {
+            // Kimliği doğrulanmamışsa (genellikle auth middleware tarafından yakalanır ama ek kontrol)
+            if (!$user) {
+                return $this->errorResponse('responses.auth.unauthenticated', 401);
+            }
+
+            // E-posta doğrulanmamışsa
             return $this->errorResponse('responses.auth.email_not_verified', 403);
         }
 
+        // Kullanıcının kimliği ve e-postası doğrulanmışsa, isteğin devam etmesine izin ver
         return $next($request);
     }
 }

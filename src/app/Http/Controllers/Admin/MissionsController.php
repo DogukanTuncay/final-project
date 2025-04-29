@@ -51,15 +51,7 @@ class MissionsController extends BaseController
      */
     public function store(MissionsRequest $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'is_active' => 'required|boolean',
-            'min_xp' => 'required|integer',
-            'max_xp' => 'required|integer',
-        ]);
-
-        $item = $this->service->create($validated);
+        $item = $this->service->create($request->all());
 
         return $this->successResponse(new MissionsResource($item), 'api.missions.store.success');
     }
@@ -73,15 +65,8 @@ class MissionsController extends BaseController
      */
     public function update(MissionsRequest $request, $id)
     {
-        $validated = $request->validate([
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
-            'min_xp' => 'nullable|integer',
-            'max_xp' => 'nullable|integer',
-        ]);
 
-        $item = $this->service->update($id, $validated);
+        $item = $this->service->update($id, $request->all());
 
         if ($item) {
             return $this->successResponse(new MissionsResource($item), 'api.missions.update.success');

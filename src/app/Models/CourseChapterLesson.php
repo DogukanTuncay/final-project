@@ -16,6 +16,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class CourseChapterLesson extends Model 
 {
@@ -246,6 +247,14 @@ class CourseChapterLesson extends Model
     }
 
     /**
+     * Bu dersin tamamlanmasını gerektiren görevler (Missions).
+     */
+    public function missions(): MorphMany
+    {
+        return $this->morphMany(Mission::class, 'completable');
+    }
+
+    /**
      * Configure the options for activity logging.
      */
     public function getActivitylogOptions(): LogOptions
@@ -254,7 +263,7 @@ class CourseChapterLesson extends Model
             ->logFillable() // Log all fillable attributes
             ->logOnlyDirty() // Only log changes
             ->useLogName('course_chapter_lesson')
-            ->setDescriptionForEvent(fn(string $eventName) => "Lesson '{$this->name}' has been {$eventName}");
+            ->setDescriptionForEvent(fn(string $eventName) => "Lesson \"{$this->getTranslation('name', 'en', false)}\" (ID: {$this->id}) has been {$eventName}");
     }
 
 }
