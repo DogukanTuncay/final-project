@@ -10,4 +10,5 @@ interface AuthRepositoryInterface
     public function refresh();
     public function forgotPassword($email);
     public function findByEmail(string $email);
+    public function resetPassword(array $data);
 }

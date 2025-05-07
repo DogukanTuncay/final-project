@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Notification;
 use App\Interfaces\Services\Auth\VerificationServiceInterface;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\VerifyEmailNotification;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
 
 class AuthService extends BaseService implements AuthServiceInterface
 {
@@ -108,5 +110,34 @@ class AuthService extends BaseService implements AuthServiceInterface
         }
         
         return ['message' => 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.'];
+    }
+
+    /**
+     * Şifre sıfırlama işlemini gerçekleştirir
+     *
+     * @param array $data
+     * @return array
+     */
+    public function resetPassword(array $data)
+    {
+        // Şifre sıfırlama işlemini gerçekleştir
+        $status = Password::reset(
+            $data,
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return ['status' => 'success', 'message' => __('passwords.reset')];
+        }
+
+        return ['status' => 'error', 'message' => __('passwords.' . $status)];
     }
 }

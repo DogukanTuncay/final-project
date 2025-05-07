@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,6 +13,14 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+  // Şifre sıfırlama rotaları
+  Route::post('password-reset', [ResetPasswordController::class, 'reset'])
+  ->middleware('guest')
+  ->name('password.update');
+Route::get('password-reset/{token}', [ResetPasswordController::class, 'showResetForm'])
+  ->middleware('guest')
+  ->name('password.reset');
+
 
 Route::get('/', function () {
     return view('welcome');

@@ -8,6 +8,9 @@ use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Auth\Events\PasswordReset;
+
 class AuthRepository extends BaseRepository implements AuthRepositoryInterface
 {
     public function __construct()
@@ -52,7 +55,7 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
             $user->onesignal_player_id = $onesignalApiKey;
             $user->save();
             // Kullanıcı nesnesini yeniden yükleyerek güncel veriyi al (isteğe bağlı, token aynı kalır)
-            // $user = $user->fresh(); 
+            $user = $user->fresh(); 
         }
 
         return compact('token', 'user');
@@ -76,4 +79,21 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
 {
     return User::where('email', $email)->first();
 }
+
+    /**
+     * Şifre sıfırlama işlemini gerçekleştirir
+     *
+     * @param array $data
+     * @return mixed
+     */
+    public function resetPassword(array $data)
+    {
+        return Password::reset($data, function ($user, $password) {
+            $user->password = Hash::make($password);
+            $user->setRememberToken(Str::random(60));
+            $user->save();
+
+            event(new PasswordReset($user));
+        });
+    }
 }

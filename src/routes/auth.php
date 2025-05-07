@@ -5,14 +5,14 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\VerificationController;
 
 // Kimlik doğrulama rotaları - ayrı bir prefix olarak tanımlanıyor
-Route::prefix('auth')->name('auth.')->group(function () {
+Route::prefix('auth')->group(function () {
     // Public rotalar - Email doğrulaması gerektirmeyen rotalar
     Route::post('register', [AuthController::class, 'register'])->name('register');
     Route::post('login', [AuthController::class, 'login'])->name('login');
     Route::post('forgot-password', [AuthController::class, 'forgotPassword'])
-        ->middleware('verified')
         ->name('forgot-password');
-
+    
+  
     // Email doğrulama rotaları
     Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])

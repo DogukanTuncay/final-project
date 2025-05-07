@@ -3,9 +3,9 @@
 namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\BaseRequest;
-class ForgotPasswordRequest  extends BaseRequest
-{
 
+class ResetPasswordRequest extends BaseRequest
+{
     /**
      * Get the validation rules that apply to the request.
      *
@@ -14,7 +14,9 @@ class ForgotPasswordRequest  extends BaseRequest
     public function rules(): array
     {
         return [
+            'token' => 'required',
             'email' => 'required|email|exists:users,email',
+            'password' => 'required|min:8|confirmed',
         ];
     }
-}
+} 

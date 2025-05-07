@@ -247,6 +247,9 @@ return [
         'invalid_credentials' => 'E-posta adresi veya şifre hatalı.',
         'invalid_token' => 'Geçersiz veya süresi dolmuş token.',
         'email_already_verified' => 'E-posta adresiniz zaten doğrulanmış.',
+        'reset_form' => 'Şifre sıfırlama formu.',
+        'reset_success' => 'Şifreniz başarıyla sıfırlanmıştır.',
+        'reset_failed' => 'Şifre sıfırlama işlemi başarısız oldu.',
     ],
     'verification' => [
         'success' => 'E-posta adresiniz başarıyla doğrulandı.',

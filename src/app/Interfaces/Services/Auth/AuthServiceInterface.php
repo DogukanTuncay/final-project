@@ -9,4 +9,5 @@ interface AuthServiceInterface
     public function logout();
     public function refresh();
     public function forgotPassword(string $email);
+    public function resetPassword(array $data);
 }

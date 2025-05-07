@@ -9,7 +9,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Interfaces\Services\Auth\AuthServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-
+use App\Http\Resources\Api\UserResource;
 class AuthController extends BaseController
 {
     protected $authService;
@@ -30,7 +30,7 @@ class AuthController extends BaseController
         $result = $this->authService->register($request->validated());
         return isset($result['error'])
             ? $this->errorResponse($result['error'], 401)
-            : $this->successResponse($result, 'responses.auth.register_success');
+            : $this->successResponse(new UserResource($result), 'responses.auth.register_success');
     }
 
     /**
