@@ -159,7 +159,10 @@ class CourseChapterLessonController extends BaseController
 
         $completion = $this->service->markAsCompleted($id);
         if(!$completion){
-            return $this->errorResponse('responses.lesson_completion.already_completed', 400);
+            return $this->successResponse(
+                null, 
+                'responses.lesson_completion.completed'
+            );
         }
 
         // Ders tamamlamaya özel event ekle
@@ -186,7 +189,6 @@ class CourseChapterLessonController extends BaseController
             'lesson'
         );
 
-Log::info("Dönüş Yapılıyor.");
         // EventService'den eventleri al
         $eventService = app(EventService::class);
         $events = $eventService->getEvents();
