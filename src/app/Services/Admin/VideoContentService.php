@@ -29,7 +29,7 @@ class VideoContentService extends BaseService implements VideoContentServiceInte
      * ID'ye göre video içeriğini bul
      *
      * @param int $id
-     * @return \App\Models\VideoContent|null
+     * @return \App\Models\VideoContent
      */
     public function find($id)
     {
@@ -98,30 +98,32 @@ class VideoContentService extends BaseService implements VideoContentServiceInte
     }
 
     /**
-     * Video URL'sinden provider ve video ID bilgilerini çıkar
+     * Video URL'sini parse et ve bilgileri çıkar
      *
      * @param string $url
      * @return array
      */
     public function parseVideoUrl($url)
     {
-        $result = [
-            'provider' => 'custom',
-            'video_id' => null
-        ];
+        $provider = 'custom';
+        $videoId = null;
 
-        // YouTube URL kontrolü
+        // YouTube URL'si
         if (preg_match('/(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $url, $matches)) {
-            $result['provider'] = 'youtube';
-            $result['video_id'] = $matches[1];
+            $provider = 'youtube';
+            $videoId = $matches[1];
         }
-        // Vimeo URL kontrolü
+        // Vimeo URL'si
         elseif (preg_match('/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|)(\d+)(?:|\/\?)/', $url, $matches)) {
-            $result['provider'] = 'vimeo';
-            $result['video_id'] = $matches[1];
+            $provider = 'vimeo';
+            $videoId = $matches[1];
         }
 
-        return $result;
+        return [
+            'provider' => $provider,
+            'video_id' => $videoId,
+            'is_valid' => $provider !== 'custom'
+        ];
     }
 
     /**
@@ -133,6 +135,11 @@ class VideoContentService extends BaseService implements VideoContentServiceInte
      */
     public function bulkUpdate(array $ids, array $data)
     {
-        return $this->repository->bulkUpdate($ids, $data);
+        try {
+            return $this->repository->bulkUpdate($ids, $data);
+        } catch (\Exception $e) {
+            Log::error('VideoContent toplu güncellenirken hata: ' . $e->getMessage());
+            throw $e;
+        }
     }
 }

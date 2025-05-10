@@ -9,6 +9,8 @@ use App\Listeners\UpdateMissionProgressOnLessonCompletion;
 use App\Events\ChapterCompleted;
 use App\Events\CourseCompleted;
 use App\Listeners\SendEmailVerificationNotification;
+use App\Listeners\UpdateMissionProgressOnChapterCompletion;
+use App\Listeners\UpdateMissionProgressOnCourseCompletion;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -27,18 +29,17 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\LessonCompleted::class => [
             \App\Listeners\UpdateMissionProgressOnLessonCompletion::class,
             \App\Listeners\CheckBadgeEligibilityListener::class,
-            // Lesson tamamlanınca tetiklenecek başka listenerlar varsa buraya ekleyin
         ],
         \App\Events\ChapterCompleted::class => [
-            // \App\Listeners\UpdateMissionProgressOnChapterCompletion::class, // Bu listener'ı oluşturduğunuzda ekleyin
+            \App\Listeners\UpdateMissionProgressOnChapterCompletion::class,
             \App\Listeners\CheckBadgeEligibilityListener::class,
         ],
         \App\Events\CourseCompleted::class => [
-            // \App\Listeners\UpdateMissionProgressOnCourseCompletion::class, // Bu listener'ı oluşturduğunuzda ekleyin
+            \App\Listeners\UpdateMissionProgressOnCourseCompletion::class,
             \App\Listeners\CheckBadgeEligibilityListener::class,
         ],
         \App\Events\MissionCompleted::class => [
-            \App\Listeners\CheckBadgeEligibilityListener::class,
+            \App\Listeners\HandleMissionCompleted::class,
         ],
         \App\Events\UserLoggedIn::class => [
             \App\Listeners\CheckBadgeEligibilityListener::class,

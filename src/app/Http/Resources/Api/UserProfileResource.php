@@ -7,6 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\Api\LevelResource; // LevelResource varsa
 use App\Http\Resources\BaseResource;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Session;
 
 class UserProfileResource extends BaseResource
 {
@@ -30,6 +31,9 @@ class UserProfileResource extends BaseResource
             fn() => $this->completedLessons->count(), 
             fn() => \App\Models\LessonCompletion::where('user_id', $this->id)->count()
         );
+        
+        // Yeni tamamlanan görevler (session'dan)
+        $justCompletedMissions = Session::get('just_completed_missions', []);
         
         return array_merge($translated, [
             'id' => $this->id,
@@ -66,6 +70,9 @@ class UserProfileResource extends BaseResource
                 'join_days' => $this->created_at ? Carbon::now()->diffInDays($this->created_at) : 0,
                 'last_login' => $this->logins()->latest('login_date')->first()?->login_date?->toIso8601String(),
             ],
+            'just_completed_missions' => $justCompletedMissions,
+            'completed_missions_count' => $completedMissions,
+            'completed_lessons_count' => $completedLessonsCount,
         ]);
     }
 } 

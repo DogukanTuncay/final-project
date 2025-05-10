@@ -6,8 +6,15 @@ use App\Http\Controllers\BaseController;
 use App\Interfaces\Services\Api\CourseChapterLessonServiceInterface;
 use App\Http\Resources\Api\CourseChapterLessonResource;
 use Illuminate\Support\Facades\Auth;
+use App\Models\CourseChapterLesson;
+use App\Traits\HandlesEvents;
+use Illuminate\Support\Facades\Log;
+
 class CourseChapterLessonController extends BaseController
 {
+    use HandlesEvents;
+    
+
     protected $service;
 
     public function __construct(CourseChapterLessonServiceInterface $service)
@@ -153,6 +160,31 @@ class CourseChapterLessonController extends BaseController
             return $this->errorResponse('responses.lesson_completion.already_completed', 400);
         }
 
+        // Ders tamamlamaya özel event ekle
+        $eventData = [
+            'lesson_id' => $id,
+            'lesson_name' => is_array($lesson->name) 
+                ? ($lesson->name[app()->getLocale()] ?? reset($lesson->name)) 
+                : $lesson->name,
+            'completion_id' => $completion->id,
+            'xp_reward' => $lesson->xp_reward ?? 0,
+            'event_reason' => 'lesson_completed',
+            'event_source' => 'lesson',
+            'timestamp' => now()->toDateTimeString()
+        ];
+        
+        // Özel olayı oluştur
+        $this->createEvent(
+            'lesson_completed', 
+            $eventData, 
+            __('events.lesson_completed', [
+                'lesson' => $eventData['lesson_name'],
+                'xp' => $eventData['xp_reward']
+            ]), 
+            'lesson'
+        );
+
+Log::info("Dönüş Yapılıyor.");
         return $this->successResponse([
             'completed' => true,
             'completion_id' => $completion->id
@@ -216,5 +248,41 @@ class CourseChapterLessonController extends BaseController
         ];
         
         return $this->successResponse($debug, 'Ön koşul testi başarılı');
+    }
+
+    private function checkAndAwardBadges($user, $lesson): void
+    {
+        // Ders tamamlama sayısına göre rozet kontrolü
+        $completedLessonsCount = $user->completedLessons()->count();
+        
+        // Örnek rozet kontrolleri
+        if ($completedLessonsCount >= 10) {
+            $badge = Badge::where('type', 'lesson_master_10')->first();
+            if ($badge) {
+                $user->addBadge($badge);
+            }
+        }
+        
+        if ($completedLessonsCount >= 50) {
+            $badge = Badge::where('type', 'lesson_master_50')->first();
+            if ($badge) {
+                $user->addBadge($badge);
+            }
+        }
+
+        // Bölüm tamamlama rozeti kontrolü
+        $chapter = $lesson->chapter;
+        $completedLessonsInChapter = $chapter->lessons()
+            ->whereHas('completions', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->count();
+
+        if ($completedLessonsInChapter === $chapter->lessons()->count()) {
+            $badge = Badge::where('type', 'chapter_master')->first();
+            if ($badge) {
+                $user->addBadge($badge);
+            }
+        }
     }
 }

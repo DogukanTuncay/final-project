@@ -22,7 +22,7 @@ class TrueFalseQuestionRepository extends BaseRepository implements TrueFalseQue
      */
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return $this->model->orderBy('created_at', 'desc')->paginate($perPage);
+        return $this->model->orderBy('created_at', 'desc')->get();
     }
 
     /**

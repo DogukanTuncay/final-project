@@ -15,6 +15,9 @@ class DatabaseSeeder extends Seeder
     {
         // Önem sırasına göre Seeder'ları çağırın
         $this->call([
+            // 0. Sistem Ayarları
+            SettingsSeeder::class,      // Sistem Ayarları
+        
             // 1. Temel ve Bağımsız Veriler
             UserSeeder::class,          // Kullanıcılar (Özellikle Admin)
             LevelSeeder::class,         // Seviyeler
@@ -36,7 +39,6 @@ class DatabaseSeeder extends Seeder
             TrueFalseQuestionSeeder::class,
             ShortAnswerQuestionSeeder::class,
             MatchingQuestionSeeder::class,
-            
             // 5. İlişkisel ve Diğer Veriler
             LessonPrerequisiteSeeder::class, // Ders ön koşulları (Dersler oluşturulduktan sonra)
             CoursePermissionSeeder::class, // Kurs İzinleri

@@ -19,11 +19,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
 use App\Traits\HasImage;
+use App\Traits\HandlesEvents;
+use App\Http\Resources\Api\LevelResource;
+use App\Http\Resources\Api\BadgeResource;
 
 class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanResetPassword
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity, HasImage, CanResetPasswordTrait;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, LogsActivity, HasImage, CanResetPasswordTrait, HandlesEvents;
 
     /**
      * The attributes that are mass assignable.
@@ -239,22 +242,30 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
      */
     public function addExperiencePoints(int $xpAmount): bool
     {
-        if ($xpAmount <= 0) {
-            return false; // Eklenecek XP pozitif olmalı
-        }
-
-        // Deneyim puanını (xp sütununu) güncelle
-        // increment kullanımı atomik işlem sağlar ve daha verimlidir.
-        // return $this->increment('xp', $xpAmount);
-
-        // Veya save() kullanarak:
+        $oldXp = $this->experience_points;
+    
+        // Klonlanmış eski Level nesnesi (referans sorunu yaşamamak için)
+        $oldLevel = clone $this->level;
+    
+        // XP'yi ekle ve kaydet
         $this->experience_points += $xpAmount;
-        return $this->save();
-
-        // Önceki seviye kontrolü mantığı kaldırıldı.
-        // Seviye atlama mantığı gerekiyorsa ayrı bir yerde ele alınmalıdır.
+        $this->save();
+    
+        // Observer seviyeyi günceller ama ilişki cache'lenmiş olur
+        // Bu yüzden level ilişkisini yeniden yükle
+        $this->load('level');
+        // Seviye atlama kontrolü
+        if ($oldLevel->id !== $this->level->id) {
+            $this->addEvent('level_up', [
+                'old_level' => $oldLevel->id,
+                'new_level' => $this->level->id,
+                'level' => new LevelResource($this->level)
+            ], __('events.level_up', ['level' => $this->level->level_number]));
+        }
+    
+        return true;
     }
-
+    
     /**
      * Kullanıcının mevcut streak'ini hesaplar
      * Streak, kullanıcının kesintisiz olarak kaç gün uygulamaya giriş yaptığını gösterir
@@ -371,5 +382,27 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
     public function notificationLogs()
     {
         return $this->hasMany(UserNotificationLog::class);
+    }
+
+    /**
+     * Rozet ekle
+     */
+    public function addBadge(Badge $badge): void
+    {
+        if (!$this->badges()->where('badge_id', $badge->id)->exists()) {
+            $this->badges()->attach($badge->id, ['earned_at' => now()]);
+            
+            $this->addEvent('badge_earned', [
+                'badge' => new BadgeResource($badge)
+            ], __('events.badge_earned', ['name' => $badge->name]));
+        }
+    }
+
+    /**
+     * Kullanıcının tamamladığı dersler.
+     */
+    public function completedLessons(): HasMany
+    {
+        return $this->hasMany(\App\Models\LessonCompletion::class);
     }
 }

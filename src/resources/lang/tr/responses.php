@@ -157,5 +157,7 @@ return [
         'not_found' => 'Hikaye kategorisi bulunamadı'
     ],
     
+    'app_version_too_low' => 'Uygulama sürümünüz (:current) çok eski. Lütfen uygulamayı güncelleyin. Minimum gerekli sürüm: :required',
+    
     // Diğer çeviriler...
 ]; 

@@ -16,11 +16,10 @@ class StoryResource extends BaseResource
     {
         // getTranslated mevcut dilin çevirisini getirir (title)
         $translated = $this->getTranslated($this->resource);
-
-        return [
+        
+        return  array_merge($translated, [
             'id' => $this->id,
-            // 'story_category_id' => $this->story_category_id, // API'de belki gerekli değil?
-            'title' => $translated['title'] ?? null, // Sadece mevcut dilin başlığı
+            'story_category_id' => $this->story_category_id, // API'de belki gerekli değil?
             'media_url' => $this->media_url,
             'content' => $this->content,
             'order_column' => $this->order_column,
@@ -29,6 +28,6 @@ class StoryResource extends BaseResource
             // İlişkili kategori bilgisini de ekleyebiliriz (eğer yüklendiyse)
             // Kategori Resource'unun da API versiyonu olmalı
             'category' => new StoryCategoryResource($this->whenLoaded('storyCategory')),
-        ];
+        ]);
     }
 }

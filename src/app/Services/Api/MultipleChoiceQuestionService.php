@@ -58,7 +58,7 @@ class MultipleChoiceQuestionService extends BaseService implements MultipleChoic
         
         return $this->repository->with(['options' => function($query) {
             $query->orderBy('order', 'asc');
-        }])->paginate($perPage);
+        }])->get();
     }
 
     // Burada API için gerekli diğer metodları ekleyebilirsiniz

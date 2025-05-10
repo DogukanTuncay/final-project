@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\BadgeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\VideoContentController;
+use App\Http\Controllers\Api\SettingController;
 
 // API Route grubu için ana yapılandırma - prefix kaldırıldı, çünkü RouteServiceProvider.php zaten ekliyor
 Route::name('api.')->group(function () {
@@ -28,8 +29,22 @@ Route::name('api.')->group(function () {
         return $request->user();
     });
 
+    // Ayarlar (Settings) - Kimlik doğrulaması gerektirmeyen public rotalar
+    Route::group(['prefix' => 'settings', 'controller' => SettingController::class], function () {
+        Route::get('/site-info', 'getSiteInfo');
+        Route::get('/mobile/{platform?}', 'getMobileInfo');
+    });
+
     // Kullanıcı doğrulaması gerektiren API rotaları
     Route::group(['middleware' => ['JWT', 'verified', 'role:user|admin|super-admin', 'record.login'], 'as' => 'api.'], function () {
+        // Ayarlar (Settings) - Kimlik doğrulaması gerektiren rotalar
+        Route::group(['prefix' => 'settings', 'controller' => SettingController::class], function () {
+            Route::get('/', 'index');
+            Route::get('/{id}', 'show');
+            Route::get('/key/{key}', 'showByKey');
+            Route::get('/group/{group}', 'getGroupSettings');
+        });
+
         // Course routes
         Route::group(['prefix' => 'courses', 'controller' => CourseController::class], function () {
             Route::get('/', 'index');
@@ -140,15 +155,18 @@ Route::name('api.')->group(function () {
         });
 
         // Story Categories
-        Route::get('/story-categories', [StoryCategoryController::class, 'index'])->name('story-categories.index');
-        Route::get('/story-categories/{slug}', [StoryCategoryController::class, 'showBySlug'])->name('story-categories.showBySlug');
+        Route::prefix('story-categories')->group(function () {
+            Route::get('/', [StoryCategoryController::class, 'index'])->name('story-categories.index');
+            Route::get('/{slug}', [StoryCategoryController::class, 'showBySlug'])->name('story-categories.showBySlug');
+            Route::get('/{slug}/stories', [StoryCategoryController::class, 'getStoriesByCategory'])->name('story-categories.stories');
+        });
 
         // Stories
-        Route::get('/stories', [StoryController::class, 'index'])->name('stories.index');
-        Route::get('/stories/{id}', [StoryController::class, 'show'])->name('stories.show')->where('id', '[0-9]+');
-
-        // Belirli bir kategoriye ait story'leri getirmek için route (opsiyonel, index üzerinden filtreleme yapılabilir)
-        // Route::get('/story-categories/{category_slug}/stories', [StoryController::class, 'index'])->name('stories.byCategorySlug');
+        Route::prefix('stories')->group(function () {
+            Route::get('/', [StoryController::class, 'index'])->name('stories.index');
+            Route::get('/{id}', [StoryController::class, 'show'])->name('stories.show')->where('id', '[0-9]+');
+            Route::get('/slug/{slug}', [StoryController::class, 'showBySlug'])->name('stories.showBySlug');
+        });
 
         // Bildirim Rotaları
         Route::prefix('notifications')->group(function () {
@@ -164,16 +182,28 @@ Route::name('api.')->group(function () {
 
         // Video İçerik Rotaları
         Route::group(['prefix' => 'video-contents', 'controller' => VideoContentController::class], function () {
-            Route::get('/', 'index');
-            Route::get('/active', 'getActiveVideos');
-            Route::get('/provider/{provider}', 'getVideosByProvider');
             Route::get('/{id}', 'show');
-            Route::get('/slug/{slug}', 'showBySlug');
-            Route::post('/validate-url', 'validateVideoUrl');
         });
+    });
+
+    // AI Sohbet (AiChat) Route'ları
+    Route::prefix('ai-chat')->name('ai-chat.')->middleware(['JWT', 'verified'])->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\AiChatController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Api\AiChatController::class, 'store'])->name('store');
+        Route::get('/{id}', [App\Http\Controllers\Api\AiChatController::class, 'show'])->name('show');
+        Route::put('/{id}', [App\Http\Controllers\Api\AiChatController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\Api\AiChatController::class, 'destroy'])->name('destroy');
+        
+        
+    });
+
+    // AI Chat Message Routes
+    Route::prefix('ai-chat-messages')->name('ai-chat-messages.')->middleware(['auth:api'])->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\AiChatMessageController::class, 'index'])->name('index');
+        Route::get('/{id}', [App\Http\Controllers\Api\AiChatMessageController::class, 'show'])->name('show');
+        Route::post('/send', [App\Http\Controllers\Api\AiChatMessageController::class, 'send'])->name('send');
+        Route::get('/chat/{chatId}', [App\Http\Controllers\Api\AiChatMessageController::class, 'getByChatId'])->name('by-chat');
+        Route::delete('/{id}', [App\Http\Controllers\Api\AiChatMessageController::class, 'destroy'])->name('destroy');
     });
 });
 
-// Admin ve Auth route'larını ayrı dosyalardan yükle
-// NOT: admin.php ve auth.php içinde kendi prefix tanımlamaları yapılmalıdır.
-// Artık burada require kullanılmayacak

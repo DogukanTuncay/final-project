@@ -69,7 +69,7 @@ class VideoContentRepository implements VideoContentRepositoryInterface
 
         // Sayfalama
         $perPage = $params['per_page'] ?? 15;
-        return $query->paginate($perPage);
+        return $query->get();
     }
 
     /**

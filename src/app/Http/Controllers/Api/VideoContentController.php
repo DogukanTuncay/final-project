@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Interfaces\Services\Api\VideoContentServiceInterface;
 use App\Http\Resources\Api\VideoContentResource;
-use Illuminate\Http\Request;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class VideoContentController extends Controller
 {
@@ -27,12 +28,12 @@ class VideoContentController extends Controller
      */
     public function index(Request $request)
     {
-        $params = $request->all();
+        $params = $request->only(['title', 'provider', 'is_active', 'order_by', 'order_direction', 'per_page']);
         $items = $this->service->getWithPagination($params);
         
         return $this->successResponse(
-            $items->response()->getData(true), 
-            'api.video_content.list.success'
+            VideoContentResource::collection($items)->response()->getData(true),
+            'responses.api.video_content.list.success'
         );
     }
 
@@ -45,7 +46,10 @@ class VideoContentController extends Controller
     public function show($id)
     {
         $item = $this->service->findById($id);
-        return $this->successResponse($item, 'api.video_content.show.success');
+        return $this->successResponse(
+            new VideoContentResource($item),
+            'responses.api.video_content.show.success'
+        );
     }
 
     /**
@@ -61,7 +65,7 @@ class VideoContentController extends Controller
     }
 
     /**
-     * Aktif videoları getir
+     * Sadece aktif video içeriklerini getir
      * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -69,34 +73,34 @@ class VideoContentController extends Controller
     public function getActiveVideos(Request $request)
     {
         $limit = $request->input('limit', 10);
-        $videos = $this->service->getActiveVideos($limit);
+        $items = $this->service->getActiveVideos($limit);
         
         return $this->successResponse(
-            $videos,
-            'api.video_content.active.success'
+            VideoContentResource::collection($items),
+            'responses.api.video_content.active.success'
         );
     }
 
     /**
-     * Belirli bir provider'a ait videoları getir
+     * Provider'a göre video içeriklerini getir
      * 
-     * @param Request $request
      * @param string $provider
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getVideosByProvider(Request $request, $provider)
+    public function getVideosByProvider($provider, Request $request)
     {
         $limit = $request->input('limit', 10);
-        $videos = $this->service->getVideosByProvider($provider, $limit);
+        $items = $this->service->getVideosByProvider($provider, $limit);
         
         return $this->successResponse(
-            $videos,
-            'api.video_content.provider.success'
+            VideoContentResource::collection($items),
+            'responses.api.video_content.by_provider.success'
         );
     }
 
     /**
-     * Video URL'sinin geçerli olup olmadığını kontrol et
+     * Video URL'sini doğrula
      * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -104,14 +108,14 @@ class VideoContentController extends Controller
     public function validateVideoUrl(Request $request)
     {
         $request->validate([
-            'url' => 'required|url',
+            'url' => 'required|url'
         ]);
 
-        $isValid = $this->service->isValidVideoUrl($request->input('url'));
+        $isValid = $this->service->isValidVideoUrl($request->url);
         
         return $this->successResponse(
             ['is_valid' => $isValid],
-            'api.video_content.validate.success'
+            'responses.api.video_content.validate_url.success'
         );
     }
 }

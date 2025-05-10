@@ -129,7 +129,7 @@ class BadgeRepository implements BadgeRepositoryInterface
 
         // Sayfalama
         $perPage = $params['per_page'] ?? 15;
-        return $query->paginate($perPage);
+        return $query->get();
     }
 
     // Burada API için gerekli diğer metodları ekleyebilirsiniz

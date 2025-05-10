@@ -8,19 +8,21 @@ use App\Models\UserMissionProgress;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log; // Loglama için
-// Gerekirse MissionCompleted gibi bir event ekleyin
-// use App\Events\MissionCompleted;
-
+use App\Services\Api\EventService;
+use App\Events\MissionCompleted;
+use App\Traits\HandlesEvents;
 class MissionProgressService
 {
+    use HandlesEvents;
     /**
      * Kullanıcının belirli bir olayla ilgili görevlerdeki ilerlemesini günceller.
      *
      * @param User $user Kullanıcı
      * @param string $eventType Tetikleyen olayın adı (örn: 'LessonCompleted')
      * @param Model|null $relatedModel Olayla doğrudan ilişkili model (örn: tamamlanan Lesson nesnesi)
+     * @return array Tamamlanan görevlerin ID listesi
      */
-    public function updateProgress(User $user, string $eventType, Model $relatedModel = null): void
+    public function updateProgress(User $user, string $eventType, Model $relatedModel = null): array
     {
         // Olay tipinin kısa adını al (sınıf adı olarak geldiğinde)
         $eventName = $eventType;
@@ -28,9 +30,7 @@ class MissionProgressService
             $eventName = class_basename($eventType);
         }
 
-        Log::info("MissionProgressService: Updating progress for User ID: {$user->id}, Event: {$eventName}", [
-            'relatedModel' => $relatedModel ? get_class($relatedModel) . '(' . $relatedModel->id . ')' : null
-        ]);
+        Log::info("MissionProgressService: {$eventName} olayı için görev ilerlemesi güncelleniyor. User ID: {$user->id}");
 
         // 1. Olay türüyle tetiklenen genel görevleri bul (completable olmayanlar)
         $generalMissions = Mission::where('trigger_event', $eventName)
@@ -52,20 +52,25 @@ class MissionProgressService
         $relevantMissions = $generalMissions->merge($specificMissions)->unique('id');
 
         if ($relevantMissions->isEmpty()) {
-            Log::info("MissionProgressService: No relevant missions found for User ID: {$user->id}, Event: {$eventName}");
-            return; // İlgili görev yoksa çık
+            return [];
         }
 
-        Log::info("MissionProgressService: Found relevant missions", [
-            'mission_ids' => $relevantMissions->pluck('id')->all(),
-            'mission_count' => $relevantMissions->count(),
-            'mission_names' => $relevantMissions->pluck('title')->all()
-        ]);
-
+        $completedMissionIds = [];
         // Her bir ilgili görev için ilerlemeyi güncelle
         foreach ($relevantMissions as $mission) {
-            $this->processMissionForUser($user, $mission);
+            $wasCompleted = $this->processMissionForUser($user, $mission);
+            if ($wasCompleted) {
+                $completedMissionIds[] = $mission->id;
+            }
         }
+        
+        if (!empty($completedMissionIds)) {
+            Log::info("MissionProgressService: {$user->id} ID'li kullanıcı için {$eventName} olayı ile görevler tamamlandı", [
+                'completed_mission_count' => count($completedMissionIds)
+            ]);
+        }
+        
+        return $completedMissionIds;
     }
 
     /**
@@ -73,52 +78,213 @@ class MissionProgressService
      *
      * @param User $user
      * @param Mission $mission
+     * @return bool O anda görev tamamlandıysa true
      */
-    protected function processMissionForUser(User $user, Mission $mission): void
+    protected function processMissionForUser(User $user, Mission $mission): bool
     {
-        DB::transaction(function () use ($user, $mission) {
-            // Kullanıcının bu görevdeki ilerlemesini al veya oluştur (kilitlemeli)
-            $progress = UserMissionProgress::lockForUpdate()->firstOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'mission_id' => $mission->id,
-                ],
-                [
-                    'current_amount' => 0, // Yeni oluşturuluyorsa başlangıç değeri
-                ]
-            );
-
-            // Görev zaten tamamlanmışsa işlem yapma
-            if ($progress->isCompleted()) {
-                Log::info("MissionProgressService: Mission ID {$mission->id} already completed for User ID {$user->id}");
-                return;
-            }
-
-            // İlerlemeyi artır
-            $progress->current_amount += 1;
-
-            Log::info("MissionProgressService: Incrementing progress for Mission ID {$mission->id}, User ID {$user->id}. New amount: {$progress->current_amount}");
-
-            // Tamamlanma koşulunu kontrol et
-            if ($progress->current_amount >= $mission->required_amount) {
-                $progress->completed_at = now();
-                Log::info("MissionProgressService: Mission ID {$mission->id} COMPLETED for User ID {$user->id}");
+        $completedNow = false;
+        
+        try {
+            // Transaction içinde ilerlemeyi artır ve kontrol et
+            DB::transaction(function () use ($user, $mission, &$completedNow) {
+                // Daha önce tamamlanmış mı kontrol et
+                $progress = UserMissionProgress::where('user_id', $user->id)
+                    ->where('mission_id', $mission->id)
+                    ->first();
+                    
+                // Tekrarlanabilir görevler için tarih kontrolü (daily/weekly)
+                $shouldReset = false;
+                $allowProgress = true;
                 
-                // Görev tamamlama olayını tetikle - Bu kısmı ekledik
-                if (class_exists('\App\Events\MissionCompleted')) {
-                    event(new \App\Events\MissionCompleted($user, $mission, $progress));
-                    Log::info("MissionCompleted event triggered for User ID: {$user->id}, Mission ID: {$mission->id}");
+                if ($progress && $progress->completed_at !== null) {
+                    if ($mission->type === 'daily') {
+                        // Eğer görev günlük ise ve bugün tamamlanmışsa, işlem yapma
+                        if ($progress->completed_at->isToday()) {
+                            $allowProgress = false;
+                        } else {
+                            // Eğer günlük görev daha önceki bir günde tamamlanmışsa, ilerlemeyi sıfırla
+                            $shouldReset = true;
+                        }
+                    } elseif ($mission->type === 'weekly') {
+                        // Eğer görev haftalık ise ve bu hafta tamamlanmışsa, işlem yapma
+                        if ($progress->completed_at->isCurrentWeek()) {
+                            $allowProgress = false;
+                        } else {
+                            // Eğer haftalık görev daha önceki bir haftada tamamlanmışsa, ilerlemeyi sıfırla
+                            $shouldReset = true;
+                        }
+                    } else {
+                        // one_time tipinde bir görev zaten tamamlanmışsa, işlem yapma
+                        $allowProgress = false;
+                    }
                 }
-
-                // İsteğe bağlı: Kullanıcıya XP ekle
-                if ($mission->xp_reward > 0) {
-                   $user->addExperiencePoints($mission->xp_reward); // User modelinde bu metod varsa
-                    Log::info("MissionProgressService: Rewarding {$mission->xp_reward} XP for Mission ID {$mission->id} to User ID {$user->id}");
+                
+                if (!$allowProgress) {
+                    return;
                 }
-            }
+                
+                // İlerleme kaydını al veya oluştur
+                if ($progress) {
+                    if ($shouldReset) {
+                        // İlerlemeyi sıfırla (tekrarlanabilir görevler için)
+                        $progress->current_amount = 0;
+                        $progress->completed_at = null;
+                    }
+                    // Lock for update
+                    $progress = UserMissionProgress::lockForUpdate()->find($progress->id);
+                } else {
+                    $progress = UserMissionProgress::lockForUpdate()->firstOrCreate(
+                        [
+                            'user_id' => $user->id,
+                            'mission_id' => $mission->id,
+                        ],
+                        [
+                            'current_amount' => 0,
+                        ]
+                    );
+                }
+                
+                // İlerlemeyi artır
+                $progress->current_amount += 1;
+                
+                // Tamamlanma kontrolü
+                if ($progress->current_amount >= $mission->required_amount && $progress->completed_at === null) {
+                    // Tamamlama zamanını ayarla
+                    $completionTime = now();
+                    $progress->completed_at = $completionTime;
+                    
+                    Log::info("MissionProgressService: Görev tamamlandı. User ID: {$user->id}, Mission ID: {$mission->id}, Tip: {$mission->type}");
+                    
+                    // XP ödülünü kaydet
+                    $progress->xp_reward = $mission->xp_reward;
+                    // XP ver
+                    if ($mission->xp_reward > 0) {
+                        $user->addExperiencePoints($mission->xp_reward);
+                    }
+                    
+                    // Progress kaydını önce kaydet
+                    $progress->save();
+                    
+                    // MissionCompleted event'ini tetikle
+                    try {
+                        if (class_exists('\\App\\Events\\MissionCompleted')) {
+                            $missionCompletedEvent = new MissionCompleted(
+                                $user, 
+                                $mission, 
+                                $progress, 
+                                $mission->xp_reward, 
+                                $completionTime
+                            );
+                            
+                            // Laravel event sistemini kullan
+                            event($missionCompletedEvent);
+                            
+                            // Event verilerini API yanıtına ekle
+                            $this->addCustomEventData($user, $mission, $progress);
+                        } else {
+                            Log::error("MissionProgressService: MissionCompleted event sınıfı bulunamadı");
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("MissionProgressService: Event tetiklenirken hata: " . $e->getMessage());
+                    }
+                    
+                    $completedNow = true;
+                } else {
+                    // Progress kaydını kaydet
+                    $progress->save();
+                }
+            }, 3); // Hata durumunda 3 kez yeniden dene
+            
+        } catch (\Exception $e) {
+            Log::error("MissionProgressService: İşlem sırasında hata: " . $e->getMessage());
+        }
+        
+        return $completedNow;
+    }
+    
 
-            $progress->save();
+    
+    /**
+     * Kullanıcının tamamladığı görevleri getirir
+     *
+     * @param User $user
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getCompletedMissions(User $user)
+    {
+        return UserMissionProgress::where('user_id', $user->id)
+            ->whereNotNull('completed_at')
+            ->with('mission')
+            ->get();
+    }
+    
+    /**
+     * Belirli bir görevin tamamlanıp tamamlanmadığını kontrol eder
+     *
+     * @param User $user
+     * @param int $missionId
+     * @return bool
+     */
+    public function isMissionCompleted(User $user, int $missionId): bool
+    {
+        return UserMissionProgress::where('user_id', $user->id)
+            ->where('mission_id', $missionId)
+            ->whereNotNull('completed_at')
+            ->exists();
+    }
 
-        }, 3); // Hata durumunda 3 kez yeniden dene
+    /**
+     * API yanıtı için özel event verisi ekler
+     * 
+     * @param User $user
+     * @param Mission $mission
+     * @param UserMissionProgress $progress
+     * @return void 
+     */
+    protected function addCustomEventData(User $user, Mission $mission, UserMissionProgress $progress)
+    {
+
+        try {
+            $eventData = [
+                'mission_id' => $mission->id,
+                'mission_title' => $mission->getTranslation('title', app()->getLocale()),
+                'mission_description' => $mission->getTranslation('description', app()->getLocale(), ''),
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'xp_reward' => $mission->xp_reward,
+                'current_amount' => $progress ? $progress->current_amount : null,
+                'required_amount' => $mission->required_amount ?? 1,
+                'mission_type' => $mission->type ?? 'one_time',
+                'event_reason' => 'mission_completed',
+                'event_source' => 'mission',
+            ];
+            // Mesajı görev tipine göre özelleştir
+            $missionTitle = $mission->getTranslation('title', app()->getLocale());
+            $messageParams = ['mission' => $missionTitle, 'xp' => $mission->xp_reward];
+            
+            // Görev tipine göre özel mesaj oluştur
+            $messageKey = match($mission->type) {
+                'daily' => 'events.daily_mission_completed',
+                'weekly' => 'events.weekly_mission_completed',
+                default => 'events.mission_completed'
+            };
+            
+            $this->createEvent(
+                'mission_completed',
+                $eventData,
+                __($messageKey, $messageParams),
+                'mission'
+            );
+        } catch (\Exception $e) {
+            Log::error("MissionProgressService: Event verileri eklenirken hata: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * @deprecated Bu metod artık kullanılmıyor. Onun yerine addCustomEventData kullanın.
+     */
+    public function createMissionCompletedEvent(User $user, Mission $mission, UserMissionProgress $progress, int $xpReward, $completedAt = null)
+    {
+        $this->addCustomEventData($user, $mission, $progress);
     }
 } 

@@ -39,7 +39,7 @@ class MultipleChoiceQuestionRepository extends BaseRepository implements Multipl
 
         // Sayfalama
         $perPage = $params['per_page'] ?? 15;
-        return $query->paginate($perPage);
+        return $query->get();
     }
 
     /**

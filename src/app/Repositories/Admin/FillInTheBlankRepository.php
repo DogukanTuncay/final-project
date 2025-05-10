@@ -56,7 +56,7 @@ class FillInTheBlankRepository extends BaseRepository implements FillInTheBlankR
      */
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return $this->model->with($this->with)->paginate($perPage);
+        return $this->model->with($this->with)->get();
     }
 
     /**

@@ -17,11 +17,13 @@ class UserMissionProgress extends Model
         'mission_id',
         'current_amount',
         'completed_at',
+        'xp_reward',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
         'current_amount' => 'integer',
+        'xp_reward' => 'integer',
     ];
 
     /**
@@ -46,5 +48,31 @@ class UserMissionProgress extends Model
     public function isCompleted(): bool
     {
         return $this->completed_at !== null;
+    }
+
+    /**
+     * Görevin bugün tamamlandığını kontrol et
+     */
+    public function isCompletedToday(): bool
+    {
+        return $this->completed_at && $this->completed_at->isToday();
+    }
+
+    /**
+     * Görevin bu hafta tamamlandığını kontrol et
+     */
+    public function isCompletedThisWeek(): bool
+    {
+        return $this->completed_at && $this->completed_at->isCurrentWeek();
+    }
+
+    /**
+     * Görevin ilerleme durumunu sıfırla
+     */
+    public function resetProgress(): void
+    {
+        $this->current_amount = 0;
+        $this->completed_at = null;
+        $this->save();
     }
 } 

@@ -114,8 +114,41 @@ class MissionsService implements MissionsServiceInterface
             if ($progress->current_amount >= $requiredAmount) {
                 $progress->completed_at = now();
                 
+                // XP ödülünü kaydet
+                $progress->xp_reward = $mission->xp_reward;
+                
                 // XP ödülünü ekle
                 $user->addExperiencePoints($mission->xp_reward);
+                
+                // MissionCompleted event'ini tetikle
+                try {
+                    \Illuminate\Support\Facades\Log::info("MissionsService: Attempting to trigger MissionCompleted event for User ID: {$user->id}, Mission ID: {$mission->id}");
+                    
+                    if (class_exists('\\App\\Events\\MissionCompleted')) {
+                        $completedEvent = new \App\Events\MissionCompleted(
+                            $user,
+                            $mission,
+                            $progress,
+                            $mission->xp_reward,
+                            now()
+                        );
+                        
+                        event($completedEvent);
+                        
+                        \Illuminate\Support\Facades\Log::notice("MissionsService: MissionCompleted event triggered successfully for User ID: {$user->id}, Mission ID: {$mission->id}", [
+                            'event_class' => get_class($completedEvent),
+                            'mission_title' => $mission->getTranslation('title', app()->getLocale()),
+                            'xp_reward' => $mission->xp_reward
+                        ]);
+                    } else {
+                        \Illuminate\Support\Facades\Log::error("MissionsService: MissionCompleted event class not found");
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("MissionsService: Event tetiklenirken hata: " . $e->getMessage(), [
+                        'exception' => $e,
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
             }
             
             // Değişiklikleri kaydet

@@ -23,7 +23,7 @@ class StoryCategoryRepository extends BaseRepository implements StoryCategoryRep
      */
     public function getAllPaginated(int $perPage = 15): LengthAwarePaginator
     {
-        return $this->model->ordered()->paginate($perPage);
+        return $this->model->ordered()->get();
     }
 
   

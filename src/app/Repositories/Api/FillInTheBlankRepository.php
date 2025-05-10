@@ -23,9 +23,9 @@ class FillInTheBlankRepository extends BaseRepository implements FillInTheBlankR
         return $this->model->where('slug', $slug)->where('is_active', 1)->first();
     }
 
-    public function paginate($perPage)
+    public function get()
     {
-        return $this->model->where('is_active', 1)->paginate($perPage);
+        return $this->model->where('is_active', 1)->get();
     }
     public function with($relations)
     {

@@ -15,9 +15,29 @@ use App\Http\Controllers\Admin\StoryController;
 use App\Http\Controllers\Admin\BadgeController;
 use App\Http\Controllers\Admin\OneSignalController;
 use App\Http\Controllers\Admin\VideoContentController;
+use App\Http\Controllers\Admin\SettingController;
 
 // Admin rotaları - 'admin' prefix'i ekleniyor, 'api' prefix'i RouteServiceProvider'da ekleniyor
 Route::prefix('admin')->name('admin.')->middleware(['JWT', 'verified', 'role:admin|super-admin'])->group(function () {
+
+    // Ayarlar (Settings) rotaları
+    Route::group(['prefix' => 'settings', 'controller' => SettingController::class], function () {
+        Route::get('/', 'index')->name('settings.index');
+        Route::post('/', 'store')->name('settings.store');
+        Route::get('{id}', 'show')->name('settings.show');
+        Route::put('{id}', 'update')->name('settings.update');
+        Route::delete('{id}', 'destroy')->name('settings.destroy');
+        
+        // Özel ayar rotaları
+        Route::put('site', 'updateSiteSettings')->name('settings.update-site');
+        Route::put('mobile', 'updateMobileSettings')->name('settings.update-mobile');
+        Route::post('images', 'updateImageSettings')->name('settings.update-images');
+        Route::post('clear-cache', 'clearCache')->name('settings.clear-cache');
+        
+        // Özel (private) ayarlar için rotalar
+        Route::get('get/private', 'privateSettings')->name('settings.private');
+        Route::patch('{id}/toggle-private', 'togglePrivate')->name('settings.toggle-private');
+    });
 
     Route::group(['prefix' => 'courses', 'controller' => CourseController::class], function () {
         Route::get('/', 'index')->name('courses.index');
@@ -211,6 +231,27 @@ Route::prefix('admin')->name('admin.')->middleware(['JWT', 'verified', 'role:adm
         Route::put('{id}', 'update')->name('video-contents.update');
         Route::delete('{id}', 'destroy')->name('video-contents.destroy');
         Route::post('bulk-update', 'bulkUpdate')->name('video-contents.bulk-update');
-        Route::post('parse-url', 'parseUrl')->name('video-contents.parse-url');
+    });
+
+    // AI Sohbet (AiChat) ve Mesajları (AiChatMessage) Route'ları
+    Route::prefix('ai-chat')->name('ai-chat.')->group(function () {
+        // AiChat rotaları
+        Route::get('/', [App\Http\Controllers\Admin\AiChatController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\AiChatController::class, 'store'])->name('store');
+        Route::get('/{id}', [App\Http\Controllers\Admin\AiChatController::class, 'show'])->name('show');
+        Route::put('/{id}', [App\Http\Controllers\Admin\AiChatController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\AiChatController::class, 'destroy'])->name('destroy');
+        
+        // AiChatMessage rotaları
+        Route::prefix('messages')->name('messages.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\AiChatMessageController::class, 'index'])->name('index');
+            Route::post('/', [App\Http\Controllers\Admin\AiChatMessageController::class, 'store'])->name('store');
+            Route::get('/{id}', [App\Http\Controllers\Admin\AiChatMessageController::class, 'show'])->name('show');
+            Route::put('/{id}', [App\Http\Controllers\Admin\AiChatMessageController::class, 'update'])->name('update');
+            Route::delete('/{id}', [App\Http\Controllers\Admin\AiChatMessageController::class, 'destroy'])->name('destroy');
+            Route::get('/chat/{chatId}', [App\Http\Controllers\Admin\AiChatMessageController::class, 'getByChatId'])->name('by-chat');
+            Route::get('/user/{userId}/messages', [App\Http\Controllers\Admin\AiChatMessageController::class, 'getUserMessages'])->name('user-messages');
+            Route::get('/chat/{chatId}/ai-messages', [App\Http\Controllers\Admin\AiChatMessageController::class, 'getAiMessages'])->name('ai-messages');
+        });
     });
 });

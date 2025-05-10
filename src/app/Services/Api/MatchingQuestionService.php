@@ -43,7 +43,7 @@ class MatchingQuestionService implements MatchingQuestionServiceInterface
         
         return $this->repository->with(['pairs' => function($query) {
             $query->orderBy('order', 'asc');
-        }])->paginate($perPage);
+        }])->get();
     }
 
     // Burada API için gerekli diğer metodları ekleyebilirsiniz

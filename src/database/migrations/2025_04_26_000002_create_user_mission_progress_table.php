@@ -17,7 +17,8 @@ return new class extends Migration
             $table->foreignId('mission_id')->constrained()->onDelete('cascade');
             $table->unsignedInteger('current_amount')->default(0)->comment('Kullanıcının mevcut ilerleme miktarı');
             $table->timestamp('completed_at')->nullable()->comment('Görevin tamamlandığı zaman');
-            $table->timestamps(); // created_at ve updated_at
+            $table->unsignedInteger('xp_reward')->default(0)->comment('Kullanıcıya verilen XP ödülü');
+            $table->timestamps(); // created_at ve updated_at   
 
             // Bir kullanıcının bir görevi sadece bir kez takip edebilmesi için
             $table->unique(['user_id', 'mission_id']);

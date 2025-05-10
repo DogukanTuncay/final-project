@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\VideoContentRequest;
 use App\Http\Resources\Admin\VideoContentResource;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class VideoContentController extends Controller
 {
@@ -35,7 +36,7 @@ class VideoContentController extends Controller
         
         return $this->successResponse(
             VideoContentResource::collection($items)->response()->getData(true),
-            'admin.video_content.list.success'
+            'responses.admin.video_content.list.success'
         );
     }
 
@@ -48,16 +49,13 @@ class VideoContentController extends Controller
     public function store(VideoContentRequest $request)
     {
         $data = $request->validated();
-        
-        // Video URL'inden provider ve video_id bilgilerini alma (Model içinde de yapılıyor)
-        $videoInfo = $this->service->parseVideoUrl($data['video_url']);
-        
-        // Provider ve video_id bilgilerini ekle (Modelde otomatik olarak doldurulsa da ekstra kontrol)
-        $data['provider'] = $videoInfo['provider'];
-        $data['video_id'] = $videoInfo['video_id'];
-        
         $item = $this->service->create($data);
-        return $this->successResponse(new VideoContentResource($item), 'admin.video_content.create.success');
+        
+        return $this->successResponse(
+            new VideoContentResource($item),
+            'responses.admin.video_content.create.success',
+            Response::HTTP_CREATED
+        );
     }
 
     /**
@@ -69,7 +67,10 @@ class VideoContentController extends Controller
     public function show($id)
     {
         $item = $this->service->find($id);
-        return $this->successResponse(new VideoContentResource($item), 'admin.video_content.show.success');
+        return $this->successResponse(
+            new VideoContentResource($item),
+            'responses.admin.video_content.show.success'
+        );
     }
 
     /**
@@ -82,16 +83,12 @@ class VideoContentController extends Controller
     public function update(VideoContentRequest $request, $id)
     {
         $data = $request->validated();
-        
-        // Eğer video_url değiştiyse, provider ve video_id bilgilerini güncelle
-        if (isset($data['video_url'])) {
-            $videoInfo = $this->service->parseVideoUrl($data['video_url']);
-            $data['provider'] = $videoInfo['provider'];
-            $data['video_id'] = $videoInfo['video_id'];
-        }
-        
         $item = $this->service->update($id, $data);
-        return $this->successResponse(new VideoContentResource($item), 'admin.video_content.update.success');
+        
+        return $this->successResponse(
+            new VideoContentResource($item),
+            'responses.admin.video_content.update.success'
+        );
     }
 
     /**
@@ -103,7 +100,10 @@ class VideoContentController extends Controller
     public function destroy($id)
     {
         $this->service->delete($id);
-        return $this->successResponse(null, 'admin.video_content.delete.success');
+        return $this->successResponse(
+            null,
+            'responses.admin.video_content.delete.success'
+        );
     }
 
     /**
@@ -122,11 +122,14 @@ class VideoContentController extends Controller
 
         $this->service->bulkUpdate($request->input('ids'), $request->input('data'));
         
-        return $this->successResponse(null, 'admin.video_content.bulk_update.success');
+        return $this->successResponse(
+            null,
+            'responses.admin.video_content.bulk_update.success'
+        );
     }
 
     /**
-     * Video URL'sinden provider ve video_id bilgilerini çıkar
+     * Video URL'sini doğrula ve bilgileri çıkar
      * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -134,11 +137,14 @@ class VideoContentController extends Controller
     public function parseUrl(Request $request)
     {
         $request->validate([
-            'url' => 'required|url',
+            'url' => 'required|url'
         ]);
 
-        $videoInfo = $this->service->parseVideoUrl($request->input('url'));
+        $videoInfo = $this->service->parseVideoUrl($request->url);
         
-        return $this->successResponse($videoInfo, 'admin.video_content.parse_url.success');
+        return $this->successResponse(
+            $videoInfo,
+            'responses.admin.video_content.parse_url.success'
+        );
     }
 }

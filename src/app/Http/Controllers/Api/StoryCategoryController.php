@@ -7,6 +7,8 @@ use App\Http\Resources\Api\StoryCategoryResource;
 use App\Interfaces\Services\Api\StoryCategoryServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use App\Http\Resources\Api\StoryResource;
 
 class StoryCategoryController extends BaseController
 {
@@ -45,5 +47,37 @@ class StoryCategoryController extends BaseController
         $resource = new StoryCategoryResource($category);
 
         return $this->successResponse($resource, 'responses.story_category.show_success');
+    }
+
+    /**
+     * Belirli bir kategoriye ait hikayeleri getir
+     *
+     * @param string $slug
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStoriesByCategory($slug)
+    {
+        try {
+            $category = $this->service->findBySlug($slug);
+            
+            if (!$category) {
+                return $this->errorResponse(
+                    'responses.story_category.not_found',
+                    Response::HTTP_NOT_FOUND
+                );
+            }
+
+            $stories = $this->service->getStoriesByCategory($category->id);
+            
+            return $this->successResponse(
+                StoryResource::collection($stories),
+                'responses.story_category.stories.success'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'responses.story_category.stories.error',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 }

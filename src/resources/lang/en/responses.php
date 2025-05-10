@@ -160,5 +160,7 @@ return [
         'not_found' => 'Story category not found'
     ],
     
+    'app_version_too_low' => 'Your app version (:current) is too old. Please update the app. Minimum required version: :required',
+    
     // Other translations...
 ]; 

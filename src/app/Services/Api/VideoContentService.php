@@ -4,31 +4,28 @@ namespace App\Services\Api;
 
 use App\Interfaces\Services\Api\VideoContentServiceInterface;
 use App\Interfaces\Repositories\Api\VideoContentRepositoryInterface;
-use App\Http\Resources\Api\VideoContentResource;
+use App\Services\BaseService;
 use Illuminate\Support\Facades\Log;
 
-class VideoContentService implements VideoContentServiceInterface
+class VideoContentService extends BaseService implements VideoContentServiceInterface
 {
-    protected $repository;
-
     public function __construct(VideoContentRepositoryInterface $repository)
     {
-        $this->repository = $repository;
+        parent::__construct($repository);
     }
 
     /**
      * ID'ye göre video içeriğini bul
      *
      * @param int $id
-     * @return VideoContentResource
+     * @return \App\Models\VideoContent
      */
     public function findById($id)
     {
         try {
-            $video = $this->repository->findById($id);
-            return new VideoContentResource($video);
+            return $this->repository->findById($id);
         } catch (\Exception $e) {
-            Log::error('Video içeriği bulunamadı: ' . $e->getMessage());
+            Log::error('VideoContent bulunurken hata: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -54,50 +51,47 @@ class VideoContentService implements VideoContentServiceInterface
      * Sayfalama ve filtreleme ile video içeriklerini getir
      *
      * @param array $params
-     * @return \Illuminate\Http\Resources\Json\ResourceCollection
+     * @return \Illuminate\Pagination\LengthAwarePaginator
      */
     public function getWithPagination(array $params)
     {
         try {
-            $videos = $this->repository->getWithPagination($params);
-            return VideoContentResource::collection($videos);
+            return $this->repository->getWithPagination($params);
         } catch (\Exception $e) {
-            Log::error('Video içerikleri listelenirken hata: ' . $e->getMessage());
+            Log::error('VideoContent listelenirken hata: ' . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * Aktif video içeriklerini getir
+     * Sadece aktif video içeriklerini getir
      *
      * @param int $limit
-     * @return \Illuminate\Http\Resources\Json\ResourceCollection
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getActiveVideos($limit = 10)
     {
         try {
-            $videos = $this->repository->getActiveVideos($limit);
-            return VideoContentResource::collection($videos);
+            return $this->repository->getActiveVideos($limit);
         } catch (\Exception $e) {
-            Log::error('Aktif video içerikleri listelenirken hata: ' . $e->getMessage());
+            Log::error('Aktif VideoContent listelenirken hata: ' . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * Belirli bir provider'a ait videoları getir
+     * Provider'a göre video içeriklerini getir
      *
      * @param string $provider
      * @param int $limit
-     * @return \Illuminate\Http\Resources\Json\ResourceCollection
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getVideosByProvider($provider, $limit = 10)
     {
         try {
-            $videos = $this->repository->getVideosByProvider($provider, $limit);
-            return VideoContentResource::collection($videos);
+            return $this->repository->getVideosByProvider($provider, $limit);
         } catch (\Exception $e) {
-            Log::error("$provider provider'ına ait videolar listelenirken hata: " . $e->getMessage());
+            Log::error('Provider\'a göre VideoContent listelenirken hata: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -110,6 +104,11 @@ class VideoContentService implements VideoContentServiceInterface
      */
     public function isValidVideoUrl($url)
     {
-        return $this->repository->isValidVideoUrl($url);
+        try {
+            return $this->repository->isValidVideoUrl($url);
+        } catch (\Exception $e) {
+            Log::error('Video URL doğrulanırken hata: ' . $e->getMessage());
+            throw $e;
+        }
     }
 }

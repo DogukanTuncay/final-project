@@ -61,7 +61,23 @@ class StoryCategoryRepository extends BaseRepository implements StoryCategoryRep
 
         // Sayfalama
         $perPage = $params['per_page'] ?? 15;
-        return $query->paginate($perPage);
+        return $query->get();
+    }
+
+    /**
+     * Belirli bir kategoriye ait hikayeleri getir
+     *
+     * @param int $categoryId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getStoriesByCategory($categoryId)
+    {
+        return $this->model
+            ->findOrFail($categoryId)
+            ->stories()
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     // Burada API için gerekli diğer metodları ekleyebilirsiniz

@@ -94,7 +94,7 @@ class VideoContentRepository extends BaseRepository implements VideoContentRepos
             $query->where('is_active', $filters['is_active']);
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        return $query->orderBy('created_at', 'desc')->get();
     }
 
     /**

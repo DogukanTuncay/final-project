@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Event;
 
 class CourseChapterLessonService implements CourseChapterLessonServiceInterface
 {
@@ -90,8 +91,13 @@ class CourseChapterLessonService implements CourseChapterLessonServiceInterface
             }
 
             // LessonCompleted olayını tetikle
-            event(new \App\Events\LessonCompleted($user, $lesson));
-            Log::info("LessonCompleted event triggered for User ID: {$userId}, Lesson ID: {$id}");
+            Log::info("CourseChapterLessonService: Firing LessonCompleted event. User ID: {$userId}, Lesson ID: {$id}");
+            
+            // Senkron işletim için event dispatch edilir
+            // Dikkat: Tüm event listeners işlenene kadar bu kısımdan çıkılmaz
+            Event::dispatch(
+                new \App\Events\LessonCompleted($user, $lesson)
+            );
 
             return $completion;
         });

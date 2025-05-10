@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 use App\Traits\HasImage;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StoryCategory extends Model
 {
@@ -110,9 +111,9 @@ class StoryCategory extends Model
      */
     public function stories(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        // Henüz Story modeli olmadığı için yorumda bırakıldı, Story modeli oluşturulunca açılmalı
-        // return $this->hasMany(Story::class);
-        return $this->hasMany(Model::class); // Geçici
+
+        return $this->hasMany(Story::class);
+
     }
 
     /**

@@ -6,6 +6,6 @@ interface FillInTheBlankRepositoryInterface
 {
     public function findById($id);
     public function findBySlug($slug);
-    public function paginate($perPage);
+    public function get();
     public function with($relations);
 } 

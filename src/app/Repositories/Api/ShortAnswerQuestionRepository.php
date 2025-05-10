@@ -40,7 +40,7 @@ class ShortAnswerQuestionRepository implements ShortAnswerQuestionRepositoryInte
 
         // Sayfalama
         $perPage = $params['per_page'] ?? 15;
-        return $query->paginate($perPage);
+        return $query->get();
     }
 
     // Burada API için gerekli diğer metodları ekleyebilirsiniz

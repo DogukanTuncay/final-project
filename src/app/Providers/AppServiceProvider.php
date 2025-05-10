@@ -4,12 +4,13 @@ namespace App\Providers;
 
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
-use App\Repositories\BaseRepository;
 use App\Repositories\Auth\AuthRepository;
 use App\Models\User;
 use App\Observers\UserObserver;
 use App\Interfaces\Services\Api\NotificationServiceInterface;
 use App\Services\Api\NotificationService;
+use App\Services\Api\EventService;
+use App\Services\MissionProgressService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,10 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(BaseRepository::class, function ($app) {
-            // BaseRepository'i User modeliyle inject et
-            return new BaseRepository(new User());
-        });
+
 
         $this->app->bind(AuthRepository::class, function ($app) {
             return new AuthRepository();
@@ -41,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Notification Service bağlama
         $this->app->bind(NotificationServiceInterface::class, NotificationService::class);
+
+        $this->app->singleton(EventService::class);
+        $this->app->singleton(MissionProgressService::class);
     }
 
     /**

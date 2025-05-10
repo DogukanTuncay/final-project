@@ -4,6 +4,9 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Services\Api\EventService;
+
+
 class BaseResource extends JsonResource
 {
     /**
@@ -29,7 +32,6 @@ class BaseResource extends JsonResource
                 ?? $model->getTranslation($attribute, $fallbackLocale, false)
                 ?? null;
         }
-    
         return $translated;
     }
 
@@ -38,8 +40,13 @@ class BaseResource extends JsonResource
      */
     public function with($request)
     {
+        $eventService = app(EventService::class);
+        $events = $eventService->getEvents();
+        $eventService->clearEvents();
+        
         return [
             'success' => true,
+            'events' => $events
         ];
     }
 }

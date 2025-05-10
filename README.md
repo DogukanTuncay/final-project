@@ -86,3 +86,87 @@ Then, run the following commands to install your dependencies and start the dev 
 -   `docker compose run --rm --service-ports npm run dev`
 
 Want to build for production? Simply run `docker compose run --rm npm run build`.
+
+# AI Chat İşleyiş Akışı
+
+Davah uygulamasında, kullanıcı ile AI arasındaki chat işleyiş süreci aşağıdaki şekilde çalışmaktadır:
+
+## Adım 1: Yeni Chat Oluşturma
+
+- Kullanıcı yeni bir chat başlatır (AiChat modeli ile oluşturulur).
+- Chat oluşturulduğunda bir başlık ve kullanıcı ID'si ile kaydedilir.
+
+## Adım 2: Kullanıcı Prompt Gönderir
+
+- Kullanıcı chat ekranında mesajını yazar ve gönderir.
+- Frontend tarafından `/api/ai-chat-messages/send` endpoint'ine istek yapılır.
+- İstek içeriği:
+  ```json
+  {
+    "ai_chat_id": "<chat_id>",
+    "message": "<kullanıcı_mesajı>"
+  }
+  ```
+
+## Adım 3: Backend İşlem Süreci
+
+1. **Güvenlik Kontrolü**: 
+   - Kullanıcının mesajı yasaklı kelimeler ve içerik açısından kontrol edilir.
+   - Mesaj uzunluğu limitleri kontrol edilir.
+
+2. **Kullanıcı Mesajını Kaydetme**:
+   - Kullanıcı mesajı veritabanına kaydedilir (`is_from_ai = false`).
+
+3. **AI İşlem Süreci**:
+   - Mesaj, geçmiş mesajlar ile birlikte AI API'sine gönderilir.
+   - AI yanıtı alınır.
+   - AI yanıtı veritabanına kaydedilir (`is_from_ai = true`).
+
+4. **Yanıt Dönüş**:
+   - Kullanıcı mesajı, AI yanıtı ve güncellenmiş mesaj geçmişi frontend'e döndürülür.
+
+## Teknik Detaylar
+
+### Endpoint: `/api/ai-chat-messages/send` (POST)
+
+**İstek Body:**
+```json
+{
+  "ai_chat_id": "<chat_id>",
+  "message": "<kullanıcı_mesajı>"
+}
+```
+
+**Başarılı Yanıt (200):**
+```json
+{
+  "status": "success",
+  "message": "AI yanıtı başarıyla alındı",
+  "data": {
+    "user_message": { /* kullanıcı mesajı bilgileri */ },
+    "ai_message": { /* AI yanıtı bilgileri */ },
+    "chat_history": [ /* Tüm mesaj geçmişi */ ]
+  }
+}
+```
+
+**Hata Yanıtı (400):**
+```json
+{
+  "status": "error",
+  "message": "<hata_mesajı>",
+  "errors": { /* varsa hata detayları */ }
+}
+```
+
+### Diğer Endpointler
+
+- `GET /api/ai-chat-messages/chat/{chatId}`: Belirli bir chat'in tüm mesajlarını getirir
+- `GET /api/ai-chat-messages/{id}`: Belirli bir mesajın detaylarını getirir
+- `DELETE /api/ai-chat-messages/{id}`: Bir mesajı siler
+
+### Güvenlik Kontrolleri
+
+- Yasaklı kelimeler listesi ayarlardan alınır (`ai_banned_words`)
+- Maksimum mesaj uzunluğu ayarlardan alınır (`ai_max_message_length`)
+- Tüm istekler için JWT token ile authentication kontrolü yapılır

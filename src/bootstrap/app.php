@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'record.login' => \App\Http\Middleware\RecordUserLogin::class,
+            'check.app.version' => \App\Http\Middleware\CheckMobileAppVersion::class,
         ]);
 
         //

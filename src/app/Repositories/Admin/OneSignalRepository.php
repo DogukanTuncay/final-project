@@ -41,7 +41,7 @@ class OneSignalRepository implements OneSignalRepositoryInterface
             });
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        return $query->orderBy('created_at', 'desc')->get();
     }
 
     /**

@@ -50,6 +50,6 @@ class FillInTheBlankService implements FillInTheBlankServiceInterface
     public function getWithPagination(array $params)
     {
         $perPage = $params['per_page'] ?? 15;
-        return $this->repository->paginate($perPage);
+        return $this->repository->get();
     }
 } 

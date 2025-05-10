@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('mission_user', function (Blueprint $table) {
+        Schema::create('ai_chats', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('mission_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->date('completed_at')->nullable(); // Görev tamamlandıysa tarih
+            $table->string('title')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->integer('xp_reward')->default(0);
-            $table->unique(['mission_id', 'user_id', 'completed_at']); // Her gün için bir kayıt
         });
     }
 
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('mission_user');
+        Schema::dropIfExists('ai_chats');
     }
 };

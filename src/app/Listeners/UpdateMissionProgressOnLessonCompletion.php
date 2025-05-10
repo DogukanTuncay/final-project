@@ -2,16 +2,12 @@
 
 namespace App\Listeners;
 
-use App\Events\LessonCompleted; // Olayı import et
+use App\Events\LessonCompleted;
 use App\Services\MissionProgressService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
-class UpdateMissionProgressOnLessonCompletion implements ShouldQueue // İsteğe bağlı: Kuyruğa alınabilir
+class UpdateMissionProgressOnLessonCompletion
 {
-    use InteractsWithQueue;
-
     protected MissionProgressService $missionProgressService;
 
     /**
@@ -32,10 +28,10 @@ class UpdateMissionProgressOnLessonCompletion implements ShouldQueue // İsteğe
             'lesson_id' => $event->lesson->id
         ]);
 
-        // Servis metodunu çağır
-        $this->missionProgressService->updateProgress(
+        // Servis metodunu çağır ve tamamlanan görevleri al
+        $completedMissionIds = $this->missionProgressService->updateProgress(
             $event->user,
-            'LessonCompleted', // Tam sınıf adı yerine sadece 'LessonCompleted' kullanıyoruz
+            'LessonCompleted',
             $event->lesson
         );
     }
