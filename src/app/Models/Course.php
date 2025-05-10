@@ -65,7 +65,8 @@ class Course extends Model
         'short_description' => 'array',
         'description' => 'array',
         'meta_title' => 'array',
-        'meta_description' => 'array'
+        'meta_description' => 'array',
+        'difficulty' => 'integer'
     ];
 
     /**
@@ -81,9 +82,9 @@ class Course extends Model
      * Sabit zorluk seviyeleri
      */
     public const DIFFICULTIES = [
-        'basic' => 'Temel',
-        'intermediate' => 'Orta',
-        'advanced' => 'İleri'
+        1 => 'Kolay',
+        2 => 'Orta',
+        3 => 'Zor'
     ];
 
     /**
@@ -141,14 +142,7 @@ class Course extends Model
 
    
 
-    /**
-     * Zorluk seviyesini insan dostu formatta döndürür
-     */
-    public function getDifficultyTextAttribute(): string
-    {
-        return self::DIFFICULTIES[$this->difficulty] ?? $this->difficulty;
-    }
-
+    
     
 
     public function getCompletionStatusAttribute(): array
@@ -257,7 +251,7 @@ class Course extends Model
     /**
      * Zorluk seviyesine göre filtreler
      */
-    public function scopeByDifficulty($query, string $difficulty)
+    public function scopeByDifficulty($query, int $difficulty)
     {
         return $query->where('difficulty', $difficulty);
     }

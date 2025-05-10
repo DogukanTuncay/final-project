@@ -16,6 +16,8 @@ class CourseChapterLessonResource extends BaseResource
             'slug' => $this->slug,
             'order' => $this->order,
             'is_active' => $this->is_active,
+            'difficulty' => $this->difficulty,
+           
             'thumbnail_url' => $this->thumbnail_url,
             'duration' => $this->duration,
             'xp_reward' => $this->xp_reward,

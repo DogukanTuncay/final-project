@@ -178,6 +178,50 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
     }
 
     /**
+     * Kullanıcının tamamladığı görevler.
+     */
+    public function completedMissions(): HasMany
+    {
+        return $this->hasMany(UserMission::class);
+    }
+    
+    /**
+     * Kullanıcının bugün tamamladığı görevleri getirir.
+     */
+    public function todayCompletedMissions()
+    {
+        return $this->completedMissions()->whereDate('completed_date', today());
+    }
+    
+    /**
+     * Kullanıcının bu hafta tamamladığı görevleri getirir.
+     */
+    public function thisWeekCompletedMissions()
+    {
+        return $this->completedMissions()->whereDate('completed_date', '>=', now()->startOfWeek())
+                                        ->whereDate('completed_date', '<=', now()->endOfWeek());
+    }
+    
+    /**
+     * Kullanıcının belirli bir görevi belirli bir tarihte tamamlayıp tamamlamadığını kontrol eder.
+     */
+    public function hasMissionCompletedOnDate(int $missionId, $date): bool
+    {
+        return $this->completedMissions()
+                   ->where('mission_id', $missionId)
+                   ->whereDate('completed_date', $date)
+                   ->exists();
+    }
+    
+    /**
+     * Kullanıcının belirli bir görevi bugün tamamlayıp tamamlamadığını kontrol eder.
+     */
+    public function hasMissionCompletedToday(int $missionId): bool
+    {
+        return $this->hasMissionCompletedOnDate($missionId, today());
+    }
+
+    /**
      * Kullanıcının kazandığı rozetler
      */
     public function badges(): BelongsToMany

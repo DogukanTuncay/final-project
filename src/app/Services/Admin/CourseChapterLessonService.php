@@ -25,6 +25,36 @@ class CourseChapterLessonService extends BaseService implements CourseChapterLes
         return $this->repository->findByChapter($chapterId);
     }
 
+    public function create(array $data)
+    {
+        $courseChapterLesson = parent::create($data);
+
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $this->handleImage($courseChapterLesson, $data['image']);
+        }
+
+        if (isset($data['images']) && is_array($data['images'])) {
+            $this->handleImages($courseChapterLesson, $data['images']);
+        }
+
+        return $courseChapterLesson;
+    }
+
+    public function update($id, array $data)
+    {
+        $courseChapter = parent::update($id, $data);
+
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $this->handleImage($courseChapter, $data['image']);
+        }
+
+        if (isset($data['images']) && is_array($data['images'])) {
+            $this->handleImages($courseChapter, $data['images']);
+        }
+
+        return $courseChapter;
+    }
+
     /**
      * Ders durumunu değiştirir
      *
@@ -46,5 +76,16 @@ class CourseChapterLessonService extends BaseService implements CourseChapterLes
     public function updateOrder(int $id, int $order): ?CourseChapterLesson
     {
         return $this->repository->updateOrder($id, $order);
+    }
+
+    
+    public function handleImage($courseChapterLesson, UploadedFile $image)
+    {
+        return $courseChapterLesson->uploadImage($image);
+    }
+
+    public function handleImages($courseChapterLesson, array $images)
+    {
+        return $courseChapterLesson->uploadImages($images);
     }
 }

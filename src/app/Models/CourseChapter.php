@@ -39,7 +39,8 @@ class CourseChapter extends Model
         'meta_title',
         'meta_description',
         'image',
-        'images'
+        'images',
+        'difficulty'
     ];
 
     /**
@@ -48,6 +49,7 @@ class CourseChapter extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'images' => 'json',
+        'difficulty' => 'integer'
     ];
 
     /**

@@ -10,7 +10,7 @@ use App\Observers\UserObserver;
 use App\Interfaces\Services\Api\NotificationServiceInterface;
 use App\Services\Api\NotificationService;
 use App\Services\Api\EventService;
-use App\Services\MissionProgressService;
+use App\Services\Api\MissionProgressService;
 
 class AppServiceProvider extends ServiceProvider
 {

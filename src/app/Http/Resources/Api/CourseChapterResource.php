@@ -30,8 +30,12 @@ class CourseChapterResource extends BaseResource
             'slug' => $this->slug,
             'order' => $this->order,
             'is_active' => $this->is_active,
+            'difficulty' => $this->difficulty,
+            'image_url' => $this->image_url,
+            'images_url' => $this->images_url,
             'completion_percentage' => $completion_percentage,
             'lessons' => CourseChapterLessonResource::collection($this->whenLoaded('lessons')),
+            'lessons_count' => $this->whenLoaded('lessons', fn () => $this->lessons->count()),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             // Add other non-translatable attributes here

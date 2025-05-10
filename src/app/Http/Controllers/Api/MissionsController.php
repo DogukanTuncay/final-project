@@ -6,10 +6,16 @@ use App\Interfaces\Services\Api\MissionsServiceInterface;
 use App\Http\Resources\Api\MissionsResource;
 use App\Http\Controllers\BaseController;
 use App\Models\UserMissionProgress;
+use App\Models\UserMission;
+use App\Models\Mission;
 use Illuminate\Http\Request;
+use App\Services\Api\EventService;
+use App\Traits\HandlesEvents;
 
 class MissionsController extends BaseController
 {
+    use HandlesEvents;
+    
     protected $service;
 
     public function __construct(MissionsServiceInterface $service)
@@ -64,20 +70,28 @@ class MissionsController extends BaseController
                 404
             );
         }
+
+        if($mission->type != Mission::TYPE_MANUAL){
+            return $this->errorResponse(
+                'responses.api.Missions.complete.manual',
+                400
+            );
+        }
         
-        $isCompleted = $this->service->complete($id);
+        $result = $this->service->complete($id);
         
-        if ($isCompleted) {
-            // Tamamlanan görev hakkında ek bilgi
-            $progress = UserMissionProgress::where([
-                'user_id' => auth()->id(),
-                'mission_id' => $id
-            ])->first();
+        if ($result) {
+          
             
+            // EventService'den eventleri al
+            
+            $eventService = app(EventService::class);
+            $events = $eventService->getEvents();
+            $eventService->clearEvents();
             $response = [
                 'mission' => new MissionsResource($mission),
-                'progress' => $progress,
-                'xp_earned' => $mission->xp_reward
+                'completion' => $result instanceof UserMission ? $result : null,
+                'events' => $events
             ];
             
             return $this->successResponse(
@@ -116,18 +130,68 @@ class MissionsController extends BaseController
             return $this->errorResponse('responses.api.auth.unauthenticated', 401);
         }
         
+        // İlerleme kayıtları
         $progressList = UserMissionProgress::with('mission')
             ->where('user_id', $user->id)
             ->get();
             
-        $formattedProgress = $progressList->map(function ($progress) {
+        // Tamamlama kayıtları
+        $completionsList = UserMission::with('mission')
+            ->where('user_id', $user->id)
+            ->orderBy('completed_date', 'desc')
+            ->get();
+            
+        $formattedProgress = $progressList->map(function ($progress) use ($completionsList) {
+            $mission = $progress->mission;
+            
+            // Bu görev için tamamlama kayıtları
+            $completions = $completionsList->where('mission_id', $mission->id)->values();
+            $todayCompletion = $completions->first(function($completion) {
+                return $completion->completed_date->isToday();
+            });
+            
+            // Görev tipine göre tamamlanma durumu
+            $isCompleted = false;
+            
+            switch ($mission->type) {
+                case Mission::TYPE_DAILY:
+                    // Günlük görevler için bugün tamamlanmış mı?
+                    $isCompleted = $todayCompletion !== null;
+                    break;
+                    
+                case Mission::TYPE_WEEKLY:
+                    // Haftalık görevler için bu hafta tamamlanmış mı?
+                    $isCompleted = $completions->contains(function($completion) {
+                        return $completion->completed_date->isCurrentWeek();
+                    });
+                    break;
+                    
+                case Mission::TYPE_ONE_TIME:
+                case Mission::TYPE_MANUAL:
+                default:
+                    // Tek seferlik görevler için herhangi bir zaman tamamlanmış mı?
+                    $isCompleted = $completions->isNotEmpty();
+                    break;
+            }
+            
             return [
-                'mission' => new MissionsResource($progress->mission),
+                'mission' => new MissionsResource($mission),
                 'current_amount' => $progress->current_amount,
-                'required_amount' => $progress->mission->required_amount ?? 1,
-                'is_completed' => $progress->isCompleted(),
-                'completed_at' => $progress->completed_at,
-                'progress_percentage' => min(100, ($progress->current_amount / ($progress->mission->required_amount ?? 1)) * 100)
+                'required_amount' => $mission->required_amount ?? 1,
+                'is_completed' => $isCompleted,
+                'completions' => $completions->map(function($completion) {
+                    return [
+                        'id' => $completion->id,
+                        'completed_date' => $completion->completed_date,
+                        'xp_earned' => $completion->xp_earned
+                    ];
+                }),
+                'today_completion' => $todayCompletion ? [
+                    'id' => $todayCompletion->id,
+                    'completed_date' => $todayCompletion->completed_date,
+                    'xp_earned' => $todayCompletion->xp_earned
+                ] : null,
+                'progress_percentage' => min(100, ($progress->current_amount / ($mission->required_amount ?? 1)) * 100)
             ];
         });
         

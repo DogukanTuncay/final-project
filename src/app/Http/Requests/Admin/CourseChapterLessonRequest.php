@@ -25,9 +25,7 @@ class CourseChapterLessonRequest extends BaseRequest
             'meta_description.en' => 'nullable|string',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
-            'thumbnail' => $this->isMethod('PUT') 
-                ? 'nullable|image|mimes:jpeg,png,jpg|max:2048'
-                : 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'difficulty' => 'required|integer|in:1,2,3',
             'duration' => 'nullable|integer|min:0',
             
         ];

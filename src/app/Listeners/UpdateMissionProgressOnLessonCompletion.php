@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\LessonCompleted;
-use App\Services\MissionProgressService;
+use App\Services\Api\MissionProgressService;
 use Illuminate\Support\Facades\Log;
 
 class UpdateMissionProgressOnLessonCompletion

@@ -12,7 +12,7 @@ trait ApiResponseTrait
         $locale = LocaleHelper::getUserLocale();
         $message = $messageKey ? __($messageKey, $messageParams, $locale) : 'Success';
 
-        // EventService'den eventleri al
+        /* EventService'den eventleri al
         $eventService = app(EventService::class);
         $events = $eventService->getEvents();
         $eventService->clearEvents();
@@ -25,13 +25,13 @@ trait ApiResponseTrait
         // Eğer data varsa ekle
         if (!empty($data)) {
             $responseData = array_merge(is_array($data) ? $data : ['data' => $data], $responseData);
-        }
+        }  */
 
         return response()->json([
             'status' => 'success',
             'message' => $message,
             'errors' => (object)[], // Her zaman {} dönecek
-            'data' => $responseData
+            'data' => $data
         ], $status);
     }
 
@@ -44,9 +44,7 @@ trait ApiResponseTrait
             'status' => 'error',
             'message' => $message,
             'errors' => $errors,
-            'data' => [
-                'events' => [] // Hata durumunda boş events array'i
-            ]
+            'data' =>null
         ], $status);
     }
 }

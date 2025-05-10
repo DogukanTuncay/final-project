@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('type')->default('one_time'); // one_time, daily, weekly, etc.
             $table->json('title');
             $table->json('description')->nullable();
-            $table->json('requirements'); // {"type": "comment_count", "value": 1}
+            $table->json('requirements')->nullable(); // {"type": "comment_count", "value": 1}
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

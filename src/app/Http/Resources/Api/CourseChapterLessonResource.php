@@ -53,15 +53,25 @@ class CourseChapterLessonResource extends BaseResource
             'id' => $this->id,
             'course_chapter_id' => $this->course_chapter_id,
             'slug' => $this->slug,
-            'xp_reward' => $this->xp_reward,
             'order' => $this->order,
             'is_active' => $this->is_active,
+            'difficulty' => $this->difficulty,
+            'thumbnail_url' => $this->thumbnail_url,
+            'duration' => $this->duration,
+            'is_free' => $this->is_free,
+            'xp_reward' => $this->xp_reward,
+            'is_completed' => $this->is_completed,
+            'missing_prerequisites' => $this->missing_prerequisites,
+            'contents' => $this->whenLoaded('contents', function() {
+                return CourseChapterLessonContentResource::collection($this->contents);
+            }),
+            'contents_count' => $this->whenLoaded('contents', fn() => $this->contents->count()),
+            'chapter' => $this->whenLoaded('courseChapter', function() {
+                return new CourseChapterResource($this->courseChapter);
+            }),
             'is_locked' => $is_locked,
             'prerequisites' => $this->when($is_locked, $this->missing_prerequisites),
             'thumbnail' => $this->thumbnail,
-            'thumbnail_url' => $this->thumbnail_url,
-            'duration' => $this->duration,
-            'is_completed' => $this->is_completed,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ]);

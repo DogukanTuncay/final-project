@@ -7,28 +7,11 @@ use App\Models\UserMissionProgress;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Interfaces\Services\Api\NotificationServiceInterface;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class HandleMissionCompleted implements ShouldQueue
+class HandleMissionCompleted
 {
-    use InteractsWithQueue, SerializesModels;
-
-    /**
-     * Kuyruktaki işlemin zaman aşımı (saniye)
-     */
-    public $timeout = 60;
-
-    /**
-     * Kuyruktaki işlemin önceliği
-     */
-    public $priority = 90;  // Yüksek öncelik (düşük değer)
-
-    /**
-     * İşlemin commit sonrası çalışması
-     */
-    public $afterCommit = true;
+    use SerializesModels;
 
     /**
      * @var NotificationServiceInterface

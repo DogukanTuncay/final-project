@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Api;
 
 use App\Models\User;
 use App\Models\Mission;
 use App\Models\UserMissionProgress;
+use App\Models\UserMission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log; // Loglama için
@@ -87,83 +88,78 @@ class MissionProgressService
         try {
             // Transaction içinde ilerlemeyi artır ve kontrol et
             DB::transaction(function () use ($user, $mission, &$completedNow) {
-                // Daha önce tamamlanmış mı kontrol et
-                $progress = UserMissionProgress::where('user_id', $user->id)
-                    ->where('mission_id', $mission->id)
-                    ->first();
+                // 1. Görevin durumuna göre ilk kontroller
+                if (!$mission->is_active) {
+                    return; // Görev aktif değil
+                }
+                
+                // Görev tipine göre kontroller
+                $missionType = $mission->type ?? 'one_time';
+                
+                // Mevcut ilerleme kaydını al veya oluştur
+                $progress = UserMissionProgress::firstOrNew([
+                    'user_id' => $user->id,
+                    'mission_id' => $mission->id
+                ]);
+                
+                // Görev tipine göre özel kontroller
+                switch ($missionType) {
+                    case Mission::TYPE_DAILY:
+                        // Günlük görev bugün zaten tamamlanmışsa işlem yapma
+                        if ($user->hasMissionCompletedToday($mission->id)) {
+                            return;
+                        }
+                        break;
                     
-                // Tekrarlanabilir görevler için tarih kontrolü (daily/weekly)
-                $shouldReset = false;
-                $allowProgress = true;
-                
-                if ($progress && $progress->completed_at !== null) {
-                    if ($mission->type === 'daily') {
-                        // Eğer görev günlük ise ve bugün tamamlanmışsa, işlem yapma
-                        if ($progress->completed_at->isToday()) {
-                            $allowProgress = false;
-                        } else {
-                            // Eğer günlük görev daha önceki bir günde tamamlanmışsa, ilerlemeyi sıfırla
-                            $shouldReset = true;
+                    case Mission::TYPE_WEEKLY:
+                        // Haftalık görev bu hafta zaten tamamlanmışsa
+                        if ($user->completedMissions()
+                                ->where('mission_id', $mission->id)
+                                ->whereDate('completed_date', '>=', now()->startOfWeek())
+                                ->whereDate('completed_date', '<=', now()->endOfWeek())
+                                ->exists()) {
+                            return;
                         }
-                    } elseif ($mission->type === 'weekly') {
-                        // Eğer görev haftalık ise ve bu hafta tamamlanmışsa, işlem yapma
-                        if ($progress->completed_at->isCurrentWeek()) {
-                            $allowProgress = false;
-                        } else {
-                            // Eğer haftalık görev daha önceki bir haftada tamamlanmışsa, ilerlemeyi sıfırla
-                            $shouldReset = true;
+                        break;
+                        
+                    case Mission::TYPE_MANUAL:
+                        // Manuel görevler API üzerinden tamamlanır
+                        // Event ile otomatik tamamlanmazlar
+                        return; // Bu görevler otomatik tamamlanmamalı
+                        break;
+                    
+                    case Mission::TYPE_ONE_TIME:
+                    default:
+                        // Tek seferlik görev zaten tamamlanmışsa
+                        if ($user->completedMissions()->where('mission_id', $mission->id)->exists()) {
+                            return;
                         }
-                    } else {
-                        // one_time tipinde bir görev zaten tamamlanmışsa, işlem yapma
-                        $allowProgress = false;
-                    }
-                }
-                
-                if (!$allowProgress) {
-                    return;
-                }
-                
-                // İlerleme kaydını al veya oluştur
-                if ($progress) {
-                    if ($shouldReset) {
-                        // İlerlemeyi sıfırla (tekrarlanabilir görevler için)
-                        $progress->current_amount = 0;
-                        $progress->completed_at = null;
-                    }
-                    // Lock for update
-                    $progress = UserMissionProgress::lockForUpdate()->find($progress->id);
-                } else {
-                    $progress = UserMissionProgress::lockForUpdate()->firstOrCreate(
-                        [
-                            'user_id' => $user->id,
-                            'mission_id' => $mission->id,
-                        ],
-                        [
-                            'current_amount' => 0,
-                        ]
-                    );
                 }
                 
                 // İlerlemeyi artır
                 $progress->current_amount += 1;
                 
                 // Tamamlanma kontrolü
-                if ($progress->current_amount >= $mission->required_amount && $progress->completed_at === null) {
-                    // Tamamlama zamanını ayarla
-                    $completionTime = now();
-                    $progress->completed_at = $completionTime;
-                    
-                    Log::info("MissionProgressService: Görev tamamlandı. User ID: {$user->id}, Mission ID: {$mission->id}, Tip: {$mission->type}");
-                    
+                if ($progress->current_amount >= $mission->required_amount && !$user->hasMissionCompletedToday($mission->id)) {
                     // XP ödülünü kaydet
-                    $progress->xp_reward = $mission->xp_reward;
+                    $xpReward = $mission->xp_reward;
+                    
                     // XP ver
-                    if ($mission->xp_reward > 0) {
-                        $user->addExperiencePoints($mission->xp_reward);
+                    if ($xpReward > 0) {
+                        $user->addExperiencePoints($xpReward);
                     }
                     
-                    // Progress kaydını önce kaydet
-                    $progress->save();
+                    // Tamamlama kaydı oluştur
+                    $completion = new UserMission([
+                        'user_id' => $user->id,
+                        'mission_id' => $mission->id,
+                        'xp_earned' => $xpReward,
+                        'completed_date' => today()
+                    ]);
+                    
+                    $completion->save();
+                    
+                    // Progress kaydını kaydet
                     
                     // MissionCompleted event'ini tetikle
                     try {
@@ -172,8 +168,8 @@ class MissionProgressService
                                 $user, 
                                 $mission, 
                                 $progress, 
-                                $mission->xp_reward, 
-                                $completionTime
+                                $xpReward, 
+                                now()
                             );
                             
                             // Laravel event sistemini kullan
@@ -189,6 +185,8 @@ class MissionProgressService
                     }
                     
                     $completedNow = true;
+                    $progress->delete();
+
                 } else {
                     // Progress kaydını kaydet
                     $progress->save();
@@ -212,10 +210,7 @@ class MissionProgressService
      */
     public function getCompletedMissions(User $user)
     {
-        return UserMissionProgress::where('user_id', $user->id)
-            ->whereNotNull('completed_at')
-            ->with('mission')
-            ->get();
+        return $user->completedMissions()->with('mission')->get();
     }
     
     /**
@@ -227,10 +222,7 @@ class MissionProgressService
      */
     public function isMissionCompleted(User $user, int $missionId): bool
     {
-        return UserMissionProgress::where('user_id', $user->id)
-            ->where('mission_id', $missionId)
-            ->whereNotNull('completed_at')
-            ->exists();
+        return $user->completedMissions()->where('mission_id', $missionId)->exists();
     }
 
     /**

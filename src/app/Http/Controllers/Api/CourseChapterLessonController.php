@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\CourseChapterLesson;
 use App\Traits\HandlesEvents;
 use Illuminate\Support\Facades\Log;
+use App\Services\Api\EventService;
+use App\Models\Badge;
 
 class CourseChapterLessonController extends BaseController
 {
@@ -185,10 +187,22 @@ class CourseChapterLessonController extends BaseController
         );
 
 Log::info("Dönüş Yapılıyor.");
-        return $this->successResponse([
+        // EventService'den eventleri al
+        $eventService = app(EventService::class);
+        $events = $eventService->getEvents();
+        $eventService->clearEvents();
+        Log::info("Eventler: " . json_encode($events));
+        // Data'yı hazırla
+        $responseData = [
             'completed' => true,
-            'completion_id' => $completion->id
-        ], 'responses.lesson_completion.completed');
+            'completion_id' => $completion->id,
+            'events' => $events
+        ];
+
+        return $this->successResponse(
+            $responseData, 
+            'responses.lesson_completion.completed'
+        );
     }
 
     /**

@@ -16,6 +16,9 @@ class Mission extends Model
 
     public $translatable = ['title', 'description', 'requirements'];
 
+    /**
+     * Toplu atama yapılabilecek alanlar
+     */
     protected $fillable = [
         'title',
         'description',
@@ -28,6 +31,14 @@ class Mission extends Model
         'required_amount',
         'trigger_event',
     ];
+
+    /**
+     * Görev tipleri
+     */
+    const TYPE_ONE_TIME = 'one_time';
+    const TYPE_DAILY = 'daily';
+    const TYPE_WEEKLY = 'weekly';
+    const TYPE_MANUAL = 'manual';
 
     protected $casts = [
         'title' => 'array',
@@ -52,6 +63,31 @@ class Mission extends Model
     public function userProgresses(): HasMany
     {
         return $this->hasMany(UserMissionProgress::class);
+    }
+
+    /**
+     * Bu görevin tamamlanma kayıtları.
+     */
+    public function completions(): HasMany
+    {
+        return $this->hasMany(UserMission::class);
+    }
+
+    /**
+     * Bugün tamamlanmış kayıtlar.
+     */
+    public function todayCompletions()
+    {
+        return $this->completions()->whereDate('completed_date', today());
+    }
+
+    /**
+     * Bu hafta tamamlanmış kayıtlar.
+     */
+    public function thisWeekCompletions()
+    {
+        return $this->completions()->whereDate('completed_date', '>=', now()->startOfWeek())
+                                   ->whereDate('completed_date', '<=', now()->endOfWeek());
     }
 
     public function user(): BelongsTo

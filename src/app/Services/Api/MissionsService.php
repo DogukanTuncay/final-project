@@ -7,13 +7,17 @@ use App\Interfaces\Repositories\Api\MissionsRepositoryInterface;
 use App\Models\User;
 use App\Models\Mission;
 use App\Models\UserMissionProgress;
+use App\Models\UserMission;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-
+use App\Traits\HandlesEvents;
 class MissionsService implements MissionsServiceInterface
 {
     protected MissionsRepositoryInterface $repository;
+
+    use HandlesEvents;
+
 
     public function __construct(MissionsRepositoryInterface $repository)
     {
@@ -45,14 +49,52 @@ class MissionsService implements MissionsServiceInterface
             return collect([]);
         }
         
-        return $this->repository->getAvailableMissionsForUser($user->id);
+        $missions = $this->repository->getAvailableMissionsForUser($user->id);
+        
+        // Bugün tamamlanan görevleri filtrele
+        $today = today();
+        
+        return $missions->filter(function ($mission) use ($user, $today) {
+            // Görev tipine göre filtrele
+            switch ($mission->type) {
+                case Mission::TYPE_DAILY:
+                    // Günlük görevler: bugün tamamlanmışsa çıkar
+                    return !$user->hasMissionCompletedToday($mission->id);
+                    
+                case Mission::TYPE_WEEKLY:
+                    // Haftalık görevler: bu hafta tamamlanmışsa çıkar
+                    return !$user->completedMissions()
+                        ->where('mission_id', $mission->id)
+                        ->whereDate('completed_date', '>=', now()->startOfWeek())
+                        ->whereDate('completed_date', '<=', now()->endOfWeek())
+                        ->exists();
+                    
+                case Mission::TYPE_ONE_TIME:
+                    // Tek seferlik görevler: hiç tamamlanmamışsa göster
+                    return !$user->completedMissions()
+                        ->where('mission_id', $mission->id)
+                        ->exists();
+                    
+                case Mission::TYPE_MANUAL:
+                    // Manuel görevler: hiç tamamlanmamışsa göster
+                    return !$user->completedMissions()
+                        ->where('mission_id', $mission->id)
+                        ->exists();
+                    
+                default:
+                    // Bilinmeyen tipler için tek seferlik gibi davran
+                    return !$user->completedMissions()
+                        ->where('mission_id', $mission->id)
+                        ->exists();
+            }
+        });
     }
 
     /**
      * Görevi tamamla
      * 
      * @param int $id Görev ID
-     * @return bool Başarılıysa true, değilse false
+     * @return bool|UserMission Başarılıysa tamamlama kaydı, değilse false
      */
     public function complete($id)
     {
@@ -67,42 +109,55 @@ class MissionsService implements MissionsServiceInterface
             
             // Görevin tipine göre tamamlanabilirliğini kontrol et
             $missionType = $mission->type ?? 'one_time';
-            
-            // Kullanıcının bu görevle ilgili mevcut ilerlemesini kontrol et veya oluştur
-            $progress = UserMissionProgress::firstOrNew([
-                'user_id' => $user->id,
-                'mission_id' => $mission->id
-            ]);
+            $today = today();
             
             // Görev tipi kontrolü
             switch ($missionType) {
-                case 'one_time':
+                case Mission::TYPE_ONE_TIME:
                     // Bu görev türü sadece bir kez tamamlanabilir
-                    if ($progress->isCompleted()) {
+                    if ($user->completedMissions()->where('mission_id', $mission->id)->exists()) {
                         return false; // Zaten tamamlanmış
                     }
                     break;
                 
-                case 'daily':
+                case Mission::TYPE_DAILY:
                     // Günlük görevler her gün tekrar tamamlanabilir
-                    if ($progress->completed_at && $progress->completed_at->isToday()) {
+                    // Sadece bugün tamamlanmış mı kontrolü yapalım
+                    if ($user->hasMissionCompletedToday($mission->id)) {
                         return false; // Bugün zaten tamamlanmış
                     }
                     break;
                 
-                case 'weekly':
+                case Mission::TYPE_WEEKLY:
                     // Haftalık görevler her hafta tekrar tamamlanabilir
-                    if ($progress->completed_at && $progress->completed_at->isCurrentWeek()) {
+                    if ($user->completedMissions()
+                            ->where('mission_id', $mission->id)
+                            ->whereDate('completed_date', '>=', now()->startOfWeek())
+                            ->whereDate('completed_date', '<=', now()->endOfWeek())
+                            ->exists()) {
                         return false; // Bu hafta zaten tamamlanmış
+                    }
+                    break;
+                
+                case Mission::TYPE_MANUAL:
+                    // Manuel görevler bir kez tamamlanabilir
+                    if ($user->completedMissions()->where('mission_id', $mission->id)->exists()) {
+                        return false; // Zaten tamamlanmış
                     }
                     break;
                 
                 default:
                     // Tanımlanmamış görev tipleri için one_time davranışı
-                    if ($progress->isCompleted()) {
+                    if ($user->completedMissions()->where('mission_id', $mission->id)->exists()) {
                         return false;
                     }
             }
+            
+            // İlerleme kaydını al veya oluştur (takip için kullanılacak)
+            $progress = UserMissionProgress::firstOrNew([
+                'user_id' => $user->id,
+                'mission_id' => $mission->id
+            ]);
             
             // İlerleme miktarını artır
             $incrementAmount = 1; // Varsayılan artış miktarı
@@ -112,13 +167,21 @@ class MissionsService implements MissionsServiceInterface
             $requiredAmount = $mission->required_amount ?? 1;
             
             if ($progress->current_amount >= $requiredAmount) {
-                $progress->completed_at = now();
-                
                 // XP ödülünü kaydet
-                $progress->xp_reward = $mission->xp_reward;
+                $xpReward = $mission->xp_reward;
                 
                 // XP ödülünü ekle
-                $user->addExperiencePoints($mission->xp_reward);
+                $user->addExperiencePoints($xpReward);
+                
+                // Tamamlama kaydı oluştur
+                $completion = new UserMission([
+                    'user_id' => $user->id,
+                    'mission_id' => $mission->id,
+                    'xp_earned' => $xpReward,
+                    'completed_date' => today()
+                ]);
+                
+                $completion->save();
                 
                 // MissionCompleted event'ini tetikle
                 try {
@@ -129,16 +192,22 @@ class MissionsService implements MissionsServiceInterface
                             $user,
                             $mission,
                             $progress,
-                            $mission->xp_reward,
+                            $xpReward,
                             now()
                         );
                         
-                        event($completedEvent);
-                        
+                        $this->createEvent(
+                            'mission_completed',
+                            $completedEvent->toArray(),
+                            __('events.mission_completed', ['mission' => $mission->getTranslation('title', app()->getLocale()), 'xp' => $xpReward]),
+                            'mission'
+                        );
+
+                                                
                         \Illuminate\Support\Facades\Log::notice("MissionsService: MissionCompleted event triggered successfully for User ID: {$user->id}, Mission ID: {$mission->id}", [
                             'event_class' => get_class($completedEvent),
                             'mission_title' => $mission->getTranslation('title', app()->getLocale()),
-                            'xp_reward' => $mission->xp_reward
+                            'xp_reward' => $xpReward
                         ]);
                     } else {
                         \Illuminate\Support\Facades\Log::error("MissionsService: MissionCompleted event class not found");
@@ -149,12 +218,17 @@ class MissionsService implements MissionsServiceInterface
                         'trace' => $e->getTraceAsString()
                     ]);
                 }
+                
+                // İlerleme kaydını kaydet (takip için)
+                $progress->delete();
+                
+                return $completion;
             }
             
             // Değişiklikleri kaydet
             $progress->save();
             
-            return $progress->isCompleted();
+            return false; // Henüz tamamlanmadı
         });
     }
 }

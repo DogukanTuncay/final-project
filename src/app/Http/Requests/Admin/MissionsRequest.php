@@ -13,10 +13,10 @@ class MissionsRequest extends BaseRequest
             'title.*' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'array'],
             'description.*' => ['nullable', 'string'],
-            'type' => ['required', 'in:one_time,daily,weekly,chain'],
-            'requirements' => ['required', 'array'],
-            'requirements.type' => ['required', 'string'],
-            'requirements.value' => ['required'],
+            'type' => ['required', 'in:one_time,daily,weekly,chain,manual'],
+            'requirements' => ['sometimes', 'array'],
+            'requirements.type' => ['sometimes', 'string'],
+            'requirements.value' => ['sometimes'],
             'xp_reward' => ['required', 'integer', 'min:0'],
             'is_active' => ['boolean']
         ];

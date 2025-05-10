@@ -25,6 +25,7 @@ class CourseChapterRequest extends BaseRequest
             'description.en' => 'nullable|string',
             'is_active' => 'boolean',
             'order' => 'integer',
+            'difficulty' => 'required|integer|in:1,2,3',
             
             'meta_title' => 'nullable|array',
             'meta_title.tr' => 'nullable|string|max:255',

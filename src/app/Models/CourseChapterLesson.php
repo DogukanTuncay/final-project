@@ -48,6 +48,7 @@ class CourseChapterLesson extends Model
         'duration',
         'is_free',  
         'xp_reward',
+        'difficulty'
     ];
 
     /**
@@ -61,7 +62,8 @@ class CourseChapterLesson extends Model
         'name' => 'array',
         'description' => 'array',
         'meta_title' => 'array',
-        'meta_description' => 'array'
+        'meta_description' => 'array',
+        'difficulty' => 'integer'
     ];
 
     /**
@@ -265,6 +267,8 @@ class CourseChapterLesson extends Model
             ->useLogName('course_chapter_lesson')
             ->setDescriptionForEvent(fn(string $eventName) => "Lesson \"{$this->getTranslation('name', 'en', false)}\" (ID: {$this->id}) has been {$eventName}");
     }
+
+
 
 }
 

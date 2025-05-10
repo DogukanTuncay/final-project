@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Registered;
 use App\Events\LessonCompleted;
 use App\Listeners\UpdateMissionProgressOnLessonCompletion;
 use App\Events\ChapterCompleted;

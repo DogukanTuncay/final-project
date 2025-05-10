@@ -72,7 +72,7 @@ class CourseChapterController extends BaseController
             $sqlState = $e->errorInfo[0] ?? null;
             
             if ($sqlState === '23505' && strpos($message, 'course_chapters_slug_unique') !== false) {
-                return $this->errorResponse('errors.duplicate_course_chapter_slug', Response::HTTP_CONFLICT);
+                return $this->errorResponse('errors.duplicate_course_chapter_slug', Response::HTTP_CONFLICT,$e->getMessage());
             }
             
             throw $e; // Başka bir hata ise yeniden fırlat

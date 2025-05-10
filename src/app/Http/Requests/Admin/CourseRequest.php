@@ -39,7 +39,7 @@ class CourseRequest extends BaseRequest
             'is_featured' => 'boolean',
             'order' => 'integer|min:0',
             'category' => ['required', Rule::in(array_keys(Course::CATEGORIES))],
-            'difficulty' => ['required', Rule::in(array_keys(Course::DIFFICULTIES))],
+            'difficulty' => ['required', 'integer', Rule::in([1, 2, 3])],
         ]);
     }
 }
