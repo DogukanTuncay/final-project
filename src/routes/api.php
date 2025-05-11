@@ -175,9 +175,8 @@ Route::name('api.')->group(function () {
             Route::get('/logs', [NotificationController::class, 'getNotificationLogs']);
             
             // Bildirim Ayarları
-            Route::get('/settings', [App\Http\Controllers\Api\NotificationSettingController::class, 'getSettings']);
-            Route::put('/settings', [App\Http\Controllers\Api\NotificationSettingController::class, 'updateSettings']);
-            Route::post('/settings/reset', [App\Http\Controllers\Api\NotificationSettingController::class, 'resetSettings']);
+            Route::get('/settings', [NotificationController::class, 'getNotificationSettings']);
+            Route::post('/settings', [NotificationController::class, 'updateNotificationSettings']);
         });
 
         // Video İçerik Rotaları

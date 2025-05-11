@@ -23,7 +23,6 @@ class OneSignalCustomNotificationRequest extends BaseRequest
     {
         return [
             'user_id' => 'required|integer|exists:users,id',
-            'player_id' => 'required|string',
             'title' => 'required|string|max:255',
             'message' => 'required|string|max:2000',
             'additional_data' => 'nullable|array',

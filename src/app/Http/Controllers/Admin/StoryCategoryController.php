@@ -40,11 +40,7 @@ class StoryCategoryController extends BaseController
         
         // Resim yükleme işlemini burada yapma ihtiyacı olmayabilir, çünkü service'e taşıyoruz
         $category = $this->service->create($validatedData);
-        
-        // Eğer request'te resim varsa, yükleyelim
-        if ($request->hasFile('image')) {
-            $category->uploadImage($request->file('image'), 'image');
-        }
+      
         
         return $this->successResponse(new StoryCategoryResource($category), 'responses.crud.create_success', 201);
     }
@@ -63,12 +59,7 @@ class StoryCategoryController extends BaseController
         
         $validatedData = $request->validated();
         
-        // Eğer request'te resim varsa
-        if ($request->hasFile('image')) {
-            $category->uploadImage($request->file('image'), 'image');
-            // Resim trait tarafından kaydedildiği için validatedData'dan çıkaralım
-            unset($validatedData['image']);
-        }
+       
         
         // Diğer verileri güncelleyelim (eğer varsa)
         if (!empty($validatedData)) {

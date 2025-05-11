@@ -24,7 +24,7 @@ class OneSignalResource extends JsonResource
                     'email' => $this->user->email,
                 ];
             }),
-            'type' => $this->type,
+            'notification_type' => $this->notification_type,
             'notification_id' => $this->notification_id,
             'title' => $this->title,
             'message' => $this->message,

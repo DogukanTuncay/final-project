@@ -8,6 +8,7 @@ use App\Services\BaseService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Http\UploadedFile;
 
 class StoryCategoryService extends BaseService implements StoryCategoryServiceInterface
 {
@@ -38,7 +39,19 @@ class StoryCategoryService extends BaseService implements StoryCategoryServiceIn
      */
     public function create(array $data)
     {
-       return $this->repository->create($data);
+
+        $storyCategory = $this->repository->create($data);
+
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $this->handleImage($storyCategory, $data['image']);
+        }
+
+        if (isset($data['images']) && is_array($data['images'])) {
+            $this->handleImages($storyCategory, $data['images']);
+        }
+
+       return $storyCategory;
+       
     }
     
     /**
@@ -50,7 +63,26 @@ class StoryCategoryService extends BaseService implements StoryCategoryServiceIn
      */
     public function update($id, array $data)
     {
-        return $this->repository->update($id, $data);
-        
+
+        $storyCategory = $this->repository->update($id, $data);
+          if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $this->handleImage($storyCategory, $data['image']);
+        }
+
+        if (isset($data['images']) && is_array($data['images'])) {
+            $this->handleImages($storyCategory, $data['images']);
+        }
+        return $storyCategory;
     }
+
+    public function handleImage($storyCategory, UploadedFile $image)
+    {
+        return $storyCategory->uploadImage($image);
+    }
+
+    public function handleImages($storyCategory, array $images)
+    {
+        return $storyCategory->uploadImages($images);
+    }
+
 }

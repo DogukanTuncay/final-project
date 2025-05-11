@@ -23,8 +23,6 @@ class OneSignalSegmentNotificationRequest extends BaseRequest
     {
         return [
             'segment' => 'required|string|max:255',
-            'user_ids' => 'required|array',
-            'user_ids.*' => 'required|integer|exists:users,id',
             'title' => 'required|string|max:255',
             'message' => 'required|string|max:2000',
             'additional_data' => 'nullable|array',

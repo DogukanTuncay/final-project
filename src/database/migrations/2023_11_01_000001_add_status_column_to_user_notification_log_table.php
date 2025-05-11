@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('user_notification_logs', function (Blueprint $table) {
-            $table->string('status')->default('sent')->after('data');
+            $table->string('status')->default('sent')->after('user_id');
         });
     }
 

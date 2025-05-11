@@ -43,7 +43,7 @@ trait ApiResponseTrait
         return response()->json([
             'status' => 'error',
             'message' => $message,
-            'errors' => $errors,
+            'errors' => is_array($errors) ? (object)$errors : $errors,
             'data' =>null
         ], $status);
     }

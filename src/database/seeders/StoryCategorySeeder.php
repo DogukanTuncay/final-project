@@ -21,7 +21,7 @@ class StoryCategorySeeder extends Seeder
                 ],
                 'is_active' => true,
                 'order' => 1,
-                'image_url' => 'images/story-categories/beginner.jpg',
+                'image' => 'images/story-categories/beginner.jpg',
             ],
             [
                 'name' => [
@@ -30,7 +30,7 @@ class StoryCategorySeeder extends Seeder
                 ],
                 'is_active' => true,
                 'order' => 2,
-                'image_url' => 'images/story-categories/intermediate.jpg',
+                'image' => 'images/story-categories/intermediate.jpg',
             ],
             [
                 'name' => [
@@ -39,7 +39,7 @@ class StoryCategorySeeder extends Seeder
                 ],
                 'is_active' => true,
                 'order' => 3,
-                'image_url' => 'images/story-categories/advanced.jpg',
+                'image' => 'images/story-categories/advanced.jpg',
             ],
             [
                 'name' => [
@@ -48,7 +48,7 @@ class StoryCategorySeeder extends Seeder
                 ],
                 'is_active' => true,
                 'order' => 4,
-                'image_url' => 'images/story-categories/conversations.jpg',
+                'image' => 'images/story-categories/conversations.jpg',
             ],
             [
                 'name' => [
@@ -57,7 +57,7 @@ class StoryCategorySeeder extends Seeder
                 ],
                 'is_active' => true,
                 'order' => 5,
-                'image_url' => 'images/story-categories/culture.jpg',
+                'image' => 'images/story-categories/culture.jpg',
             ],
         ];
 

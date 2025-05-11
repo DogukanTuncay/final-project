@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api;
 
 use App\Http\Resources\BaseResource;
 use Illuminate\Support\Facades\Auth;
+use App\Models\LessonCompletion;
 
 class CourseResource extends BaseResource
 {
@@ -16,18 +17,33 @@ class CourseResource extends BaseResource
         $completed_lessons_in_course = 0;
         $user = Auth::user();
 
-        // Kursun tüm derslerini (bölümler aracılığıyla) ve kullanıcı ilerlemesini yüklediğimizi varsayalım
-        if ($this->relationLoaded('courseChapters')) {
-            foreach ($this->courseChapters as $chapter) {
+        // Kursun tüm derslerini (bölümler aracılığıyla) hesapla
+        if ($this->relationLoaded('chapters')) {
+            $lessonsIds = [];
+            
+            foreach ($this->chapters as $chapter) {
                 if ($chapter->relationLoaded('lessons')) {
-                    $total_lessons_in_course += $chapter->lessons->count();
-                    if ($user) {
-                        $completed_lessons_in_course += $chapter->lessons->filter(function ($lesson) use ($user) {
-                            // 'userProgress' ilişkisi ve 'is_completed' alanı olduğunu varsayıyoruz
-                            return $lesson->relationLoaded('userProgress') && $lesson->userProgress?->is_completed;
-                        })->count();
-                    }
+                    $chapterLessonsIds = $chapter->lessons->pluck('id')->toArray();
+                    $lessonsIds = array_merge($lessonsIds, $chapterLessonsIds);
+                    $total_lessons_in_course += count($chapterLessonsIds);
                 }
+            }
+            
+            // Eğer kullanıcı giriş yapmışsa, tamamlanmış dersleri say
+            if ($user) {
+                $completed_lessons_in_course = LessonCompletion::where('user_id', $user->id)
+                    ->whereIn('lesson_id', $lessonsIds)
+                    ->count();
+            }
+        } else {
+            // Kurs ilişkileri yüklenmemişse, lessons() ilişkisini kullanarak hesapla
+            $total_lessons_in_course = $this->lessons()->count();
+            
+            if ($user) {
+                $lessonsIds = $this->lessons()->pluck('course_chapter_lessons.id')->toArray();
+                $completed_lessons_in_course = LessonCompletion::where('user_id', $user->id)
+                    ->whereIn('lesson_id', $lessonsIds)
+                    ->count();
             }
         }
 
@@ -38,9 +54,15 @@ class CourseResource extends BaseResource
             'slug' => $this->slug,
             'difficulty' => $this->difficulty,
             'completion_percentage' => $course_completion_percentage,
-            'chapters' => CourseChapterResource::collection($this->whenLoaded('courseChapters')),
-            'image_url' => $this->image ? asset($this->image) : null,
-            'images_url' => $this->images ? collect($this->images)->map(fn($image) => asset($image)) : [],
+            'completion_status' => [
+                'completed' => $total_lessons_in_course > 0 && $total_lessons_in_course === $completed_lessons_in_course,
+                'progress' => $course_completion_percentage,
+                'total_lessons' => $total_lessons_in_course,
+                'completed_lessons' => $completed_lessons_in_course
+            ],
+            'chapters' => CourseChapterResource::collection($this->whenLoaded('chapters')),
+            'image_url' => $this->image_url,
+            'images_url' => $this->images_url,
             // Add other non-translatable attributes here
         ]);
     }

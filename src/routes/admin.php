@@ -204,6 +204,8 @@ Route::prefix('admin')->name('admin.')->middleware(['JWT', 'verified', 'role:adm
     Route::group(['prefix' => 'onesignal', 'controller' => OneSignalController::class], function () {
         // Bildirim Listeleme ve Detay
         Route::get('/', 'index')->name('onesignal.index');
+        Route::get('statistics', 'getStatistics')->name('onesignal.statistics');
+
         Route::get('{id}', 'show')->name('onesignal.show');
         
         // Bildirim Gönderme
@@ -220,7 +222,6 @@ Route::prefix('admin')->name('admin.')->middleware(['JWT', 'verified', 'role:adm
         Route::delete('templates/{id}', 'deleteTemplate')->name('onesignal.templates.delete');
         
         // İstatistikler
-        Route::get('statistics', 'getStatistics')->name('onesignal.statistics');
     });
 
     // Video İçerikleri (VideoContent) Route'ları

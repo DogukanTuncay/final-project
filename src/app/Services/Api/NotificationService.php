@@ -40,16 +40,15 @@ class NotificationService implements NotificationServiceInterface
      */
     private function canSendNotification(int $userId, string $notificationType): bool
     {
-        // Kullanıcı bildirim tercihlerini kontrol et
-        $userSettings = UserNotificationSetting::firstOrCreate(
-            ['user_id' => $userId],
-            ['preferences' => json_encode(['all' => true])]
-        );
+        // Kullanıcıyı bul
+        $user = User::find($userId);
         
-        $preferences = json_decode($userSettings->preferences, true);
+        if (!$user) {
+            return false;
+        }
         
-        // Kullanıcı tüm bildirimleri veya bu tür bildirimleri kapatmışsa
-        if (!($preferences['all'] ?? true) || !($preferences[$notificationType] ?? true)) {
+        // Kullanıcının bildirim tipini alabileceğini kontrol et
+        if (!$user->canReceiveNotificationType($notificationType)) {
             return false;
         }
         

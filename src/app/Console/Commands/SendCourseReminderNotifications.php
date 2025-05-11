@@ -48,33 +48,55 @@ class SendCourseReminderNotifications extends Command
             $sentCount = 0;
             
             foreach ($inactiveUsers as $user) {
-                // Kullanıcının başladığı ama tamamlamadığı kursları bul
-                // Bu kısım sizin Course ve UserCourseProgress modellerinize göre uyarlanmalıdır
-                $incompleteCourses = Course::whereHas('userProgress', function ($query) use ($user) {
-                    $query->where('user_id', $user->id)
-                        ->where('progress', '<', 100)
-                        ->where('progress', '>', 0);
+                // Kullanıcının en az bir dersini tamamladığı kursları bul
+                $startedCourses = Course::whereHas('lessons.completions', function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
                 })->get();
                 
-                if ($incompleteCourses->count() > 0) {
-                    // En çok ilerlenen ama tamamlanmamış kursu seç
-                    $mostProgressedCourse = $incompleteCourses->sortByDesc(function ($course) use ($user) {
-                        return $course->userProgress->where('user_id', $user->id)->first()->progress ?? 0;
-                    })->first();
+                $incompleteCourses = [];
+                
+                foreach ($startedCourses as $course) {
+                    // Kurs tamamlama yüzdesini hesapla
+                    $totalLessons = $course->lessons()->count();
                     
-                    if ($mostProgressedCourse) {
-                        $progress = $mostProgressedCourse->userProgress->where('user_id', $user->id)->first()->progress ?? 0;
+                    if ($totalLessons > 0) {
+                        $completedLessons = $course->lessons()
+                            ->whereHas('completions', function ($query) use ($user) {
+                                $query->where('user_id', $user->id);
+                            })->count();
                         
-                        // Bildirim gönder
-                        $result = $notificationService->sendCourseReminderNotification(
-                            $user->id, 
-                            $mostProgressedCourse->name, 
-                            $progress
-                        );
+                        $progress = ($completedLessons / $totalLessons) * 100;
                         
-                        if ($result) {
-                            $sentCount++;
+                        // İlerleme kaydedilmiş ama tamamlanmamışsa listeye ekle
+                        if ($progress > 0 && $progress < 100) {
+                            $incompleteCourses[] = [
+                                'course' => $course,
+                                'progress' => $progress
+                            ];
                         }
+                    }
+                }
+                
+                // Başlanmış ama tamamlanmamış kurslar varsa
+                if (count($incompleteCourses) > 0) {
+                    // En çok ilerlenen kursu bul
+                    usort($incompleteCourses, function ($a, $b) {
+                        return $b['progress'] <=> $a['progress'];
+                    });
+                    
+                    $mostProgressedCourse = $incompleteCourses[0]['course'];
+                    $progress = $incompleteCourses[0]['progress'];
+                    
+                    // Bildirim gönder
+                    $result = $notificationService->sendCourseReminderNotification(
+                        $user->id, 
+                        $mostProgressedCourse->name, 
+                        round($progress)
+                    );
+                    
+                    if ($result) {
+                        $sentCount++;
+                        $this->info("Kullanıcı {$user->id} için {$mostProgressedCourse->name} kursuna bildirim gönderildi");
                     }
                 }
             }

@@ -140,6 +140,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'onesignal_player_id' => 'string',
+        'settings' => 'json',
     ];
 
     /**
@@ -413,14 +414,6 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
     }
 
     /**
-     * Kullanıcının bildirim ayarları
-     */
-    public function notificationSettings()
-    {
-        return $this->hasOne(UserNotificationSetting::class);
-    }
-
-    /**
      * Kullanıcının bildirim logları
      */
     public function notificationLogs()
@@ -448,5 +441,61 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
     public function completedLessons(): HasMany
     {
         return $this->hasMany(\App\Models\LessonCompletion::class);
+    }
+
+    /**
+     * Kullanıcının bildirim ayarları
+     * 
+     * @return array
+     */
+    public function getNotificationSettingsAttribute()
+    {
+        $defaultSettings = [
+            'all' => true, // Tüm bildirimler
+            'login_streak' => true, // Giriş streaki bildirimleri
+            'course_completion' => true, // Kurs tamamlama bildirimleri
+            'course_reminder' => true, // Kurs hatırlatma bildirimleri
+            'custom' => true, // Özel bildirimler
+            'broadcast' => true, // Toplu bildirimler
+        ];
+        
+        $settings = $this->settings ?? [];
+        $notifications = $settings['notifications'] ?? [];
+        
+        return array_merge($defaultSettings, $notifications);
+    }
+    
+    /**
+     * Kullanıcının bildirim ayarlarını günceller
+     * 
+     * @param array $settings
+     * @return void
+     */
+    public function updateNotificationSettings(array $settings)
+    {
+        $currentSettings = $this->settings ?? [];
+        $currentSettings['notifications'] = array_merge($this->notification_settings, $settings);
+        
+        $this->settings = $currentSettings;
+        $this->save();
+    }
+    
+    /**
+     * Kullanıcının belirli bir tür bildirim alıp alamayacağını kontrol eder
+     *
+     * @param string $type
+     * @return bool
+     */
+    public function canReceiveNotificationType(string $type): bool
+    {
+        $settings = $this->notification_settings;
+        
+        // Önce tüm bildirimlerin açık olup olmadığını kontrol et
+        if (!($settings['all'] ?? true)) {
+            return false;
+        }
+        
+        // Sonra spesifik bildirim türünü kontrol et
+        return $settings[$type] ?? true;
     }
 }

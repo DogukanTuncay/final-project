@@ -94,4 +94,50 @@ class NotificationController extends Controller
             return $this->errorResponse('notification.logs.error', 500);
         }
     }
+    
+    /**
+     * Kullanıcının bildirim ayarlarını getirir
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getNotificationSettings(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            
+            return $this->successResponse(
+                $user->notification_settings,
+                'notification.settings.retrieved'
+            );
+        } catch (\Exception $e) {
+            \Log::error('Bildirim ayarları getirilemedi: ' . $e->getMessage());
+            return $this->errorResponse('notification.settings.error', 500);
+        }
+    }
+    
+    /**
+     * Kullanıcının bildirim ayarlarını günceller
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateNotificationSettings(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            $settings = $request->input('settings');
+            
+            // Bildirim ayarlarını güncelle
+            $user->updateNotificationSettings($settings);
+            
+            return $this->successResponse(
+                $user->notification_settings,
+                'notification.settings.updated'
+            );
+        } catch (\Exception $e) {
+            \Log::error('Bildirim ayarları güncellenemedi: ' . $e->getMessage());
+            return $this->errorResponse('notification.settings.update_error', 500);
+        }
+    }
 } 

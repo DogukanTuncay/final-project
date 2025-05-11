@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('story_category_id')->constrained('story_categories')->onDelete('cascade');
             $table->json('title'); // Çevrilebilir başlık için
-            $table->string('media_url')->nullable(); // Medya (resim/video) URL'si
-            $table->text('content')->nullable(); // Metin içeriği
+            $table->string('image')->nullable(); // Medya (resim/video) URL'si
             $table->unsignedInteger('order_column')->default(0); // Sıralama için
             $table->boolean('is_active')->default(true);
             $table->timestamps();

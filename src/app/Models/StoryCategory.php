@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -14,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StoryCategory extends Model
 {
-    use HasFactory, SoftDeletes, HasTranslations, LogsActivity, HasImage;
+    use HasFactory,  HasTranslations, LogsActivity, HasImage;
 
     /**
      * Çevirilecek alanlar.

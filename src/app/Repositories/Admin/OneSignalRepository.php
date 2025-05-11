@@ -6,6 +6,7 @@ use App\Interfaces\Repositories\Admin\OneSignalRepositoryInterface;
 use App\Models\NotificationTemplate;
 use App\Models\UserNotificationLog;
 use OneSignal;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class OneSignalRepository implements OneSignalRepositoryInterface
@@ -63,26 +64,30 @@ class OneSignalRepository implements OneSignalRepositoryInterface
      */
     public function sendToUser(array $data): bool
     {
+        $user = User::find($data['user_id']);
+
+        if(!$user){
+            return false;
+        }
         try {
-            $response = OneSignal::sendNotificationToUser(
-                $data['message'],
-                $data['player_id'],
-                null,
-                [
-                    'headings' => ['en' => $data['title']],
-                    'data' => $data['additional_data'] ?? []
-                ]
-            );
+            $response = OneSignal::sendNotificationCustom([
+                'contents' => ['en' => $data['message']],
+                'headings' => ['en' => $data['title']],
+                'include_player_ids' => [$user->onesignal_player_id],
+                // 'data' => json_encode($data['additional_data'] ?? []),
+            ]);
+            
 
             // Bildirim kaydı oluştur
             if (isset($data['user_id'])) {
                 UserNotificationLog::create([
                     'user_id' => $data['user_id'],
-                    'type' => 'admin_custom',
+                    'notification_type' => 'admin_custom',
                     'title' => $data['title'],
                     'message' => $data['message'],
-                    'data' => json_encode($data['additional_data'] ?? []),
-                    'notification_id' => $response['id'] ?? null,
+                    'data' => $data['additional_data'] ?? [],
+                    'notification_id' => $response->id ?? null,
+                    'sent_at' => now(),
                 ]);
             }
 
@@ -113,16 +118,16 @@ class OneSignalRepository implements OneSignalRepositoryInterface
             );
 
             // Log bildirim bilgilerini veritabanına
-            foreach ($data['user_ids'] as $userId) {
+           
                 UserNotificationLog::create([
-                    'user_id' => $userId,
-                    'type' => 'admin_segment',
+                    'notification_type' => 'admin_segment_for_'.$data['segment'],
                     'title' => $data['title'],
                     'message' => $data['message'],
                     'data' => json_encode($data['additional_data'] ?? []),
                     'notification_id' => $response['id'] ?? null,
+                    'sent_at' => now(),
                 ]);
-            }
+            
 
             return true;
         } catch (\Exception $e) {
@@ -140,23 +145,21 @@ class OneSignalRepository implements OneSignalRepositoryInterface
     public function sendToAll(array $data): bool
     {
         try {
-            $response = OneSignal::sendNotificationToAll(
-                $data['message'],
-                null,
-                [
-                    'headings' => ['en' => $data['title']],
-                    'data' => $data['additional_data'] ?? []
-                ]
-            );
+            $response = OneSignal::sendNotificationCustom([
+                'contents' => ['en' => $data['message']],
+                'headings' => ['en' => $data['title']],
+                'included_segments' => ['All'],
+                'data' => null,
+            ]);
 
             // Genel bir bildirim kaydı oluştur (user_id olmadan)
             UserNotificationLog::create([
-                'user_id' => null,
-                'type' => 'admin_broadcast',
+                'notification_type' => 'admin_custom_to_all',
                 'title' => $data['title'],
                 'message' => $data['message'],
                 'data' => json_encode($data['additional_data'] ?? []),
-                'notification_id' => $response['id'] ?? null,
+                'notification_id' => $response->id ?? null,
+                'sent_at' => now(),
             ]);
 
             return true;

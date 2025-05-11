@@ -22,8 +22,6 @@ class Story extends Model
     protected $fillable = [
         'story_category_id',
         'title',
-        'media_url',
-        'content',
         'order_column',
         'is_active',
         'image',

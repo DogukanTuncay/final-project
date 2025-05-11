@@ -53,7 +53,7 @@ class OneSignalService implements OneSignalServiceInterface
     {
         try {
             // Gerekli alanların validasyonu
-            if (empty($data['player_id']) || empty($data['title']) || empty($data['message'])) {
+            if (empty($data['title']) || empty($data['message'])) {
                 Log::error('OneSignal kullanıcıya bildirim gönderimi için gerekli alanlar eksik');
                 return false;
             }

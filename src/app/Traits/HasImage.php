@@ -28,7 +28,6 @@ trait HasImage
         if ($this->{$field}) {
             $this->deleteImage($this->{$field});
         }
-
         // Yeni resmi yükle
         $path = $image->store($this->getImagePath(), 'public');
         

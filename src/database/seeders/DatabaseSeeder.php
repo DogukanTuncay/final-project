@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // 0. Sistem Ayarları
             SettingsSeeder::class,      // Sistem Ayarları
+            NotificationSettingsSeeder::class, // Bildirim Ayarları
         
             // 1. Temel ve Bağımsız Veriler
             UserSeeder::class,          // Kullanıcılar (Özellikle Admin)

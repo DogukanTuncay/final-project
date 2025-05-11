@@ -40,6 +40,7 @@ class StoryCategoryController extends BaseController
      */
     public function showBySlug(string $slug): JsonResponse
     {
+
         $category = $this->service->findActiveBySlug($slug);
         if (!$category) {
             return $this->errorResponse('responses.story_category.not_found', 404);
@@ -57,7 +58,6 @@ class StoryCategoryController extends BaseController
      */
     public function getStoriesByCategory($slug)
     {
-        try {
             $category = $this->service->findBySlug($slug);
             
             if (!$category) {
@@ -73,11 +73,6 @@ class StoryCategoryController extends BaseController
                 StoryResource::collection($stories),
                 'responses.story_category.stories.success'
             );
-        } catch (\Exception $e) {
-            return $this->errorResponse(
-                'responses.story_category.stories.error',
-                Response::HTTP_INTERNAL_SERVER_ERROR
-            );
-        }
+       
     }
 }
