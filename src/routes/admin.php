@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\BadgeController;
 use App\Http\Controllers\Admin\OneSignalController;
 use App\Http\Controllers\Admin\VideoContentController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ContactController;
 
 // Admin rotaları - 'admin' prefix'i ekleniyor, 'api' prefix'i RouteServiceProvider'da ekleniyor
 Route::prefix('admin')->name('admin.')->middleware(['JWT', 'verified', 'role:admin|super-admin'])->group(function () {
@@ -198,6 +199,14 @@ Route::prefix('admin')->name('admin.')->middleware(['JWT', 'verified', 'role:adm
         Route::put('/{id}', [BadgeController::class, 'update'])->name('update');
         Route::delete('/{id}', [BadgeController::class, 'destroy'])->name('destroy');
         Route::patch('/{id}/toggle-status', [BadgeController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    // İletişim Formları Route'ları
+    Route::prefix('contacts')->name('contacts.')->group(function () {
+        Route::get('/', [ContactController::class, 'index'])->name('index');
+        Route::get('/{id}', [ContactController::class, 'show'])->name('show');
+        Route::put('/{id}', [ContactController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ContactController::class, 'destroy'])->name('destroy');
     });
 
     // OneSignal Bildirimleri Rota Grubu

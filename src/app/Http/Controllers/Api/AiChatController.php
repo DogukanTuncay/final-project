@@ -35,7 +35,7 @@ class AiChatController extends Controller
         $chats = $this->service->getUserChats($userId, $params);
         
         return $this->successResponse(
-            AiChatResource::collection($chats)->response()->getData(true),
+            AiChatResource::collection($chats),
             'responses.api.ai_chat.list.success'
         );
     }

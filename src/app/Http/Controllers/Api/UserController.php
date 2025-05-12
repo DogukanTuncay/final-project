@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use App\Http\Requests\Api\UpdateUserPasswordRequest;
 
 class UserController extends Controller
 {
@@ -170,6 +171,27 @@ class UserController extends Controller
             [],
             'user.onesignal_updated'
         );
+    }
+
+    /**
+     * Kullanıcı şifresini değiştirir
+     *
+     * @param UpdateUserPasswordRequest $request
+     * @return JsonResponse
+     */
+    public function updatePassword(UpdateUserPasswordRequest $request): JsonResponse
+    {
+        $userId = auth()->id();
+        $validated = $request->validated();
+        $result = $this->userService->updatePassword(
+            $userId,
+            $validated['current_password'],
+            $validated['password']
+        );
+        if ($result === true) {
+            return $this->successResponse([], 'Şifreniz başarıyla değiştirildi.');
+        }
+        return $this->errorResponse($result, 400);
     }
 
     // Gelecekte diğer kullanıcı işlemleri buraya eklenebilir (örn: get profile)

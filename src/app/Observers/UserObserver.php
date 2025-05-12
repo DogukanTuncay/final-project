@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\User;
 use App\Models\Level;
+use App\Models\UserNotificationSetting;
 
 class UserObserver
 {
@@ -23,6 +24,14 @@ class UserObserver
         // Kullanıcıya varsayılan "user" rolünü ata
         if (!$user->hasRole('user')) {
             $user->assignRole('user');
+        }
+
+        // Kullanıcıya varsayılan bildirim ayarlarını oluştur
+        if (!$user->notificationSettings()->exists()) {
+            UserNotificationSetting::create([
+                'user_id' => $user->id,
+                'preferences' => UserNotificationSetting::getDefaultPreferences()
+            ]);
         }
     }
 

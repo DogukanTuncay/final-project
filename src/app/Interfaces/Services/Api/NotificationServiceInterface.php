@@ -2,54 +2,56 @@
 
 namespace App\Interfaces\Services\Api;
 
+use App\Models\User;
+
 interface NotificationServiceInterface
 {
     /**
-     * Kullanıcıya login streak bildirimi gönderir
-     * 
-     * @param int $userId
-     * @param int $streakCount
+     * Kullanıcının belirli türde bildirim alıp alamayacağını kontrol eder
+     *
+     * @param User $user
+     * @param string $notificationType
      * @return bool
      */
-    public function sendLoginStreakNotification(int $userId, int $streakCount): bool;
+    public function canUserReceiveNotification(User $user, string $notificationType): bool;
     
     /**
-     * Kullanıcıya kurs tamamlama bildirimi gönderir
-     * 
-     * @param int $userId
-     * @param string $courseName
+     * Login streak bildirimi için kontrol yapar ve gerekirse gönderir
+     *
+     * @param User $user
      * @return bool
      */
-    public function sendCourseCompletionNotification(int $userId, string $courseName): bool;
+    public function checkAndSendLoginStreakNotification(User $user): bool;
     
     /**
-     * Kullanıcıya kurs devam et hatırlatması gönderir
-     * 
-     * @param int $userId
-     * @param string $courseName
-     * @param int $progress
+     * Kurs hatırlatıcı bildirimini kontrol eder ve gerekirse gönderir
+     *
+     * @param User $user
      * @return bool
      */
-    public function sendCourseReminderNotification(int $userId, string $courseName, int $progress): bool;
+    public function checkAndSendCourseReminderNotification(User $user): bool;
     
     /**
-     * Özel bir bildirim gönderir
-     * 
-     * @param int|array $userIds Tek bir kullanıcı ID'si veya ID'lerin dizisi
-     * @param string $title Bildirim başlığı
-     * @param string $message Bildirim mesajı
-     * @param array $additionalData Ek veri
+     * Özel bildirim gönderebilme durumunu kontrol eder
+     *
+     * @param User $user
      * @return bool
      */
-    public function sendCustomNotification($userIds, string $title, string $message, array $additionalData = []): bool;
+    public function canSendCustomNotification(User $user): bool;
     
     /**
-     * Tüm kullanıcılara bildirim gönderir
-     * 
-     * @param string $title Bildirim başlığı
-     * @param string $message Bildirim mesajı
-     * @param array $additionalData Ek veri
+     * Genel duyuru bildirimlerini alabilme durumunu kontrol eder
+     *
+     * @param User $user
      * @return bool
      */
-    public function sendBroadcastNotification(string $title, string $message, array $additionalData = []): bool;
+    public function canSendBroadcastNotification(User $user): bool;
+    
+    /**
+     * Tüm bildirim kontrollerini tek bir yerden yapar
+     *
+     * @param User $user
+     * @return array
+     */
+    public function checkAllNotifications(User $user): array;
 } 

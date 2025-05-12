@@ -19,18 +19,26 @@ class NotificationSettingController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getSettings(Request $request): JsonResponse
+    public function getNotificationSettings(Request $request): JsonResponse
     {
         try {
             $user = $request->user();
-            $settings = UserNotificationSetting::firstOrCreate(
-                ['user_id' => $user->id],
-                ['preferences' => json_encode(UserNotificationSetting::getDefaultPreferences())]
-            );
+            $settings = $user->notificationSettings()->firstOrCreate([
+                'user_id' => $user->id
+            ], [
+                'preferences' => UserNotificationSetting::getDefaultPreferences()
+            ]);
+
+            $preferences = $settings->preferences;
+            if (is_string($preferences)) {
+                $preferences = json_decode($preferences, true) ?: UserNotificationSetting::getDefaultPreferences();
+            }
+
+            Log::info('Bildirim ayarları alınıyor', ['preferences' => $preferences]);
 
             return $this->successResponse(
                 [
-                    'preferences' => json_decode($settings->preferences, true)
+                    'preferences' => $preferences
                 ],
                 'notification.settings.retrieved'
             );
@@ -46,9 +54,11 @@ class NotificationSettingController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function updateSettings(Request $request): JsonResponse
+    public function updateNotificationSettings(Request $request): JsonResponse
     {
         try {
+            Log::info('Bildirim ayarları güncelleme isteği alındı', ['request_body' => $request->all()]);
+            
             $request->validate([
                 'preferences' => 'required|array',
                 'preferences.all' => 'boolean',
@@ -60,55 +70,55 @@ class NotificationSettingController extends Controller
             ]);
 
             $user = $request->user();
-            $settings = UserNotificationSetting::firstOrCreate(['user_id' => $user->id]);
+            Log::info('Kullanıcı bilgileri', ['user_id' => $user->id, 'email' => $user->email]);
             
-            // Mevcut tercihleri al
-            $currentPreferences = json_decode($settings->preferences, true) ?: UserNotificationSetting::getDefaultPreferences();
+            // Doğrudan gelen tercihleri güncelle
+            $preferences = $request->input('preferences');
+            $user->updateNotificationSettings($preferences);
             
-            // Yeni tercihlerle birleştir
-            $preferences = array_merge($currentPreferences, $request->input('preferences'));
+            // Güncellenmiş ayarları al
+            $updatedSettings = $user->fresh()->notificationSettings()->first();
+            $updatedPreferences = $updatedSettings->preferences;
+            if (is_string($updatedPreferences)) {
+                $updatedPreferences = json_decode($updatedPreferences, true) ?: [];
+            }
             
-            // Tercihleri güncelle
-            $settings->preferences = json_encode($preferences);
-            $settings->save();
+            Log::info('Güncellenmiş bildirim ayarları', ['updated_preferences' => $updatedPreferences]);
 
             return $this->successResponse(
                 [
-                    'preferences' => $preferences
+                    'preferences' => $updatedPreferences
                 ],
                 'notification.settings.updated'
             );
         } catch (\Exception $e) {
-            Log::error('Bildirim ayarları güncellenemedi: ' . $e->getMessage());
+            Log::error('Bildirim ayarları güncellenemedi: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
             return $this->errorResponse('notification.settings.update_error', 500);
         }
     }
 
     /**
-     * Kullanıcının bildirim ayarlarını varsayılana sıfırlar
+     * Varsayılan bildirim ayarlarını getirir
      *
-     * @param Request $request
      * @return JsonResponse
      */
-    public function resetSettings(Request $request): JsonResponse
+    public function getDefaultSettings(): JsonResponse
     {
         try {
-            $user = $request->user();
-            $settings = UserNotificationSetting::firstOrCreate(['user_id' => $user->id]);
+            $defaultPreferences = UserNotificationSetting::getDefaultPreferences();
             
-            // Varsayılan tercihleri ayarla
-            $settings->preferences = json_encode(UserNotificationSetting::getDefaultPreferences());
-            $settings->save();
-
             return $this->successResponse(
                 [
-                    'preferences' => UserNotificationSetting::getDefaultPreferences()
+                    'preferences' => $defaultPreferences
                 ],
-                'notification.settings.reset'
+                'notification.settings.defaults'
             );
         } catch (\Exception $e) {
-            Log::error('Bildirim ayarları sıfırlanamadı: ' . $e->getMessage());
-            return $this->errorResponse('notification.settings.reset_error', 500);
+            Log::error('Varsayılan bildirim ayarları getirilemedi: ' . $e->getMessage());
+            return $this->errorResponse('notification.settings.default_error', 500);
         }
     }
 } 

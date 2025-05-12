@@ -20,8 +20,7 @@ class StoryResource extends BaseResource
         return  array_merge($translated, [
             'id' => $this->id,
             'story_category_id' => $this->story_category_id, // API'de belki gerekli değil?
-            'media_url' => $this->media_url,
-            'content' => $this->content,
+            'image_url' => $this->image_url,
             'order_column' => $this->order_column,
             // 'is_active' => $this->is_active, // API'de sadece aktifler listelendiği için gereksiz olabilir
             'created_at' => $this->created_at?->toIso8601String(),

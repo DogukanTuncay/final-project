@@ -12,13 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Her gün saat 10'da login streak bildirimleri
-        $schedule->command('notifications:login-streak')->dailyAt('10:00');
-        
-        // Her Pazartesi ve Perşembe saat 18:00'da kurs hatırlatma bildirimleri
-        $schedule->command('notifications:course-reminder')
-            ->days([Schedule::MONDAY, Schedule::THURSDAY])
-            ->at('18:00');
+       
     }
 
     /**

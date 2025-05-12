@@ -7,6 +7,7 @@ use App\Interfaces\Repositories\Api\UserRepositoryInterface;
 use App\Interfaces\Services\Api\UserServiceInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Hash;
 
 class UserService implements UserServiceInterface
 {
@@ -107,6 +108,30 @@ class UserService implements UserServiceInterface
         } catch (\Exception $e) {
             Log::error('UserService updateLocale error: ' . $e->getMessage(), ['user_id' => $userId, 'locale' => $locale]);
             return null;
+        }
+    }
+
+    public function updatePassword(int $userId, string $currentPassword, string $newPassword)
+    {
+        try {
+            $user = $this->userRepository->findById($userId);
+            if (!$user) {
+                return 'Kullanıcı bulunamadı.';
+            }
+            if (!Hash::check($currentPassword, $user->password)) {
+                return 'Mevcut şifre hatalı.';
+            }
+            if ($newPassword === $currentPassword) {
+                return 'Yeni şifre eski şifreyle aynı olamaz.';
+            }
+            $user->password = Hash::make($newPassword);
+            $user->save();
+            return true;
+        } catch (\Exception $e) {
+            Log::error('UserService updatePassword error: ' . $e->getMessage(), [
+                'user_id' => $userId
+            ]);
+            return 'Bir hata oluştu.';
         }
     }
 } 

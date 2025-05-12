@@ -105,9 +105,13 @@ class NotificationController extends Controller
     {
         try {
             $user = $request->user();
+            $settings = $user->notificationSettings()->firstOrCreate(
+                ['user_id' => $user->id],
+                ['preferences' => \App\Models\UserNotificationSetting::getDefaultPreferences()]
+            );
             
             return $this->successResponse(
-                $user->notification_settings,
+                ['preferences' => $settings->preferences],
                 'notification.settings.retrieved'
             );
         } catch (\Exception $e) {
@@ -125,19 +129,108 @@ class NotificationController extends Controller
     public function updateNotificationSettings(Request $request): JsonResponse
     {
         try {
+            $request->validate([
+                'preferences' => 'required|array',
+                'preferences.all_notifications' => 'array',
+                'preferences.all_notifications.enabled' => 'boolean',
+                'preferences.login_series' => 'array',
+                'preferences.login_series.enabled' => 'boolean',
+                'preferences.course_reminders' => 'array',
+                'preferences.course_reminders.enabled' => 'boolean',
+                'preferences.special_notifications' => 'array',
+                'preferences.special_notifications.enabled' => 'boolean',
+                'preferences.announcements' => 'array',
+                'preferences.announcements.enabled' => 'boolean',
+            ]);
+            
             $user = $request->user();
-            $settings = $request->input('settings');
+            $preferences = $request->input('preferences');
             
             // Bildirim ayarlarını güncelle
-            $user->updateNotificationSettings($settings);
+            $user->updateNotificationSettings($preferences);
+            
+            $settings = $user->notificationSettings;
             
             return $this->successResponse(
-                $user->notification_settings,
+                ['preferences' => $settings->preferences],
                 'notification.settings.updated'
             );
         } catch (\Exception $e) {
             \Log::error('Bildirim ayarları güncellenemedi: ' . $e->getMessage());
             return $this->errorResponse('notification.settings.update_error', 500);
         }
+    }
+
+    /**
+     * Varsayılan bildirim ayarlarını getirir
+     * 
+     * @return JsonResponse
+     */
+    public function getDefaultSettings(): JsonResponse
+    {
+        try {
+            $defaultPreferences = \App\Models\UserNotificationSetting::getDefaultPreferences();
+            
+            return $this->successResponse(
+                ['preferences' => $defaultPreferences],
+                'notification.settings.defaults_retrieved'
+            );
+        } catch (\Exception $e) {
+            \Log::error('Varsayılan bildirim ayarları getirilemedi: ' . $e->getMessage());
+            return $this->errorResponse('notification.settings.defaults_error', 500);
+        }
+    }
+
+    /**
+     * Tüm bildirim kontrollerini yapıp sonuçları döndürür
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function checkAllNotifications(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        $results = $this->notificationService->checkAllNotifications($user);
+        
+        return $this->successResponse($results, 'notifications.check_completed');
+    }
+
+    /**
+     * Kullanıcının login streak bildirimi kontrolünü yapar
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function checkLoginStreakNotification(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        $result = $this->notificationService->checkAndSendLoginStreakNotification($user);
+        
+        if ($result) {
+            return $this->successResponse(['sent' => true], 'notifications.login_streak_sent');
+        }
+        
+        return $this->successResponse(['sent' => false], 'notifications.no_login_streak_notification');
+    }
+
+    /**
+     * Kullanıcının kurs hatırlatıcı bildirimi kontrolünü yapar
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function checkCourseReminderNotification(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        $result = $this->notificationService->checkAndSendCourseReminderNotification($user);
+        
+        if ($result) {
+            return $this->successResponse(['sent' => true], 'notifications.course_reminder_sent');
+        }
+        
+        return $this->successResponse(['sent' => false], 'notifications.no_course_reminder_notification');
     }
 } 

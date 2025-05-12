@@ -31,4 +31,14 @@ interface UserServiceInterface
      * @return User|null
      */
     public function updateLocale(int $userId, string $locale): ?User;
+
+    /**
+     * Kullanıcının şifresini değiştirir.
+     *
+     * @param int $userId
+     * @param string $currentPassword
+     * @param string $newPassword
+     * @return bool|string Başarılıysa true, değilse hata mesajı döner
+     */
+    public function updatePassword(int $userId, string $currentPassword, string $newPassword);
 } 

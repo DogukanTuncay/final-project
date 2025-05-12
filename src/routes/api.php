@@ -21,7 +21,8 @@ use App\Http\Controllers\Api\BadgeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\VideoContentController;
 use App\Http\Controllers\Api\SettingController;
-
+use App\Http\Controllers\Api\NotificationSettingController;
+use App\Http\Controllers\Api\ContactController;
 // API Route grubu için ana yapılandırma - prefix kaldırıldı, çünkü RouteServiceProvider.php zaten ekliyor
 Route::name('api.')->group(function () {
     // JWT ile korunan kullanıcı bilgisi endpoint'i
@@ -33,6 +34,11 @@ Route::name('api.')->group(function () {
     Route::group(['prefix' => 'settings', 'controller' => SettingController::class], function () {
         Route::get('/site-info', 'getSiteInfo');
         Route::get('/mobile/{platform?}', 'getMobileInfo');
+    });
+
+    // İletişim Formu - Kimlik doğrulaması gerektirmeyen public rotalar
+    Route::group(['prefix' => 'contact', 'controller' => ContactController::class], function () {
+        Route::post('/', 'store');
     });
 
     // Kullanıcı doğrulaması gerektiren API rotaları
@@ -138,8 +144,8 @@ Route::name('api.')->group(function () {
             // Dil tercihini güncelleme
             Route::patch('/locale', 'updateLocale')->name('user.updateLocale');
 
-            // Gelecekte diğer kullanıcı endpointleri eklenebilir (örn: şifre değiştirme)
-            // Route::patch('/password', 'updatePassword')->name('user.updatePassword');
+            // Şifre değiştirme
+            Route::patch('/password', [\App\Http\Controllers\Api\UserController::class, 'updatePassword'])->name('user.updatePassword');
         });
         // === YENİ KULLANICI ROTALARI BİTİŞ ===
 
@@ -173,10 +179,14 @@ Route::name('api.')->group(function () {
             Route::post('/custom', [NotificationController::class, 'sendCustomNotification']);
             Route::post('/broadcast', [NotificationController::class, 'sendBroadcastNotification']);
             Route::get('/logs', [NotificationController::class, 'getNotificationLogs']);
+            Route::get('/check-all', [NotificationController::class, 'checkAllNotifications']);
+            Route::get('/check-login-streak', [NotificationController::class, 'checkLoginStreakNotification']);
+            Route::get('/check-course-reminder', [NotificationController::class, 'checkCourseReminderNotification']);
             
             // Bildirim Ayarları
-            Route::get('/settings', [NotificationController::class, 'getNotificationSettings']);
-            Route::post('/settings', [NotificationController::class, 'updateNotificationSettings']);
+            Route::get('/settings', [NotificationSettingController::class, 'getNotificationSettings']);
+            Route::put('/settings', [NotificationSettingController::class, 'updateNotificationSettings']);
+            Route::get('/settings/defaults', [NotificationSettingController::class, 'getDefaultSettings']);
         });
 
         // Video İçerik Rotaları
@@ -203,6 +213,13 @@ Route::name('api.')->group(function () {
         Route::post('/send', [App\Http\Controllers\Api\AiChatMessageController::class, 'send'])->name('send');
         Route::get('/chat/{chatId}', [App\Http\Controllers\Api\AiChatMessageController::class, 'getByChatId'])->name('by-chat');
         Route::delete('/{id}', [App\Http\Controllers\Api\AiChatMessageController::class, 'destroy'])->name('destroy');
+    });
+
+    // Bildirim kontrolleri
+    Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
+        Route::get('/check-all', [NotificationController::class, 'checkAllNotifications']);
+        Route::get('/check-login-streak', [NotificationController::class, 'checkLoginStreakNotification']);
+        Route::get('/check-course-reminder', [NotificationController::class, 'checkCourseReminderNotification']);
     });
 });
 

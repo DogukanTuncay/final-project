@@ -42,6 +42,14 @@ return [
         'auth' => [
             'unauthenticated' => 'Bu işlemi gerçekleştirmek için oturum açmalısınız'
         ],
+        'contact' => [
+            'list' => [
+                'success' => 'İletişim talepleri başarıyla listelendi'
+            ],
+            'create' => [
+                'success' => 'İletişim talebiniz başarıyla gönderildi. En kısa sürede size dönüş yapılacaktır.'
+            ],
+        ],
         'Missions' => [
             'list' => [
                 'success' => 'Görevler başarıyla listelendi'
@@ -158,6 +166,26 @@ return [
     ],
     
     'app_version_too_low' => 'Uygulama sürümünüz (:current) çok eski. Lütfen uygulamayı güncelleyin. Minimum gerekli sürüm: :required',
+    
+    'admin' => [
+        'contact' => [
+            'list' => [
+                'success' => 'İletişim talepleri başarıyla listelendi'
+            ],
+            'create' => [
+                'success' => 'İletişim talebi başarıyla oluşturuldu'
+            ],
+            'show' => [
+                'success' => 'İletişim talebi detayları başarıyla getirildi'
+            ],
+            'update' => [
+                'success' => 'İletişim talebi başarıyla güncellendi'
+            ],
+            'delete' => [
+                'success' => 'İletişim talebi başarıyla silindi'
+            ]
+        }
+    ],
     
     // Diğer çeviriler...
 ]; 

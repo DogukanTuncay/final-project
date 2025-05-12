@@ -38,7 +38,10 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // Notification Service bağlama
-        $this->app->bind(NotificationServiceInterface::class, NotificationService::class);
+        $this->app->bind(
+            NotificationServiceInterface::class,
+            NotificationService::class
+        );
 
         $this->app->singleton(EventService::class);
         $this->app->singleton(MissionProgressService::class);

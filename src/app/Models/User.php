@@ -22,6 +22,7 @@ use App\Traits\HasImage;
 use App\Traits\HandlesEvents;
 use App\Http\Resources\Api\LevelResource;
 use App\Http\Resources\Api\BadgeResource;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanResetPassword
 {
@@ -444,40 +445,60 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
     }
 
     /**
-     * Kullanıcının bildirim ayarları
+     * Kullanıcının bildirim ayarları ilişkisi
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function notificationSettings()
+    {
+        return $this->hasOne(UserNotificationSetting::class);
+    }
+
+    /**
+     * Kullanıcının bildirim ayarlarını getirir
+     * Eğer yoksa varsayılan ayarlarla oluşturur
      * 
      * @return array
      */
     public function getNotificationSettingsAttribute()
     {
-        $defaultSettings = [
-            'all' => true, // Tüm bildirimler
-            'login_streak' => true, // Giriş streaki bildirimleri
-            'course_completion' => true, // Kurs tamamlama bildirimleri
-            'course_reminder' => true, // Kurs hatırlatma bildirimleri
-            'custom' => true, // Özel bildirimler
-            'broadcast' => true, // Toplu bildirimler
-        ];
+        $settings = $this->notificationSettings()->first();
         
-        $settings = $this->settings ?? [];
-        $notifications = $settings['notifications'] ?? [];
+        if (!$settings) {
+            $settings = UserNotificationSetting::create([
+                'user_id' => $this->id,
+                'preferences' => UserNotificationSetting::getDefaultPreferences()
+            ]);
+        }
         
-        return array_merge($defaultSettings, $notifications);
+        return $settings->preferences;
     }
     
     /**
      * Kullanıcının bildirim ayarlarını günceller
      * 
-     * @param array $settings
+     * @param array $preferences
      * @return void
      */
-    public function updateNotificationSettings(array $settings)
+    public function updateNotificationSettings(array $preferences)
     {
-        $currentSettings = $this->settings ?? [];
-        $currentSettings['notifications'] = array_merge($this->notification_settings, $settings);
+        Log::info('User::updateNotificationSettings çağrıldı', [
+            'user_id' => $this->id,
+            'preferences' => $preferences
+        ]);
         
-        $this->settings = $currentSettings;
-        $this->save();
+        $settings = $this->notificationSettings()->firstOrCreate([
+            'user_id' => $this->id
+        ]);
+        
+        // Doğrudan yeni tercihleri kaydet
+        $settings->preferences = $preferences;
+        $settings->save();
+        
+        Log::info('Bildirim ayarları güncellendi', [
+            'settings_id' => $settings->id,
+            'saved_preferences' => $settings->preferences
+        ]);
     }
     
     /**
@@ -488,14 +509,12 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
      */
     public function canReceiveNotificationType(string $type): bool
     {
-        $settings = $this->notification_settings;
+        $settings = $this->notificationSettings()->first();
         
-        // Önce tüm bildirimlerin açık olup olmadığını kontrol et
-        if (!($settings['all'] ?? true)) {
-            return false;
+        if (!$settings) {
+            return true; // Varsayılan olarak tüm bildirimleri alabilir
         }
         
-        // Sonra spesifik bildirim türünü kontrol et
-        return $settings[$type] ?? true;
+        return $settings->canReceiveNotificationType($type);
     }
 }

@@ -22,7 +22,7 @@ class UserNotificationSetting extends Model
      * Veri tipi dönüşümleri
      */
     protected $casts = [
-        'preferences' => 'json',
+        'preferences' => 'array',
     ];
 
     /**
@@ -41,12 +41,11 @@ class UserNotificationSetting extends Model
     public static function getDefaultPreferences(): array
     {
         return [
-            'all' => true, // Tüm bildirimler
-            'login_streak' => true, // Giriş streaki bildirimleri
-            'course_completion' => true, // Kurs tamamlama bildirimleri
-            'course_reminder' => true, // Kurs hatırlatma bildirimleri
-            'custom' => true, // Özel bildirimler
-            'broadcast' => true, // Toplu bildirimler
+            'all' => true,
+            'login_streak' => true,
+            'course_reminder' => true,
+            'custom' => true,
+            'broadcast' => true
         ];
     }
 
@@ -58,14 +57,18 @@ class UserNotificationSetting extends Model
      */
     public function canReceiveNotificationType(string $type): bool
     {
-        $preferences = json_decode($this->preferences, true) ?: self::getDefaultPreferences();
+        $preferences = is_array($this->preferences) ? $this->preferences : self::getDefaultPreferences();
         
         // Önce tüm bildirimlerin açık olup olmadığını kontrol et
-        if (!($preferences['all'] ?? true)) {
+        if (isset($preferences['all']) && $preferences['all'] === false) {
             return false;
         }
         
-        // Sonra spesifik bildirim türünü kontrol et
-        return $preferences[$type] ?? true;
+        // Belirli bildirim türünü kontrol et
+        if (isset($preferences[$type])) {
+            return (bool)$preferences[$type];
+        }
+        
+        return true; // Varsayılan olarak etkinleştirilmiş
     }
 } 
