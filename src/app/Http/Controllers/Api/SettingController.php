@@ -74,6 +74,31 @@ class SettingController extends Controller
     public function getGroupSettings($group)
     {
         $settings = $this->service->getGroupSettings($group);
-        return $this->successResponse($settings, 'api.setting.group.success');
+        return $this->successResponse(SettingResource::collection($settings), 'api.setting.group.success');
+    }
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar gruplarını listele
+     */
+    public function getAvailableGroups()
+    {
+        $groups = $this->service->getAvailableGroups();
+        
+        return $this->successResponse([
+            'groups' => $groups
+        ], 'api.setting.groups.success');
+    }
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar anahtarlarını listele
+     */
+    public function getAvailableKeys(Request $request)
+    {
+        $group = $request->query('group');
+        $keys = $this->service->getAvailableKeys($group);
+        
+        return $this->successResponse([
+            'keys' => $keys
+        ], 'api.setting.keys.success');
     }
 }

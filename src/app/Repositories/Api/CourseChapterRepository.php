@@ -83,9 +83,9 @@ class CourseChapterRepository extends BaseRepository implements CourseChapterRep
         $chapter = $this->find($id);
         
         // Bölümün ön koşulları varsa
-        if ($chapter->prerequisites()->exists()) {
+        if ($chapter->activePrerequisites()->exists()) {
             // Ön koşul bölüm ID'lerini al
-            $prerequisiteIds = $chapter->prerequisites()->pluck('id');
+            $prerequisiteIds = $chapter->activePrerequisites()->pluck('id');
             
             // Kullanıcının tamamladığı bölüm sayısını al
             $completedCount = ChapterCompletion::where('user_id', $userId)

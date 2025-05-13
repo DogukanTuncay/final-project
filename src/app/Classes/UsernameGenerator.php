@@ -30,7 +30,7 @@ class UsernameGenerator
          // 4. Adım: Rastgele sayılar ekleyerek kullanıcı adı benzersiz hale getirelim
          $randomNumber = rand(1000, 9999);
         // 4. Adım: Bazı özel karakterler ekleyerek kullanıcının adı daha şık hale gelebilir
-        $specialChar = array('-', '_', '@', '#');
+        $specialChar = array('#');
         $randSpecialChar = $specialChar[array_rand($specialChar)];
 
         // 5. Adım: Kullanıcı adı formatını oluşturuyoruz

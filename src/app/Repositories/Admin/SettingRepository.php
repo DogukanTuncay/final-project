@@ -40,7 +40,7 @@ class SettingRepository extends BaseRepository implements SettingRepositoryInter
             return $default;
         }
         
-        $value = $setting->typed_value;
+        $value = $setting->value;
         
         // Cache'e kaydet
         Cache::put($cacheKey, $value, now()->addDay());
@@ -81,7 +81,28 @@ class SettingRepository extends BaseRepository implements SettingRepositoryInter
             $setting = $this->model->where('key', $key)->first();
             
             if ($setting) {
-                $setting->value = $value;
+                // Tip kontrolü ve değer dönüşümü
+                switch ($setting->type) {
+                    case 'boolean':
+                        $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                        break;
+                    case 'number':
+                        $value = (float) $value;
+                        break;
+                    case 'json':
+                        if (is_array($value)) {
+                            $value = json_encode($value);
+                        }
+                        break;
+                }
+                
+                // Eğer çevrilebilir bir alan ise, sadece mevcut dili güncelle
+                if ($setting->is_translatable) {
+                    $setting->setTranslation('value', app()->getLocale(), $value);
+                } else {
+                    $setting->value = $value;
+                }
+                
                 $setting->save();
                 
                 // Cache'i temizle

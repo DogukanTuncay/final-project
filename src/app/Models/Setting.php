@@ -37,6 +37,43 @@ class Setting extends Model
     ];
 
     /**
+     * Değeri kaydetmeden önce işleme
+     */
+    public function setValueAttribute($value)
+    {
+        // Eğer alan çevrilebilir değilse, normal kayıt
+        if (!$this->is_translatable) {
+            $this->attributes['value'] = is_array($value) ? json_encode($value) : $value;
+            return;
+        }
+
+        // Çevrilebilir alanlar için
+        if ($this->type === 'json' && is_string($value)) {
+            $decodedValue = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $this->setTranslation('value', app()->getLocale(), $decodedValue);
+            } else {
+                $this->setTranslation('value', app()->getLocale(), $value);
+            }
+        } else {
+            // Eğer mevcut bir değer varsa ve bu dizi ise, mevcut çevirileri korumak için güncelleme yapalım
+            if (isset($this->attributes['value']) && $this->isTranslatableAttribute('value')) {
+                try {
+                    $translations = $this->getTranslations('value');
+                    $translations[app()->getLocale()] = $value;
+                    $this->attributes['value'] = json_encode($translations);
+                } catch (\Exception $e) {
+                    // Herhangi bir hata durumunda sadece mevcut dili güncelleyelim
+                    $this->setTranslation('value', app()->getLocale(), $value);
+                }
+            } else {
+                // İlk kayıt veya çevrilebilir olmayan bir alan
+                $this->setTranslation('value', app()->getLocale(), $value);
+            }
+        }
+    }
+
+    /**
      * Değeri tiplerine göre dönüştürerek döndürür
      */
     public function getTypedValueAttribute()
@@ -45,17 +82,42 @@ class Setting extends Model
             return null;
         }
 
+        // Çevirilmeyen değerler için
+        if (!$this->is_translatable) {
+            switch ($this->type) {
+                case 'boolean':
+                    return filter_var($this->value, FILTER_VALIDATE_BOOLEAN);
+                case 'number':
+                    return (float) $this->value;
+                case 'json':
+                    if (is_string($this->value)) {
+                        return json_decode($this->value, true);
+                    }
+                    return $this->value;
+                case 'image':
+                    return $this->image_url;
+                default:
+                    return $this->value;
+            }
+        }
+        
+        // Çevrilen değerler için (mevcut dildeki değeri al)
+        $value = $this->getTranslation('value', app()->getLocale(), '');
+        
         switch ($this->type) {
             case 'boolean':
-                return (bool) $this->value;
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
             case 'number':
-                return (float) $this->value;
+                return (float) $value;
             case 'json':
-                return json_decode($this->value, true);
+                if (is_string($value)) {
+                    return json_decode($value, true);
+                }
+                return $value;
             case 'image':
-                return $this->value; // HasImage trait'i kullanır
+                return $this->image_url;
             default:
-                return $this->value;
+                return $value;
         }
     }
 
@@ -70,7 +132,7 @@ class Setting extends Model
             return $default;
         }
 
-        return $setting->typed_value;
+        return $setting->value;
     }
 
     /**
@@ -88,7 +150,7 @@ class Setting extends Model
         $result = [];
 
         foreach ($settings as $setting) {
-            $result[$setting->key] = $setting->typed_value;
+            $result[$setting->key] = $setting->value;
         }
 
         return $result;

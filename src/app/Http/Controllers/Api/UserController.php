@@ -84,7 +84,9 @@ class UserController extends Controller
                 // Yüklenen resim HasImage trait'i tarafından kaydedildi, bu alanı validated dizisinden çıkar
                 unset($validated['profile_image']);
             }
-
+            if($request->has('username')){
+                unset($validated['username']);
+            }
             // Güncellenecek alan yoksa hata vermek yerine mevcut profili döndür
             if (empty($validated)) {
                 return $this->successResponse(

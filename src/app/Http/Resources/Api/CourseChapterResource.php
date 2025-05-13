@@ -19,25 +19,26 @@ class CourseChapterResource extends BaseResource
         $completed_lessons_count = 0;
 
         if ($this->relationLoaded('lessons')) {
-            $total_lessons = $this->lessons->count();
+            $total_lessons = $this->activeLessons()->count();
             
             if ($user) {
-                $lessonsIds = $this->lessons->pluck('id')->toArray();
+                $lessonsIds = $this->activeLessons()->pluck('id')->toArray();
                 $completed_lessons_count = LessonCompletion::where('user_id', $user->id)
                     ->whereIn('lesson_id', $lessonsIds)
                     ->count();
             }
         } else {
             // İlişki yüklenmemişse, modelden çağırıp hesaplama yap
-            $total_lessons = $this->lessons()->count();
+            $total_lessons = $this->activeLessons()->count();
             
             if ($user) {
-                $lessonsIds = $this->lessons()->pluck('id')->toArray();
+                $lessonsIds = $this->activeLessons()->pluck('id')->toArray();
                 $completed_lessons_count = LessonCompletion::where('user_id', $user->id)
                     ->whereIn('lesson_id', $lessonsIds)
                     ->count();
             }
         }
+
         $completion_percentage = $total_lessons > 0 ? round(($completed_lessons_count / $total_lessons) * 100) : 0;
 
         // Ön koşul ilişkileri yüklü değilse şimdi yükle
@@ -74,7 +75,7 @@ class CourseChapterResource extends BaseResource
         
         // Bölüm kilitli mi kontrolü
         $is_locked = false;
-        if ($user && $this->prerequisites()->exists()) {
+        if ($user && $this->activePrerequisites()->exists()) {
             $missing_prerequisites = $this->missing_prerequisites;
             $is_locked = !empty($missing_prerequisites);
         }

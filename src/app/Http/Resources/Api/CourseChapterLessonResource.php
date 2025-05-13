@@ -58,8 +58,8 @@ class CourseChapterLessonResource extends BaseResource
         
         // Ders kilitli mi kontrolü
         $is_locked = false;
-        if ($user && $this->prerequisites()->exists()) {
-            $prerequisiteIds = $this->prerequisites()->pluck('course_chapter_lessons.id');
+        if ($user && $this->activePrerequisites()->exists()) {
+            $prerequisiteIds = $this->activePrerequisites()->pluck('course_chapter_lessons.id');
             $completedCount = LessonCompletion::where('user_id', $user->id)
                 ->whereIn('lesson_id', $prerequisiteIds)
                 ->count();
@@ -70,7 +70,7 @@ class CourseChapterLessonResource extends BaseResource
         // Eksik ön koşullar
         $missing_prerequisites = [];
         if ($user && $is_locked) {
-            $prerequisiteIds = $this->prerequisites()->pluck('course_chapter_lessons.id');
+            $prerequisiteIds = $this->activePrerequisites()->pluck('course_chapter_lessons.id');
             $completedIds = LessonCompletion::where('user_id', $user->id)
                 ->whereIn('lesson_id', $prerequisiteIds)
                 ->pluck('lesson_id')
@@ -80,7 +80,7 @@ class CourseChapterLessonResource extends BaseResource
             $missingIds = array_diff($prerequisiteIds->toArray(), $completedIds);
             
             if (!empty($missingIds)) {
-                $missingPrerequisites = $this->prerequisites->whereIn('id', $missingIds);
+                $missingPrerequisites = $this->activePrerequisites()->whereIn('id', $missingIds);
                 
                 $missing_prerequisites = $missingPrerequisites->map(function($lesson) {
                     return [

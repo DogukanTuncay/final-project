@@ -63,14 +63,14 @@ class CourseChapterService implements CourseChapterServiceInterface
         }
 
         // Ön koşulların kontrolü
-        if ($chapter->prerequisites()->exists()) {
-            $prerequisites = $chapter->prerequisites()->get();
+        if ($chapter->activePrerequisites()->exists()) {
+            $prerequisites = $chapter->activePrerequisites()->get();
             $completedPrerequisites = ChapterCompletion::where('user_id', $user->id)
                 ->whereIn('chapter_id', $prerequisites->pluck('id'))
                 ->count();
 
-            if ($completedPrerequisites < $prerequisites->count()) {
-                $missingPrerequisites = $chapter->missing_prerequisites;
+                if ($completedPrerequisites < $prerequisites->count()) {
+                    $missingPrerequisites = $chapter->missing_prerequisites;
                 return [
                     'success' => false,
                     'message' => 'responses.course_chapter.prerequisites_not_completed',
@@ -85,7 +85,7 @@ class CourseChapterService implements CourseChapterServiceInterface
         }
 
         // Derslerin tamamlanma kontrolü
-        $lessons = $chapter->lessons()->get();
+        $lessons = $chapter->activeLessons()->get();
         if ($lessons->isEmpty()) {
             return [
                 'success' => false,

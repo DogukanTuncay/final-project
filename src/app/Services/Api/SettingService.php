@@ -4,6 +4,7 @@ namespace App\Services\Api;
 
 use App\Interfaces\Services\Api\SettingServiceInterface;
 use App\Interfaces\Repositories\Api\SettingRepositoryInterface;
+use App\Http\Resources\Api\SettingResource;
 
 class SettingService implements SettingServiceInterface
 {
@@ -44,22 +45,28 @@ class SettingService implements SettingServiceInterface
     public function getSiteInfo()
     {
         $settings = $this->repository->getSiteSettings();
+        $settings = SettingResource::collection($settings);
+        
+        $formattedSettings = [];
+        foreach ($settings as $setting) {
+            $formattedSettings[$setting['key']] = $setting['value'];
+        }
         
         // Site bilgileri için gerekli alanları burada düzenleyebilirsiniz
         $siteInfo = [
-            'name' => $settings['site_name'] ?? null,
-            'description' => $settings['site_description'] ?? null,
-            'logo' => $settings['site_logo'] ?? null,
-            'favicon' => $settings['site_favicon'] ?? null,
-            'email' => $settings['site_email'] ?? null,
-            'phone' => $settings['site_phone'] ?? null,
-            'address' => $settings['site_address'] ?? null,
+            'name' => $formattedSettings['site_name'] ?? null,
+            'description' => $formattedSettings['site_description'] ?? null,
+            'logo' => $formattedSettings['site_logo'] ?? null,
+            'favicon' => $formattedSettings['site_favicon'] ?? null,
+            'email' => $formattedSettings['site_email'] ?? null,
+            'phone' => $formattedSettings['site_phone'] ?? null,
+            'address' => $formattedSettings['site_address'] ?? null,
             'social' => [
-                'facebook' => $settings['site_facebook'] ?? null,
-                'twitter' => $settings['site_twitter'] ?? null,
-                'instagram' => $settings['site_instagram'] ?? null,
-                'linkedin' => $settings['site_linkedin'] ?? null,
-                'youtube' => $settings['site_youtube'] ?? null,
+                'facebook' => $formattedSettings['site_facebook'] ?? null,
+                'twitter' => $formattedSettings['site_twitter'] ?? null,
+                'instagram' => $formattedSettings['site_instagram'] ?? null,
+                'linkedin' => $formattedSettings['site_linkedin'] ?? null,
+                'youtube' => $formattedSettings['site_youtube'] ?? null,
             ]
         ];
         
@@ -74,7 +81,13 @@ class SettingService implements SettingServiceInterface
      */
     public function getMobileInfo(?string $platform = null): array
     {
-        $settings = $this->repository->getMobileSettings();
+        $mobileSettings = $this->repository->getMobileSettings();
+        $mobileSettings = SettingResource::collection($mobileSettings);
+        
+        $formattedSettings = [];
+        foreach ($mobileSettings as $setting) {
+            $formattedSettings[$setting['key']] = $setting['value'];
+        }
         
         // Platform belirtilmişse sadece o platforma özel ayarları döndür
         if ($platform) {
@@ -82,29 +95,29 @@ class SettingService implements SettingServiceInterface
             
             if ($platform === 'android') {
                 return [
-                    'version' => $settings['android_version'] ?? null,
-                    'force_update' => (bool)($settings['android_force_update'] ?? false),
-                    'update_message' => $settings['android_update_message'] ?? null,
-                    'store_url' => $settings['android_store_url'] ?? null,
-                    'min_version' => $settings['android_min_version'] ?? null,
-                    'maintenance' => (bool)($settings['mobile_maintenance'] ?? false),
-                    'maintenance_message' => $settings['mobile_maintenance_message'] ?? null,
+                    'version' => $formattedSettings['android_version'] ?? null,
+                    'force_update' => (bool)($formattedSettings['android_force_update'] ?? false),
+                    'update_message' => $formattedSettings['android_update_message'] ?? null,
+                    'store_url' => $formattedSettings['android_store_url'] ?? null,
+                    'min_version' => $formattedSettings['android_min_version'] ?? null,
+                    'maintenance' => (bool)($formattedSettings['mobile_maintenance'] ?? false),
+                    'maintenance_message' => $formattedSettings['mobile_maintenance_message'] ?? null,
                 ];
             } elseif ($platform === 'ios') {
                 return [
-                    'version' => $settings['ios_version'] ?? null,
-                    'force_update' => (bool)($settings['ios_force_update'] ?? false),
-                    'update_message' => $settings['ios_update_message'] ?? null,
-                    'store_url' => $settings['ios_store_url'] ?? null,
-                    'min_version' => $settings['ios_min_version'] ?? null,
-                    'maintenance' => (bool)($settings['mobile_maintenance'] ?? false),
-                    'maintenance_message' => $settings['mobile_maintenance_message'] ?? null,
+                    'version' => $formattedSettings['ios_version'] ?? null,
+                    'force_update' => (bool)($formattedSettings['ios_force_update'] ?? false),
+                    'update_message' => $formattedSettings['ios_update_message'] ?? null,
+                    'store_url' => $formattedSettings['ios_store_url'] ?? null,
+                    'min_version' => $formattedSettings['ios_min_version'] ?? null,
+                    'maintenance' => (bool)($formattedSettings['mobile_maintenance'] ?? false),
+                    'maintenance_message' => $formattedSettings['mobile_maintenance_message'] ?? null,
                 ];
             }
         }
         
         // Platforma özel değilse tümünü döndür
-        return $settings;
+        return $formattedSettings;
     }
 
     /**
@@ -112,6 +125,31 @@ class SettingService implements SettingServiceInterface
      */
     public function getGroupSettings(string $group)
     {
-        return $this->repository->getSettingsByGroup($group);
+        $settings = $this->repository->getSettingsByGroup($group);
+        
+      
+        
+        return $settings;
+    }
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar gruplarını getir
+     * 
+     * @return array
+     */
+    public function getAvailableGroups(): array
+    {
+        return $this->repository->getAvailableGroups();
+    }
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar anahtarlarını getir
+     * 
+     * @param string|null $group Grup filtresi (opsiyonel)
+     * @return array
+     */
+    public function getAvailableKeys(?string $group = null): array
+    {
+        return $this->repository->getAvailableKeys($group);
     }
 }

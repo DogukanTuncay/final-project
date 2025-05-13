@@ -7,6 +7,7 @@ use App\Http\Middleware\JwtMiddleware;
 use App\Traits\ApiResponseTrait;
 use Symfony\Component\HttpFoundation\Response;
 use Spatie\Permission\Exceptions\UnauthorizedException;
+use Illuminate\Database\QueryException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -92,6 +93,62 @@ return Application::configure(basePath: dirname(__DIR__))
              if ($request->expectsJson() || $request->is('api/*') || $request->is('admin/*')) {
                 return $apiResponder->errorResponse(__('errors.method_not_allowed'), Response::HTTP_METHOD_NOT_ALLOWED);
              }
+        });
+
+        // SQL hatalarını ele alma
+        $exceptions->renderable(function (QueryException $e, $request) use ($apiResponder) {
+            if ($request->expectsJson() || $request->is('api/*') || $request->is('admin/*')) {
+                $errorCode = $e->getCode();
+                $message = 'Veritabanı işlemi sırasında bir hata oluştu.';
+                $status = Response::HTTP_INTERNAL_SERVER_ERROR;
+                $debug = [];
+                
+                // Hata mesajını ve durumunu belirle
+                if (app()->environment('local', 'development', 'testing')) {
+                    $debug = [
+                        'sql' => $e->getSql() ?? null,
+                        'bindings' => $e->getBindings() ?? [],
+                        'code' => $errorCode,
+                        'message' => $e->getMessage()
+                    ];
+                }
+
+                // Yaygın SQL hata kodlarını kontrol et ve kullanıcı dostu mesajlar göster
+                switch ($errorCode) {
+                    case '23000': // Bütünlük kısıtlaması ihlali
+                        if (stripos($e->getMessage(), 'foreign key constraint fails') !== false) {
+                            $message = 'Bu kaydı silemezsiniz çünkü diğer kayıtlar tarafından kullanılıyor.';
+                            $status = Response::HTTP_CONFLICT;
+                        } elseif (stripos($e->getMessage(), 'duplicate') !== false || stripos($e->getMessage(), 'unique') !== false) {
+                            $message = 'Bu kayıt zaten mevcut. Lütfen benzersiz bir değer girin.';
+                            $status = Response::HTTP_CONFLICT;
+                        }
+                        break;
+                    case '42S02': // Tablo bulunamadı
+                        $message = 'Sistem veritabanı yapılandırmasında bir hata oluştu.';
+                        break;
+                    case '42S22': // Sütun bulunamadı
+                        $message = 'Sistem veritabanı alanlarında bir hata oluştu.';
+                        break;
+                    case '42000': // Sözdizimi hatası
+                        $message = 'Veritabanı sorgusu sözdizimi hatası.';
+                        break;
+                    case 'HY000': // Genel hata
+                        if (stripos($e->getMessage(), 'too many connections') !== false) {
+                            $message = 'Sistem şu anda çok yoğun, lütfen daha sonra tekrar deneyin.';
+                            $status = Response::HTTP_SERVICE_UNAVAILABLE;
+                        }
+                        break;
+                }
+
+                // Settings güncellemesi için özel kontrol
+                if (stripos($request->path(), 'settings') !== false && stripos($e->getMessage(), 'value') !== false) {
+                    $message = 'Ayar değeri uygun formatta değil. Lütfen geçerli bir değer girin.';
+                    $status = Response::HTTP_UNPROCESSABLE_ENTITY;
+                }
+
+                return $apiResponder->errorResponse($message, $status, $debug);
+            }
         });
 
     })->create();

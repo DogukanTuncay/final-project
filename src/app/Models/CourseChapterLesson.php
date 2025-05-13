@@ -132,6 +132,14 @@ class CourseChapterLesson extends Model
     }
 
     /**
+     * Sadece aktif ve silinmemiş dersleri filtreler
+     */
+    public function scopeActiveAndNotDeleted($query)
+    {
+        return $query->where('is_active', true)->whereNull('deleted_at');
+    }
+
+    /**
      * Bölüme göre filtreler
      */
     public function scopeByChapter($query, int $chapterId)
@@ -170,6 +178,7 @@ class CourseChapterLesson extends Model
     {
         return $this->hasMany(CourseChapterLessonContent::class)
             ->where('is_active', true)
+            ->whereNull('deleted_at')
             ->orderBy('order');
     }
 
@@ -184,6 +193,21 @@ class CourseChapterLesson extends Model
             'lesson_id',
             'prerequisite_lesson_id'
         );
+    }
+
+    /**
+     * Aktif ve silinmemiş ön koşul derslerini getirir
+     */
+    public function activePrerequisites(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            CourseChapterLesson::class,
+            'lesson_prerequisites',
+            'lesson_id',
+            'prerequisite_lesson_id'
+        )
+        ->where('course_chapter_lessons.is_active', true)
+        ->whereNull('course_chapter_lessons.deleted_at');
     }
 
     /**
@@ -216,12 +240,12 @@ class CourseChapterLesson extends Model
             $userId = $user->id;
             
             // Ön koşul yoksa boş dizi döndür
-            if (!$this->prerequisites()->exists()) {
+            if (!$this->activePrerequisites()->exists()) {
                 return [];
             }
             
-            // Tüm ön koşulları al
-            $prerequisites = $this->prerequisites()->get();
+            // Tüm aktif ve silinmemiş ön koşulları al
+            $prerequisites = $this->activePrerequisites()->get();
             
             // Kullanıcının tamamladığı ders ID'lerini al
             $completedLessonIds = LessonCompletion::where('user_id', $userId)
@@ -255,6 +279,32 @@ class CourseChapterLesson extends Model
     {
         return $this->morphMany(Mission::class, 'completable');
     }
+
+    public function isCompletable(): bool
+{
+    try {
+        $user = JWTAuth::user();
+        if (!$user) {
+            return false;
+        }
+        // Ön koşulların tamamlanma kontrolü
+        if ($this->activePrerequisites()->exists()) {
+            $prerequisites = $this->activePrerequisites()->get();
+            $completedPrerequisites = LessonCompletion::where('user_id', $user->id)
+                ->whereIn('lesson_id', $prerequisites->pluck('id'))
+                ->count();
+
+            if ($completedPrerequisites < $prerequisites->count()) {
+                return false;
+            }
+        }
+
+        return true;
+    } catch (\Exception $e) {
+        return false;
+    }
+}
+
 
     /**
      * Configure the options for activity logging.

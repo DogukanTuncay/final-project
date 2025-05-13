@@ -4,7 +4,6 @@ namespace App\Repositories\Api;
 
 use App\Models\Setting;
 use App\Interfaces\Repositories\Api\SettingRepositoryInterface;
-use Illuminate\Support\Facades\Cache;
 
 class SettingRepository implements SettingRepositoryInterface
 {
@@ -28,18 +27,10 @@ class SettingRepository implements SettingRepositoryInterface
      */
     public function findByKey($key)
     {
-        $cacheKey = "settings:{$key}";
-        
-        if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
-        }
-        
         $setting = $this->model->public()->where('key', $key)->first();
         
         if ($setting) {
-            $value = $setting->typed_value;
-            Cache::put($cacheKey, $value, now()->addDay());
-            return $value;
+            return $setting;
         }
         
         return null;
@@ -82,22 +73,7 @@ class SettingRepository implements SettingRepositoryInterface
      */
     public function getSiteSettings()
     {
-        $cacheKey = "settings:site";
-        
-        if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
-        }
-        
-        $settings = $this->model->public()->where('group', 'site')->get();
-        
-        $result = [];
-        foreach ($settings as $setting) {
-            $result[$setting->key] = $setting->typed_value;
-        }
-        
-        Cache::put($cacheKey, $result, now()->addHour());
-        
-        return $result;
+        return $this->model->public()->where('group', 'site')->get();
     }
 
     /**
@@ -105,23 +81,7 @@ class SettingRepository implements SettingRepositoryInterface
      */
     public function getMobileSettings()
     {
-        $cacheKey = "settings:mobile";
-        
-        if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
-        }
-        
-        $query = $this->model->public()->where('group', 'mobile');
-        $settings = $query->get();
-        
-        $result = [];
-        foreach ($settings as $setting) {
-            $result[$setting->key] = $setting->typed_value;
-        }
-        
-        Cache::put($cacheKey, $result, now()->addHour());
-        
-        return $result;
+        return $this->model->public()->where('group', 'mobile')->get();
     }
 
     /**
@@ -129,21 +89,48 @@ class SettingRepository implements SettingRepositoryInterface
      */
     public function getSettingsByGroup(string $group)
     {
-        $cacheKey = "settings:group:{$group}";
-        
-        if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
-        }
-        
         $settings = $this->model->public()->where('group', $group)->get();
-        
-        $result = [];
-        foreach ($settings as $setting) {
-            $result[$setting->key] = $setting->typed_value;
+        return $settings;
+    }
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar gruplarını getir
+     * 
+     * @return array
+     */
+    public function getAvailableGroups(): array
+    {
+        $groups = $this->model->public()
+            ->select('group')
+            ->distinct()
+            ->orderBy('group')
+            ->pluck('group')
+            ->toArray();
+            
+        return $groups;
+    }
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar anahtarlarını getir
+     * 
+     * @param string|null $group Grup filtresi (opsiyonel)
+     * @return array
+     */
+    public function getAvailableKeys(?string $group = null): array
+    {
+        $query = $this->model->public()
+            ->select('key', 'group', 'type', 'description', 'is_translatable')
+            ->orderBy('group')
+            ->orderBy('key');
+            
+        if ($group) {
+            $query->where('group', $group);
         }
         
-        Cache::put($cacheKey, $result, now()->addHour());
+        $settings = $query->get();
         
-        return $result;
+     
+        
+        return $settings;
     }
 }

@@ -68,16 +68,58 @@ class SettingController extends Controller
     /**
      * Belirli bir ayarı güncelle
      */
-    public function update(SettingRequest $request, $id)
+    public function update(Request $request, $id)
     {
-        $data = $request->validated();
-        $item = $this->service->update($id, $data);
-        
-        if (isset($data['is_private'])) {
-            $this->service->setPrivate($id, (bool)$data['is_private']);
+        // İsteği validasyondan geçiriyoruz
+        $validated = $request->validate([
+            'key' => 'sometimes|required|string|max:255',
+            'value' => 'nullable',
+            'type' => 'sometimes|required|string|in:text,boolean,number,json,image',
+            'group' => 'sometimes|required|string|max:255',
+            'description' => 'nullable',
+            'is_translatable' => 'boolean',
+            'is_private' => 'boolean'
+        ]);
+
+        try {
+            // Değeri ayarın tipine göre işleyelim
+            if (isset($validated['type']) && isset($validated['value'])) {
+                switch ($validated['type']) {
+                    case 'boolean':
+                        $validated['value'] = filter_var($validated['value'], FILTER_VALIDATE_BOOLEAN);
+                        break;
+                    case 'number':
+                        $validated['value'] = (float) $validated['value'];
+                        break;
+                    case 'json':
+                        // JSON formatı doğrulama
+                        if (!is_array($validated['value'])) {
+                            $decodedValue = json_decode($validated['value'], true);
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                $validated['value'] = $validated['value']; // Zaten JSON string
+                            } else {
+                                return $this->errorResponse('admin.setting.update.invalid_json', 422);
+                            }
+                        } else {
+                            $validated['value'] = json_encode($validated['value']);
+                        }
+                        break;
+                }
+            }
+
+            $item = $this->service->update($id, $validated);
+            
+            if (isset($validated['is_private'])) {
+                $this->service->setPrivate($id, (bool)$validated['is_private']);
+            }
+            
+            // Cache'i temizleyelim
+            $this->service->clearCache(isset($validated['group']) ? $validated['group'] : null);
+            
+            return $this->successResponse(new SettingResource($item), 'admin.setting.update.success');
+        } catch (\Exception $e) {
+            return $this->errorResponse('admin.setting.update.error', 500, ['message' => $e->getMessage()]);
         }
-        
-        return $this->successResponse(new SettingResource($item), 'admin.setting.update.success');
     }
 
     /**
@@ -136,8 +178,12 @@ class SettingController extends Controller
      */
     public function togglePrivate(Request $request, $id)
     {
-        $isPrivate = $request->boolean('is_private', true);
-        $item = $this->service->setPrivate($id, $isPrivate);
+        $item = $this->service->find($id);
+        if (!$item){
+            return $this->errorResponse('admin.setting.not_found', 404);
+        }
+        $isPrivate = $item->is_private;
+        $item = $this->service->setPrivate($id, !$isPrivate);
         
         return $this->successResponse(
             new SettingResource($item), 

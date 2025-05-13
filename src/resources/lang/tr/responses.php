@@ -184,7 +184,7 @@ return [
             'delete' => [
                 'success' => 'İletişim talebi başarıyla silindi'
             ]
-        }
+        ]
     ],
     
     // Diğer çeviriler...

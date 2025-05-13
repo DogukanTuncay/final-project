@@ -16,7 +16,6 @@ class SettingResource extends BaseResource
             'type' => $this->type,
             'group' => $this->group,
             'value' => $this->value, // Raw value
-            'typed_value' => $this->typed_value, // Converted value based on type
             'is_translatable' => $this->is_translatable,
             'is_private' => $this->is_private,
             'created_at' => $this->created_at,

@@ -36,4 +36,19 @@ interface SettingServiceInterface
      * Belirli bir grup ayarını getir
      */
     public function getGroupSettings(string $group);
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar gruplarını getir
+     * 
+     * @return array
+     */
+    public function getAvailableGroups(): array;
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar anahtarlarını getir
+     * 
+     * @param string|null $group Grup filtresi (opsiyonel)
+     * @return array
+     */
+    public function getAvailableKeys(?string $group = null): array;
 }

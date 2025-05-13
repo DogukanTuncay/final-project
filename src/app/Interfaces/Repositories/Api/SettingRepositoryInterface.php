@@ -33,4 +33,19 @@ interface SettingRepositoryInterface
      * Bir grup ayarı getir
      */
     public function getSettingsByGroup(string $group);
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar gruplarını getir
+     * 
+     * @return array
+     */
+    public function getAvailableGroups(): array;
+    
+    /**
+     * Kullanıcı tarafından erişilebilecek tüm ayar anahtarlarını getir
+     * 
+     * @param string|null $group Grup filtresi (opsiyonel)
+     * @return array
+     */
+    public function getAvailableKeys(?string $group = null): array;
 }

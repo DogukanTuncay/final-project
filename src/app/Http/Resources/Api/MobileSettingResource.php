@@ -3,11 +3,9 @@
 namespace App\Http\Resources\Api;
 
 use App\Http\Resources\BaseResource;
-use Illuminate\Http\Resources\Json\JsonResource;
-use App\Models\Setting;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-class MobileSettingResource extends JsonResource
+class MobileSettingResource extends BaseResource
 {
     /**
      * Transform the resource into an array.

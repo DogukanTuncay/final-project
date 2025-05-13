@@ -31,30 +31,30 @@ class SettingsSeeder extends Seeder
         $settings = [
             [
                 'key' => 'site_name',
-                'value' => json_encode([
+                'value' => [
                     'tr' => 'Davah Uygulaması',
                     'en' => 'Davah App'
-                ]),
+                ],
                 'type' => 'text',
                 'group' => 'site',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Site adı',
                     'en' => 'Site name'
-                ]),
+                ],
                 'is_translatable' => true
             ],
             [
                 'key' => 'site_description',
-                'value' => json_encode([
+                'value' => [
                     'tr' => 'Davah eğitim uygulaması',
                     'en' => 'Davah education app'
-                ]),
+                ],
                 'type' => 'text',
                 'group' => 'site',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Site açıklaması',
                     'en' => 'Site description'
-                ]),
+                ],
                 'is_translatable' => true
             ],
             [
@@ -62,10 +62,10 @@ class SettingsSeeder extends Seeder
                 'value' => 'https://via.placeholder.com/200x60',
                 'type' => 'image',
                 'group' => 'site',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Site logosu',
                     'en' => 'Site logo'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -73,10 +73,10 @@ class SettingsSeeder extends Seeder
                 'value' => 'https://via.placeholder.com/32x32',
                 'type' => 'image',
                 'group' => 'site',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Site favicon',
                     'en' => 'Site favicon'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -84,10 +84,10 @@ class SettingsSeeder extends Seeder
                 'value' => 'info@davah.com',
                 'type' => 'text',
                 'group' => 'site',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'İletişim e-postası',
                     'en' => 'Contact email'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -95,10 +95,10 @@ class SettingsSeeder extends Seeder
                 'value' => '+90 (555) 123 4567',
                 'type' => 'text',
                 'group' => 'site',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'İletişim telefonu',
                     'en' => 'Contact phone'
-                ]),
+                ],
                 'is_translatable' => false
             ]
         ];
@@ -119,10 +119,10 @@ class SettingsSeeder extends Seeder
                 'value' => '1.0.0',
                 'type' => 'text',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'iOS minimum versiyon',
                     'en' => 'iOS minimum version'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -130,10 +130,10 @@ class SettingsSeeder extends Seeder
                 'value' => '1.0.0',
                 'type' => 'text',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'iOS en son versiyon',
                     'en' => 'iOS latest version'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -141,10 +141,10 @@ class SettingsSeeder extends Seeder
                 'value' => '0',
                 'type' => 'boolean',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'iOS zorunlu güncelleme',
                     'en' => 'iOS force update'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -152,24 +152,24 @@ class SettingsSeeder extends Seeder
                 'value' => '0',
                 'type' => 'boolean',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'iOS bakım modu',
                     'en' => 'iOS maintenance mode'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
                 'key' => 'ios_maintenance_message',
-                'value' => json_encode([
+                'value' => [
                     'tr' => 'Uygulamamız şu anda bakımda, lütfen daha sonra tekrar deneyin.',
                     'en' => 'Our app is currently under maintenance, please try again later.'
-                ]),
+                ],
                 'type' => 'text',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'iOS bakım mesajı',
                     'en' => 'iOS maintenance message'
-                ]),
+                ],
                 'is_translatable' => true
             ],
             [
@@ -177,10 +177,10 @@ class SettingsSeeder extends Seeder
                 'value' => 'https://apps.apple.com/app/davah',
                 'type' => 'text',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'iOS App Store URL',
                     'en' => 'iOS App Store URL'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -188,10 +188,10 @@ class SettingsSeeder extends Seeder
                 'value' => '1.0.0',
                 'type' => 'text',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Android minimum versiyon',
                     'en' => 'Android minimum version'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -199,10 +199,10 @@ class SettingsSeeder extends Seeder
                 'value' => '1.0.0',
                 'type' => 'text',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Android en son versiyon',
                     'en' => 'Android latest version'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -210,10 +210,10 @@ class SettingsSeeder extends Seeder
                 'value' => '0',
                 'type' => 'boolean',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Android zorunlu güncelleme',
                     'en' => 'Android force update'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -221,24 +221,24 @@ class SettingsSeeder extends Seeder
                 'value' => '0',
                 'type' => 'boolean',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Android bakım modu',
                     'en' => 'Android maintenance mode'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
                 'key' => 'android_maintenance_message',
-                'value' => json_encode([
+                'value' => [
                     'tr' => 'Uygulamamız şu anda bakımda, lütfen daha sonra tekrar deneyin.',
                     'en' => 'Our app is currently under maintenance, please try again later.'
-                ]),
+                ],
                 'type' => 'text',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Android bakım mesajı',
                     'en' => 'Android maintenance message'
-                ]),
+                ],
                 'is_translatable' => true
             ],
             [
@@ -246,10 +246,10 @@ class SettingsSeeder extends Seeder
                 'value' => 'https://play.google.com/store/apps/details?id=com.davah.app',
                 'type' => 'text',
                 'group' => 'mobile',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Android Play Store URL',
                     'en' => 'Android Play Store URL'
-                ]),
+                ],
                 'is_translatable' => false
             ]
         ];
@@ -270,10 +270,10 @@ class SettingsSeeder extends Seeder
                 'value' => 'tr',
                 'type' => 'text',
                 'group' => 'system',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Varsayılan dil',
                     'en' => 'Default language'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -281,10 +281,10 @@ class SettingsSeeder extends Seeder
                 'value' => 'Europe/Istanbul',
                 'type' => 'text',
                 'group' => 'system',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Zaman dilimi',
                     'en' => 'Timezone'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
@@ -292,21 +292,23 @@ class SettingsSeeder extends Seeder
                 'value' => '0',
                 'type' => 'boolean',
                 'group' => 'system',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'Bakım modu',
                     'en' => 'Maintenance mode'
-                ]),
+                ],
                 'is_translatable' => false
             ],
             [
                 'key' => 'ai_description',
-                'value' => '{"en":"You are an AI assistant focused on Islamic knowledge. You provide respectful, accurate, and well-sourced answers based on the Qur\'an, authentic Hadiths, and the views of reputable Islamic scholars. You maintain a humble and polite tone, refrain from issuing fatwas, and only present trusted scholarly opinions. You respond in the language used by the user."}',
+                'value' => [
+                    'en' => "You are an AI assistant focused on Islamic knowledge. You provide respectful, accurate, and well-sourced answers based on the Qur'an, authentic Hadiths, and the views of reputable Islamic scholars. You maintain a humble and polite tone, refrain from issuing fatwas, and only present trusted scholarly opinions. You respond in the language used by the user."
+                ],
                 'type' => 'text',
                 'group' => 'system',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'AI açıklama',
                     'en' => 'AI description'
-                ]),
+                ],
                 'is_translatable' => true
             ],
             [
@@ -314,10 +316,10 @@ class SettingsSeeder extends Seeder
                 'value' => 'your-api-key',
                 'type' => 'text',
                 'group' => 'system',
-                'description' => json_encode([
+                'description' => [
                     'tr' => 'AI key',
                     'en' => 'AI key'
-                ]),
+                ],
             ]
         ];
         

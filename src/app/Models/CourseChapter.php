@@ -96,6 +96,17 @@ class CourseChapter extends Model
     }
 
     /**
+     * Aktif ve silinmemiş bölüm derslerini getirir
+     */
+    public function activeLessons()
+    {
+        return $this->hasMany(CourseChapterLesson::class)
+            ->where('is_active', true)
+            ->whereNull('deleted_at')
+            ->orderBy('order');
+    }
+
+    /**
      * Bu bölümün tamamlanmasını gerektiren görevler (Missions).
      */
     public function missions(): MorphMany
@@ -114,6 +125,22 @@ class CourseChapter extends Model
             'chapter_id',
             'prerequisite_chapter_id'
         )->select('course_chapters.id', 'course_chapters.name', 'course_chapters.slug', 'course_chapters.order', 'course_chapters.image');
+    }
+
+    /**
+     * Aktif ve silinmemiş ön koşul bölümlerini getirir
+     */
+    public function activePrerequisites(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            CourseChapter::class,
+            'chapter_prerequisites',
+            'chapter_id',
+            'prerequisite_chapter_id'
+        )
+        ->where('course_chapters.is_active', true)
+        ->whereNull('course_chapters.deleted_at')
+        ->select('course_chapters.id', 'course_chapters.name', 'course_chapters.slug', 'course_chapters.order', 'course_chapters.image');
     }
 
     /**
@@ -172,12 +199,12 @@ class CourseChapter extends Model
             $userId = $user->id;
             
             // Ön koşul yoksa boş dizi döndür
-            if (!$this->prerequisites()->exists()) {
+            if (!$this->activePrerequisites()->exists()) {
                 return [];
             }
             
-            // Tüm ön koşulları al
-            $prerequisites = $this->prerequisites()->get();
+            // Tüm aktif ve silinmemiş ön koşulları al
+            $prerequisites = $this->activePrerequisites()->get();
             
             // Kullanıcının tamamladığı bölüm ID'lerini al
             $completedChapterIds = ChapterCompletion::where('user_id', $userId)
@@ -218,8 +245,8 @@ class CourseChapter extends Model
             }
 
             // 1. Ön koşulların tamamlanma kontrolü
-            if ($this->prerequisites()->exists()) {
-                $prerequisites = $this->prerequisites()->get();
+            if ($this->activePrerequisites()->exists()) {
+                $prerequisites = $this->activePrerequisites()->get();
                 $completedPrerequisites = ChapterCompletion::where('user_id', $user->id)
                     ->whereIn('chapter_id', $prerequisites->pluck('id'))
                     ->count();
@@ -229,8 +256,8 @@ class CourseChapter extends Model
                 }
             }
 
-            // 2. Tüm derslerin tamamlanma kontrolü
-            $lessons = $this->lessons()->get();
+            // 2. Tüm aktif ve silinmemiş derslerin tamamlanma kontrolü
+            $lessons = $this->activeLessons()->get();
             if ($lessons->isEmpty()) {
                 return false;
             }

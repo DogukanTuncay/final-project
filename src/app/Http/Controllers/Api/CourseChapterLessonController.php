@@ -32,10 +32,7 @@ class CourseChapterLessonController extends BaseController
     public function byChapter(int $chapterId)
     {
         $lessons = $this->service->findByChapter($chapterId);
-         // Hata ayıklama
-       foreach($lessons as $lesson){
-        \Log::info('Ön koşullar: ' . $lesson->prerequisites()->get());
-       }
+       
 
        if(!$lessons){
             return $this->errorResponse('responses.course_chapter_lesson.not_found', 404);
@@ -156,7 +153,9 @@ class CourseChapterLessonController extends BaseController
                 );
             }
         }
-
+        if(!$lesson->isCompletable()){
+            return $this->errorResponse('responses.course_chapter_lesson.not_completable', 403);
+        }
         $completion = $this->service->markAsCompleted($id);
         if(!$completion){
             return $this->successResponse(

@@ -41,13 +41,26 @@ class SettingService extends BaseService implements SettingServiceInterface
             // Anahtar başına 'site_' öneki ekliyoruz
             $fullKey = (strpos($key, 'site_') === 0) ? $key : "site_{$key}";
             
+            // Değerin tipini belirleyelim
+            $type = 'text';
+            if (is_bool($value) || in_array($value, ['true', 'false', true, false, 0, 1, '0', '1'])) {
+                $type = 'boolean';
+            } elseif (is_numeric($value)) {
+                $type = 'number';
+            } elseif (is_array($value)) {
+                $type = 'json';
+                $value = json_encode($value);
+            }
+            
+            $isTranslatable = in_array($key, ['name', 'description', 'keywords', 'footer_text']);
+            
             $setting = $this->repository->updateOrCreate(
                 $fullKey, 
                 $value, 
-                'text', 
+                $type, 
                 'site', 
                 [
-                    'is_translatable' => in_array($key, ['name', 'description', 'keywords', 'footer_text'])
+                    'is_translatable' => $isTranslatable
                 ]
             );
             
@@ -71,10 +84,14 @@ class SettingService extends BaseService implements SettingServiceInterface
             $type = 'text';
             if (strpos($key, 'version') !== false) {
                 $type = 'text';
-            } elseif (strpos($key, 'force_update') !== false) {
+            } elseif (strpos($key, 'force_update') !== false || strpos($key, 'maintenance') !== false) {
                 $type = 'boolean';
-            } elseif (strpos($key, 'maintenance') !== false) {
-                $type = 'boolean';
+                $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+            } elseif (is_array($value)) {
+                $type = 'json';
+                $value = json_encode($value);
+            } elseif (is_numeric($value)) {
+                $type = 'number';
             }
             
             $setting = $this->repository->updateOrCreate(
