@@ -36,7 +36,13 @@ Route::name('api.')->group(function () {
         Route::get('/site-info', 'getSiteInfo');
         Route::get('/mobile/{platform?}', 'getMobileInfo');
     });
-
+// Ayarlar (Settings) - Kimlik doğrulaması gerektiren rotalar
+Route::group(['prefix' => 'settings', 'controller' => SettingController::class], function () {
+    Route::get('/', 'index');
+    Route::get('/{id}', 'show');
+    Route::get('/key/{key}', 'showByKey');
+    Route::get('/group/{group}', 'getGroupSettings');
+});
     // İletişim Formu - Kimlik doğrulaması gerektirmeyen public rotalar
     Route::group(['prefix' => 'contact', 'controller' => ContactController::class], function () {
         Route::post('/', 'store');
@@ -44,13 +50,7 @@ Route::name('api.')->group(function () {
 
     // Kullanıcı doğrulaması gerektiren API rotaları
     Route::group(['middleware' => ['JWT', 'verified', 'role:user|admin|super-admin', 'record.login'], 'as' => 'api.'], function () {
-        // Ayarlar (Settings) - Kimlik doğrulaması gerektiren rotalar
-        Route::group(['prefix' => 'settings', 'controller' => SettingController::class], function () {
-            Route::get('/', 'index');
-            Route::get('/{id}', 'show');
-            Route::get('/key/{key}', 'showByKey');
-            Route::get('/group/{group}', 'getGroupSettings');
-        });
+        
 
         // Course routes
         Route::group(['prefix' => 'courses', 'controller' => CourseController::class], function () {

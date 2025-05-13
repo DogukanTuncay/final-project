@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 trait HasImage
 {
@@ -20,7 +21,7 @@ trait HasImage
     }
 
     /**
-     * Resim yükleme
+     * Resim yükleme (manuel yöntemle)
      */
     public function uploadImage(UploadedFile $image, string $field = 'image'): string
     {
@@ -28,21 +29,34 @@ trait HasImage
         if ($this->{$field}) {
             $this->deleteImage($this->{$field});
         }
-        // Yeni resmi yükle
-        $path = $image->store($this->getImagePath(), 'public');
         
-        // Tam URL oluştur
-        $fullUrl = $this->getFullImageUrl($path);
+        // Upload klasörünü oluştur (yoksa)
+        $uploadPath = $this->getUploadPath();
+        if (!File::isDirectory($uploadPath)) {
+            File::makeDirectory($uploadPath, 0755, true);
+        }
         
-        // Veritabanına tam URL'yi kaydet
-        $this->{$field} = $fullUrl;
-        $this->save();
-
-        return $fullUrl;
+        // Dosya adını hazırla
+        $fileName = $this->generateFileName($image);
+        $fullPath = $uploadPath . '/' . $fileName;
+        
+        // Dosyayı yükle
+        if ($image->move($uploadPath, $fileName)) {
+            // Tam URL oluştur
+            $fullUrl = $this->getFullImageUrl($fileName);
+            
+            // Veritabanına tam URL'yi kaydet
+            $this->{$field} = $fullUrl;
+            $this->save();
+            
+            return $fullUrl;
+        }
+        
+        return '';
     }
 
     /**
-     * Çoklu resim yükleme
+     * Çoklu resim yükleme (manuel yöntemle)
      */
     public function uploadImages(array $images, string $field = 'images'): array
     {
@@ -50,12 +64,25 @@ trait HasImage
 
         // Mevcut resimleri al
         $currentImages = json_decode($this->{$field} ?? '[]', true);
+        
+        // Upload klasörünü oluştur (yoksa)
+        $uploadPath = $this->getUploadPath();
+        if (!File::isDirectory($uploadPath)) {
+            File::makeDirectory($uploadPath, 0755, true);
+        }
 
         foreach ($images as $image) {
             if ($image instanceof UploadedFile) {
-                $path = $image->store($this->getImagePath(), 'public');
-                $fullUrl = $this->getFullImageUrl($path);
-                $urls[] = $fullUrl;
+                // Dosya adını hazırla
+                $fileName = $this->generateFileName($image);
+                $fullPath = $uploadPath . '/' . $fileName;
+                
+                // Dosyayı yükle
+                if ($image->move($uploadPath, $fileName)) {
+                    // Tam URL oluştur
+                    $fullUrl = $this->getFullImageUrl($fileName);
+                    $urls[] = $fullUrl;
+                }
             }
         }
 
@@ -70,17 +97,25 @@ trait HasImage
     }
 
     /**
-     * Belirli bir resmi sil
+     * Belirli bir resmi sil (manuel yöntemle)
      */
     public function deleteImage(string $url): bool
     {
-        // URL'den path kısmını çıkart
-        $path = $this->getPathFromUrl($url);
-        if (!$path) {
+        // URL'den dosya adını çıkart
+        $fileName = $this->getFileNameFromUrl($url);
+        
+        if (!$fileName) {
             return false;
         }
-
-        return Storage::disk('public')->delete($path);
+        
+        $filePath = $this->getUploadPath() . '/' . $fileName;
+        
+        // Dosya varsa sil
+        if (File::exists($filePath)) {
+            return File::delete($filePath);
+        }
+        
+        return false;
     }
 
     /**
@@ -107,40 +142,50 @@ trait HasImage
     }
 
     /**
-     * Resim yolunu al
+     * Benzersiz dosya adı oluştur
      */
-    protected function getImagePath(): string
+    protected function generateFileName(UploadedFile $file): string
     {
-        return 'images/' . strtolower(class_basename($this));
+        $extension = $file->getClientOriginalExtension();
+        $uniqueName = Str::uuid()->toString();
+        return $uniqueName . '.' . $extension;
     }
 
     /**
-     * URL'den dosya yolunu çıkarır
+     * URL'den dosya adını çıkarır
      */
-    protected function getPathFromUrl(string $url): ?string
+    protected function getFileNameFromUrl(string $url): ?string
     {
         // URL'yi parçalara ayır
         $urlParts = parse_url($url);
         
-        // URL içinde '/storage/' yolunu bul
+        // Path kısmını al
         if (isset($urlParts['path'])) {
-            $path = $urlParts['path'];
-            
-            // '/storage/' öneki varsa kaldır
-            if (Str::contains($path, '/storage/')) {
-                return Str::after($path, '/storage/');
-            }
+            $pathParts = explode('/', $urlParts['path']);
+            return end($pathParts);
         }
         
         return null;
     }
 
     /**
+     * Upload klasörünün yolunu al
+     */
+    protected function getUploadPath(): string
+    {
+        $baseDir = public_path('uploads');
+        $modelDir = strtolower(class_basename($this));
+        
+        return $baseDir . '/' . $modelDir;
+    }
+
+    /**
      * Tam resim URL'sini oluştur
      */
-    protected function getFullImageUrl(string $path): string
+    protected function getFullImageUrl(string $fileName): string
     {
-        return URL::to('/storage/' . $path);
+        $modelDir = strtolower(class_basename($this));
+        return URL::asset('uploads/' . $modelDir . '/' . $fileName);
     }
 
     /**

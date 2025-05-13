@@ -57,7 +57,7 @@ class CourseChapterResource extends BaseResource
         $is_completed = $this->is_completed; // Model'deki accessor kullanılacak
         
         // Ön koşul bilgileri
-        $prerequisites = $this->prerequisites->map(function($prerequisite) use ($user) {
+        $prerequisites = $this->activePrerequisites()->get()->map(function($prerequisite) use ($user) {
             // Ön koşulun tamamlanıp tamamlanmadığını kontrol et
             $prereq_completed = false;
             if ($user) {

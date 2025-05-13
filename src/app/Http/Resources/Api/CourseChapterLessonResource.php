@@ -38,7 +38,7 @@ class CourseChapterLessonResource extends BaseResource
         }
         
         // Ön koşul bilgileri
-        $prerequisites = $this->prerequisites->map(function($prerequisite) use ($user) {
+        $prerequisites = $this->activePrerequisites()->get()->map(function($prerequisite) use ($user) {
             // Ön koşulun tamamlanıp tamamlanmadığını kontrol et
             $prereq_completed = false;
             if ($user) {
@@ -80,7 +80,7 @@ class CourseChapterLessonResource extends BaseResource
             $missingIds = array_diff($prerequisiteIds->toArray(), $completedIds);
             
             if (!empty($missingIds)) {
-                $missingPrerequisites = $this->activePrerequisites()->whereIn('id', $missingIds);
+                $missingPrerequisites = $this->activePrerequisites()->whereIn('id', $missingIds)->get();
                 
                 $missing_prerequisites = $missingPrerequisites->map(function($lesson) {
                     return [
