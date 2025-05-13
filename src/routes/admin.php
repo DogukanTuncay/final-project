@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\OneSignalController;
 use App\Http\Controllers\Admin\VideoContentController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\ChapterPrerequisiteController;
+use App\Http\Controllers\Admin\LessonPrerequisiteController;
 
 // Admin rotaları - 'admin' prefix'i ekleniyor, 'api' prefix'i RouteServiceProvider'da ekleniyor
 Route::prefix('admin')->name('admin.')->middleware(['JWT', 'verified', 'role:admin|super-admin'])->group(function () {
@@ -263,5 +265,25 @@ Route::prefix('admin')->name('admin.')->middleware(['JWT', 'verified', 'role:adm
             Route::get('/user/{userId}/messages', [App\Http\Controllers\Admin\AiChatMessageController::class, 'getUserMessages'])->name('user-messages');
             Route::get('/chat/{chatId}/ai-messages', [App\Http\Controllers\Admin\AiChatMessageController::class, 'getAiMessages'])->name('ai-messages');
         });
+    });
+
+    // === Chapter Prerequisites (Bölüm Ön Koşulları) ===
+    Route::prefix('chapters/{chapterId}/prerequisites')->group(function () {
+        Route::get('/', [ChapterPrerequisiteController::class, 'index']);
+        Route::post('/', [ChapterPrerequisiteController::class, 'store']);
+        Route::put('/', [ChapterPrerequisiteController::class, 'update']);
+        Route::delete('/{prerequisiteId}', [ChapterPrerequisiteController::class, 'destroy']);
+        Route::delete('/', [ChapterPrerequisiteController::class, 'clear']);
+        Route::get('/available', [ChapterPrerequisiteController::class, 'availablePrerequisites']);
+    });
+    
+    // === Lesson Prerequisites (Ders Ön Koşulları) ===
+    Route::prefix('lessons/{lessonId}/prerequisites')->group(function () {
+        Route::get('/', [LessonPrerequisiteController::class, 'index']);
+        Route::post('/', [LessonPrerequisiteController::class, 'store']);
+        Route::put('/', [LessonPrerequisiteController::class, 'update']);
+        Route::delete('/{prerequisiteId}', [LessonPrerequisiteController::class, 'destroy']);
+        Route::delete('/', [LessonPrerequisiteController::class, 'clear']);
+        Route::get('/available', [LessonPrerequisiteController::class, 'availablePrerequisites']);
     });
 });

@@ -78,12 +78,11 @@ class NotificationController extends Controller
     public function getNotificationLogs(Request $request): JsonResponse
     {
         try {
-            $limit = $request->query('limit', 20);
             $user = $request->user();
             
             $logs = $user->notificationLogs()
                 ->orderBy('sent_at', 'desc')
-                ->paginate($limit);
+                ->get();
             
             return $this->successResponse(
                 $logs,

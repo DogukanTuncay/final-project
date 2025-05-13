@@ -91,6 +91,17 @@ class MissionsService implements MissionsServiceInterface
     }
 
     /**
+     * Belirli bir tipteki görevleri getir
+     * 
+     * @param string $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getByType($type)
+    {
+        return $this->repository->getByType($type);
+    }
+
+    /**
      * Görevi tamamla
      * 
      * @param int $id Görev ID

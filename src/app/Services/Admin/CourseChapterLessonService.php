@@ -88,4 +88,57 @@ class CourseChapterLessonService extends BaseService implements CourseChapterLes
     {
         return $courseChapterLesson->uploadImages($images);
     }
+
+    /**
+     * Belirli bir ders için ön koşul dersleri ekle
+     * @param int $lessonId
+     * @param array $prerequisiteIds
+     * @return bool
+     */
+    public function addPrerequisites(int $lessonId, array $prerequisiteIds): bool
+    {
+        return $this->repository->addPrerequisites($lessonId, $prerequisiteIds);
+    }
+
+    /**
+     * Belirli bir ders için ön koşul derslerini kaldır
+     * @param int $lessonId
+     * @param array $prerequisiteIds
+     * @return bool
+     */
+    public function removePrerequisites(int $lessonId, array $prerequisiteIds): bool
+    {
+        return $this->repository->removePrerequisites($lessonId, $prerequisiteIds);
+    }
+
+    /**
+     * Belirli bir ders için tüm ön koşulları kaldır
+     * @param int $lessonId
+     * @return bool
+     */
+    public function clearPrerequisites(int $lessonId): bool
+    {
+        return $this->repository->clearPrerequisites($lessonId);
+    }
+
+    /**
+     * Belirli bir ders için ön koşulları güncelle
+     * @param int $lessonId
+     * @param array $prerequisiteIds
+     * @return bool
+     */
+    public function updatePrerequisites(int $lessonId, array $prerequisiteIds): bool
+    {
+        return $this->repository->updatePrerequisites($lessonId, $prerequisiteIds);
+    }
+
+    /**
+     * Belirli bir ders için ön koşulları getir
+     * @param int $lessonId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getPrerequisites(int $lessonId)
+    {
+        return $this->repository->getPrerequisites($lessonId);
+    }
 }

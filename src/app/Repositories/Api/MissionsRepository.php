@@ -151,4 +151,17 @@ class MissionsRepository implements MissionsRepositoryInterface
             ->where('user_id', $userId)
             ->get();
     }
+
+    /**
+     * Belirli bir tipteki görevleri al
+     * 
+     * @param string $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getByType(string $type)
+    {
+        return $this->model->where('type', $type)
+            ->where('is_active', true)
+            ->get();
+    }
 }

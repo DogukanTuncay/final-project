@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\VideoContentController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\NotificationSettingController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\UserNotificationLogController;
 // API Route grubu için ana yapılandırma - prefix kaldırıldı, çünkü RouteServiceProvider.php zaten ekliyor
 Route::name('api.')->group(function () {
     // JWT ile korunan kullanıcı bilgisi endpoint'i
@@ -64,6 +65,9 @@ Route::name('api.')->group(function () {
         Route::group(['prefix' => 'chapters', 'controller' => CourseChapterController::class], function () {
             Route::get('course/{courseId}', 'byCourse');
             Route::get('{id}', 'show');
+            Route::get('{id}/prerequisites', 'prerequisites');
+            Route::get('{id}/lock-status', 'checkLockStatus');
+            Route::post('{id}/complete', 'complete');
         });
 
         // Course Chapter Lesson routes
@@ -129,6 +133,7 @@ Route::name('api.')->group(function () {
             Route::get('/', [MissionsController::class, 'index'])->name('index');
             Route::get('{id}', [MissionsController::class, 'show'])->name('show')->where('id', '[0-9]+');
             Route::get('/available', [MissionsController::class, 'availableForUser'])->name('available');
+            Route::get('/type/{type}', [MissionsController::class, 'getByType'])->name('by-type');
             Route::get('/{id}/complete', [MissionsController::class, 'complete'])->name('complete');
             Route::get('/my-progress', [MissionsController::class, 'myProgress'])->name('my-progress');
         });
@@ -187,6 +192,15 @@ Route::name('api.')->group(function () {
             Route::get('/settings', [NotificationSettingController::class, 'getNotificationSettings']);
             Route::put('/settings', [NotificationSettingController::class, 'updateNotificationSettings']);
             Route::get('/settings/defaults', [NotificationSettingController::class, 'getDefaultSettings']);
+        });
+
+        // Kullanıcı Bildirim Logları Rotaları
+        Route::prefix('user-notifications')->group(function () {
+            Route::get('/', [UserNotificationLogController::class, 'index'])->name('user-notifications.index');
+            Route::get('/{id}', [UserNotificationLogController::class, 'show'])->name('user-notifications.show')->where('id', '[0-9]+');
+            Route::get('/type/{type}', [UserNotificationLogController::class, 'lastOfType'])->name('user-notifications.last-of-type');
+            Route::delete('/{id}', [UserNotificationLogController::class, 'destroy'])->name('user-notifications.destroy')->where('id', '[0-9]+');
+            Route::delete('/', [UserNotificationLogController::class, 'destroyAll'])->name('user-notifications.destroy-all');
         });
 
         // Video İçerik Rotaları

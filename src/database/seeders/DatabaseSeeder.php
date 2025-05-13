@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             MatchingQuestionSeeder::class,
             // 5. İlişkisel ve Diğer Veriler
             LessonPrerequisiteSeeder::class, // Ders ön koşulları (Dersler oluşturulduktan sonra)
+            ChapterPrerequisiteSeeder::class, // Bölüm ön koşulları (Bölümler oluşturulduktan sonra)
             CoursePermissionSeeder::class, // Kurs İzinleri
             MissionSeeder::class,         // Görevler
             // AchievementSeeder::class, // Başarımlar (Eklenecekse)

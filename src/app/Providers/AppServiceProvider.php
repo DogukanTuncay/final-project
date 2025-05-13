@@ -11,7 +11,11 @@ use App\Interfaces\Services\Api\NotificationServiceInterface;
 use App\Services\Api\NotificationService;
 use App\Services\Api\EventService;
 use App\Services\Api\MissionProgressService;
-
+/* use App\Interfaces\Repositories\Api\UserNotificationLogRepositoryInterface;
+use App\Interfaces\Services\Api\UserNotificationLogServiceInterface;
+use App\Repositories\Api\UserNotificationLogRepository;
+use App\Services\Api\UserNotificationLogService;
+*/
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -45,7 +49,12 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(EventService::class);
         $this->app->singleton(MissionProgressService::class);
-    }
+
+  /*      // UserNotificationLog interface bağlamaları (bindings)
+        $this->app->bind(UserNotificationLogRepositoryInterface::class, UserNotificationLogRepository::class);
+        $this->app->bind(UserNotificationLogServiceInterface::class, UserNotificationLogService::class);
+    */
+        }
 
     /**
      * Bootstrap any application services.

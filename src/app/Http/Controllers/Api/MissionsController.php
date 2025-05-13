@@ -197,4 +197,16 @@ class MissionsController extends BaseController
         
         return $this->successResponse($formattedProgress, 'responses.api.Missions.progress.success');
     }
+
+    /**
+     * Belirli bir tipteki görevleri getir
+     * 
+     * @param string $type
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getByType($type)
+    {
+        $missions = $this->service->getByType($type);
+        return $this->successResponse(MissionsResource::collection($missions), 'responses.api.Missions.list.success');
+    }
 }

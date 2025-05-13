@@ -55,4 +55,12 @@ interface MissionsRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getAllUserMissionProgress(int $userId);
+
+    /**
+     * Belirli bir tipteki görevleri al
+     * 
+     * @param string $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getByType(string $type);
 }
