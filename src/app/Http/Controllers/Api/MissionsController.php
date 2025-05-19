@@ -130,6 +130,9 @@ class MissionsController extends BaseController
             return $this->errorResponse('responses.api.auth.unauthenticated', 401);
         }
         
+        // Tüm aktif görevleri al
+        $allMissions = Mission::where('is_active', true)->get();
+        
         // İlerleme kayıtları
         $progressList = UserMissionProgress::with('mission')
             ->where('user_id', $user->id)
@@ -140,9 +143,13 @@ class MissionsController extends BaseController
             ->where('user_id', $user->id)
             ->orderBy('completed_date', 'desc')
             ->get();
-            
-        $formattedProgress = $progressList->map(function ($progress) use ($completionsList) {
-            $mission = $progress->mission;
+        
+        \Illuminate\Support\Facades\Log::info("Görev ilerleme kayıtları çekiliyor: User ID: " . $user->id . ", Tamamlama kayıtları: " . $completionsList->count());
+        
+        // Her görev için ilerleme durumu oluştur (ilerleme kaydı olmayan görevler için de)
+        $formattedProgress = $allMissions->map(function ($mission) use ($progressList, $completionsList, $user) {
+            // Bu görev için ilerleme kaydı var mı?
+            $progress = $progressList->where('mission_id', $mission->id)->first();
             
             // Bu görev için tamamlama kayıtları
             $completions = $completionsList->where('mission_id', $mission->id)->values();
@@ -174,10 +181,14 @@ class MissionsController extends BaseController
                     break;
             }
             
+            // İlerleme kaydı yoksa varsayılan değerleri kullan
+            $currentAmount = $progress ? $progress->current_amount : 0;
+            $requiredAmount = $mission->required_amount ?? 1;
+            
             return [
                 'mission' => new MissionsResource($mission),
-                'current_amount' => $progress->current_amount,
-                'required_amount' => $mission->required_amount ?? 1,
+                'current_amount' => $currentAmount,
+                'required_amount' => $requiredAmount,
                 'is_completed' => $isCompleted,
                 'completions' => $completions->map(function($completion) {
                     return [
@@ -191,7 +202,7 @@ class MissionsController extends BaseController
                     'completed_date' => $todayCompletion->completed_date,
                     'xp_earned' => $todayCompletion->xp_earned
                 ] : null,
-                'progress_percentage' => min(100, ($progress->current_amount / ($mission->required_amount ?? 1)) * 100)
+                'progress_percentage' => min(100, ($currentAmount / $requiredAmount) * 100)
             ];
         });
         

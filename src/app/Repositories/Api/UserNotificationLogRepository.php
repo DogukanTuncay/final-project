@@ -85,6 +85,7 @@ class UserNotificationLogRepository implements UserNotificationLogRepositoryInte
      */
     public function deleteAllByUserId(int $userId): bool
     {
-        return UserNotificationLog::where('user_id', $userId)->delete() ? true : false;
+        UserNotificationLog::where('user_id', $userId)->delete();  // kaç kayıt silindiği önemli değil
+        return true;
     }
 } 

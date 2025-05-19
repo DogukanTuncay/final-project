@@ -115,6 +115,7 @@ class MissionsService implements MissionsServiceInterface
             
             // Görev veya kullanıcı yoksa işlem yapma
             if (!$mission || !$user) {
+                \Illuminate\Support\Facades\Log::warning("Geçersiz görev tamamlama isteği: Mission ID: {$id}, User: " . ($user ? $user->id : 'null'));
                 return false;
             }
             
@@ -127,6 +128,7 @@ class MissionsService implements MissionsServiceInterface
                 case Mission::TYPE_ONE_TIME:
                     // Bu görev türü sadece bir kez tamamlanabilir
                     if ($user->completedMissions()->where('mission_id', $mission->id)->exists()) {
+                        \Illuminate\Support\Facades\Log::info("Tek seferlik görev zaten tamamlanmış: User ID: {$user->id}, Mission ID: {$id}");
                         return false; // Zaten tamamlanmış
                     }
                     break;
@@ -135,6 +137,7 @@ class MissionsService implements MissionsServiceInterface
                     // Günlük görevler her gün tekrar tamamlanabilir
                     // Sadece bugün tamamlanmış mı kontrolü yapalım
                     if ($user->hasMissionCompletedToday($mission->id)) {
+                        \Illuminate\Support\Facades\Log::info("Günlük görev bugün zaten tamamlanmış: User ID: {$user->id}, Mission ID: {$id}");
                         return false; // Bugün zaten tamamlanmış
                     }
                     break;
@@ -146,6 +149,7 @@ class MissionsService implements MissionsServiceInterface
                             ->whereDate('completed_date', '>=', now()->startOfWeek())
                             ->whereDate('completed_date', '<=', now()->endOfWeek())
                             ->exists()) {
+                        \Illuminate\Support\Facades\Log::info("Haftalık görev bu hafta zaten tamamlanmış: User ID: {$user->id}, Mission ID: {$id}");
                         return false; // Bu hafta zaten tamamlanmış
                     }
                     break;
@@ -153,6 +157,7 @@ class MissionsService implements MissionsServiceInterface
                 case Mission::TYPE_MANUAL:
                     // Manuel görevler bir kez tamamlanabilir
                     if ($user->completedMissions()->where('mission_id', $mission->id)->exists()) {
+                        \Illuminate\Support\Facades\Log::info("Manuel görev zaten tamamlanmış: User ID: {$user->id}, Mission ID: {$id}");
                         return false; // Zaten tamamlanmış
                     }
                     break;
@@ -160,6 +165,7 @@ class MissionsService implements MissionsServiceInterface
                 default:
                     // Tanımlanmamış görev tipleri için one_time davranışı
                     if ($user->completedMissions()->where('mission_id', $mission->id)->exists()) {
+                        \Illuminate\Support\Facades\Log::warning("Tanımsız görev tipi ({$missionType}) zaten tamamlanmış: User ID: {$user->id}, Mission ID: {$id}");
                         return false;
                     }
             }
@@ -193,6 +199,10 @@ class MissionsService implements MissionsServiceInterface
                 ]);
                 
                 $completion->save();
+                
+                // Önbelleği temizle
+                \Illuminate\Support\Facades\Cache::forget("user_{$user->id}_missions_completed");
+                \Illuminate\Support\Facades\Cache::forget("user_{$user->id}_missions_progress");
                 
                 // MissionCompleted event'ini tetikle
                 try {

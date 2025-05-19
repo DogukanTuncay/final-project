@@ -80,7 +80,7 @@ class CourseChapterLessonResource extends BaseResource
             $missingIds = array_diff($prerequisiteIds->toArray(), $completedIds);
             
             if (!empty($missingIds)) {
-                $missingPrerequisites = $this->activePrerequisites()->whereIn('id', $missingIds)->get();
+                $missingPrerequisites = $this->activePrerequisites()->whereIn('course_chapter_lessons.id', $missingIds)->get();
                 
                 $missing_prerequisites = $missingPrerequisites->map(function($lesson) {
                     return [

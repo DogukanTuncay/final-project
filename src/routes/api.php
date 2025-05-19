@@ -51,7 +51,6 @@ Route::group(['prefix' => 'settings', 'controller' => SettingController::class],
     // Kullanıcı doğrulaması gerektiren API rotaları
     Route::group(['middleware' => ['JWT', 'verified', 'role:user|admin|super-admin', 'record.login'], 'as' => 'api.'], function () {
         
-
         // Course routes
         Route::group(['prefix' => 'courses', 'controller' => CourseController::class], function () {
             Route::get('/', 'index');
@@ -134,7 +133,7 @@ Route::group(['prefix' => 'settings', 'controller' => SettingController::class],
             Route::get('{id}', [MissionsController::class, 'show'])->name('show')->where('id', '[0-9]+');
             Route::get('/available', [MissionsController::class, 'availableForUser'])->name('available');
             Route::get('/type/{type}', [MissionsController::class, 'getByType'])->name('by-type');
-            Route::get('/{id}/complete', [MissionsController::class, 'complete'])->name('complete');
+            Route::post('/{id}/complete', [MissionsController::class, 'complete'])->name('complete');
             Route::get('/my-progress', [MissionsController::class, 'myProgress'])->name('my-progress');
         });
 
